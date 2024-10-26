@@ -1,0 +1,90 @@
+VEREMOS FEATURES 
+
+
+DO SNOWFLAKE...
+
+
+
+
+
+
+
+GOALS DESTE MODULE:
+
+
+
+
+
+
+
+
+1) SNOWPIPE 
+
+
+
+
+2) DATA SHARING 
+
+
+
+
+
+
+
+3) TIME TRAVEL 
+
+
+
+
+
+
+
+
+
+4) RETENTION PERIOD 
+
+
+
+
+
+
+5) FAILSAFE 
+
+
+
+
+
+6) CLONE 
+
+
+
+
+
+
+
+7) SAMPLE 
+
+
+
+
+
+
+
+8) MATERIALIZED VIEWS...
+
+
+
+
+
+
+
+
+
+
+
+
+VEREMOS CADA 1 DESSAS FEATURES....
+
+
+
+

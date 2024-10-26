@@ -1,0 +1,2472 @@
+
+
+
+
+
+
+
+
+
+AGORA FALAREMOS SOBRE PROCEDURE TYPES NO SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> NO SNOWFLAKE,
+
+TEMOS 2 TYPES DE PROCEDURE...
+
+
+
+
+
+--> podemos criar esses 2 types....
+
+
+
+
+
+
+
+1) CALLER TYPES (caller procedures)
+
+
+
+
+2) OWNER TYPES... (owner procedures)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> agora vamos checar as diferenças entre os 2 types...
+
+
+
+
+
+
+
+
+
+
+
+
+1) CALLER PROCEDURES:
+
+
+
+
+
+
+A) "A CALLER's rights procedure RUNS __ WITH __ THE 
+PRIVILEGES OF THE CALLER"...
+
+
+B) A PROCEDURE VAI "INHERIT" A "CURRENT_WAREHOUSE"
+DO CALLER 
+
+C) A PROCEDURE __ VAI __ USAR A DATABASE E O SCHEMA 
+QUE O CALLER ESTÁ USANDO, NO MOMENTO DE SUA EXECUCAO...
+
+
+D) VOCE PODE "VIEW", "SET" E "UNSET" 
+AS SESSION VARIABLES DEFINIDAS PELO CALLER...
+
+
+
+
+
+
+->  é isso que temos, sobre caller procedures...
+
+
+
+
+
+
+
+
+
+JÁ AS OWNER PROCEDURES:
+
+
+
+
+
+
+
+2) OWNER PROCEDURES:
+
+
+
+
+A) "An owner's rights stored procedure RUNS MOSTLY 
+WITH THE PRIVILEGES OF THE STORED PROCEDURE's __OWNER___"...
+
+
+(ou seja, ela pega os privileges de quem CRIOU a procedure,
+
+e nao quem CHAMA a procedure...)
+
+
+
+B) THE PROCEDURE USES THE DATABASE AND SCHEMA IN WHICH 
+IT WAS CREATED, 
+
+AND NOT THE DATABASE AND THE SCHEMA USED CURRENTLY BY THE CALLER...
+
+
+
+C) é impossível FAZER "VIEW", "SET" OU "UNSET" 
+
+DAS SESSION VARIABLES DO CALLER...
+
+
+
+D) AS "OWNER PROCEDURES" IMPEDEM O ACESSO À INFORMATION 
+
+SOBRE ELAS (as procedures) POR "NON-OWNERS"... quer dizer que 
+
+a view de "PROCEDURES", com "SHOW PROCEDURES",
+
+
+
+É PROIBIDA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+AGORA VEREMOS 1 EXEMPLO QUE VAI NOS AJUDAR 
+
+A COMPREENDER 
+ESSES PONTOS....
+
+
+
+
+
+
+
+
+
+
+IMAGINE ESTE CENÁRIO:
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE ROLE SANDBOX;
+
+
+GRANT USAGE;
+
+
+
+CREATE USER DEVELOPER PASSWORD='ABC123' DEFAULT_ROLE=SANDBOX
+MUST_CHANGE_PASSWORD=TRUE;
+
+
+
+GRANT ROLE SANDBOX TO USER DEVELOPER;
+
+GRANT USAGE ON WAREHOUSE COMPUTE_WH TO ROLE SANDBOX;
+
+
+
+
+GRANT USAGE ON DATABASE DEMO_DB_OWNER TO ROLE SANDBOX;
+GRANT USAGE ON SCHEMA DEMO_DB_OWNER.PUBLIC TO ROLE SANDBOX;
+GRANT USAGE ON ALL PROCEDURES IN SCHEMA WH.SP_SCHEMA TO ROLE SANDBOX;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> NESSE CENÁRIO,
+
+
+
+VAMOS CRIAR 1 "CALLER PROCEDURE"
+
+
+E 
+
+1 "OWNER PROCEDURE"...
+
+
+
+
+
+
+--> AMBAS PROCEDURES FARAO O MESMO TRABALHO...
+
+
+
+
+
+
+
+
+
+
+
+
+--> ELAS SERAO CRIADAS NESSA DATABASE DE "DEMO_DB_OWNER"...
+
+
+
+
+
+
+
+
+--> AÍ, QUANDO A PROCEDURE/PROCEDURES FOREM CHAMADAS,
+
+
+
+
+ELA __ VAI __ CLONE_ AS TABLES 
+
+
+
+DA DATABASE "DEMO_DB.OWNER"
+
+
+
+
+
+
+
+PARA A DATABASE DE "DEMO_DB"....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... PARA ISSO, 
+
+2 PARAMETERS SERAO PASSADOS A NOSSA PROCEDURE...
+
+
+
+
+
+
+
+
+1o parameter = "nome da table a ser clonada, na database 'DEMO_DB_OWNER' "...
+
+
+
+
+
+
+
+2o parameter = "nome da table clone da primeira table, na database 'DEMO_DB'"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ A PROCEDURE EM SI FOI ESCRITA ASSIM:
+
+
+
+
+
+
+
+
+
+
+    CREATE OR REPLACE PROCEDURE CLONE_TABLE_OWNER (SRC_TABLE_NAME STRING, TARGET_TABLE_NAME STRING)
+        RETURNS STRING 
+        LANGUAGE JAVASCRIPT
+        EXECUTE AS OWNER -- é aqui se definimos se será uma "OWNER PROCEDURE" ou uma "CALLER PROCEDURE"...
+        AS 
+        $$
+
+        var sql_statement = 'CREATE TRANSIENT TABLE DEMO_DB.PUBLIC.' + CLONE_TABLE_NAME + 'CLONE' + 'DEMO_DB_OWNER.PUBLIC' + SRC_TABLE_NAME;
+
+        var clone_statement = snowflake.createStatement(
+            {
+                sqlText: sql_statement
+            }
+        );
+
+        clone_statement.execute();
+
+
+        var grant = 'GRANT ALL ON TABLE DEMO_DB.PUBLIC.' + CLONE_TABLE_NAME + 'TO ROLE SANDBOX';
+        // return grant
+        var grant_usage = snowflake.createStatement(
+            {
+                sqlText: grant
+            }
+        );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> DA MESMA FORMA, O PROFESSOR CRIARÁ 
+
+
+1 PROCEDURE QUE FARÁ A MESMA COISA,
+
+
+MAS 
+
+
+COM A OPTION DE "EXECUTE AS CALLER" (tipo diferente de procedure)...
+
+
+
+
+
+
+
+
+
+tipo assim:
+
+
+
+
+
+
+
+
+
+
+
+
+    CREATE OR REPLACE PROCEDURE CLONE_TABLE_CALLER (SRC_TABLE_NAME STRING, TARGET_TABLE_NAME STRING)
+        RETURNS STRING 
+        LANGUAGE JAVASCRIPT
+        EXECUTE AS CALLER -- é aqui se definimos se será uma "OWNER PROCEDURE" ou uma "CALLER PROCEDURE"...
+        AS 
+        $$
+
+        var sql_statement = 'CREATE TRANSIENT TABLE DEMO_DB.PUBLIC.' + CLONE_TABLE_NAME + 'CLONE' + 'DEMO_DB_OWNER.PUBLIC' + SRC_TABLE_NAME;
+
+        var clone_statement = snowflake.createStatement(
+            {
+                sqlText: sql_statement
+            }
+        );
+
+        clone_statement.execute();
+
+
+        var grant = 'GRANT ALL ON TABLE DEMO_DB.PUBLIC.' + CLONE_TABLE_NAME + 'TO ROLE SANDBOX';
+        // return grant
+        var grant_usage = snowflake.createStatement(
+            {
+                sqlText: grant
+            }
+        );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... E ESSA PROCEDURE,
+SUAS 2 VERSOES,
+
+
+
+ESTAO SENDO CRIADAS USANDO O ROLE DE "SYSADMIN"...
+
+
+
+
+
+
+
+
+
+-> DEPOIS DISSO, DEPOIS DE CRIAR ESSA PROCEDURE,
+
+
+O PROFESSOR CRIA 1 USER,
+
+DE NOME "DEVELOPER"...
+
+
+
+
+
+
+
+EX:
+
+
+
+
+
+CREATE ROLE SANDBOX;
+
+
+GRANT USAGE;
+
+
+
+CREATE USER DEVELOPER PASSWORD='ABC123' DEFAULT_ROLE=SANDBOX
+MUST_CHANGE_PASSWORD=TRUE;
+
+
+
+GRANT ROLE SANDBOX TO USER DEVELOPER;
+
+GRANT USAGE ON WAREHOUSE COMPUTE_WH TO ROLE SANDBOX;
+
+
+
+
+GRANT USAGE ON DATABASE DEMO_DB_OWNER TO ROLE SANDBOX;
+GRANT USAGE ON SCHEMA DEMO_DB_OWNER.PUBLIC TO ROLE SANDBOX;
+GRANT USAGE ON ALL PROCEDURES IN SCHEMA WH.SP_SCHEMA TO ROLE SANDBOX;
+
+
+
+
+
+
+
+---------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-->  assim que esse user tiver loggado,
+
+
+com esse password,
+
+
+
+ele 
+
+
+
+VAI TER ACESSO A ESSAS PROCEDURES...
+
+
+
+
+
+
+
+
+
+
+
+
+--> AÍ, QUANDO ELE CHAMAR ESSAS PROCEDURES,
+
+
+
+ELE ___ DEVE__ SER CAPAZ__ DE CLONAR__ 
+
+
+A TABLE,
+
+
+DO "DEMO_DB_OWNER" 
+
+
+
+PARA O "DEMO_DB"...
+
+
+
+
+
+
+
+
+
+--> ele nao terá permission para todas as tables,
+
+
+
+MAS, POR MEIO DA PROCEDURE,
+
+
+
+ELE DEVE SER CAPAZ DE CLONAR A TABLE...
+
+
+
+
+
+
+
+
+
+
+
+
+--> NESSE CENÁRIO,
+
+
+VEREMOS COMO 
+
+ESSE "OWNER PROCEDURE" 
+
+E "CALLER PROCEDURE"
+
+diferem...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ESSE ROLE E USER DEVEM SER CRIADOS USANDO O ROLE DE "SECURITYADMIN"...
+
+
+
+
+por isso:
+
+
+
+
+
+
+
+
+
+
+USE ROLE SECURITYADMIN;
+
+
+
+CREATE ROLE SANDBOX;
+
+
+GRANT USAGE;
+
+
+
+CREATE USER DEVELOPER PASSWORD='ABC123' DEFAULT_ROLE=SANDBOX
+MUST_CHANGE_PASSWORD=TRUE;
+
+
+
+GRANT ROLE SANDBOX TO USER DEVELOPER;
+
+GRANT USAGE ON WAREHOUSE COMPUTE_WH TO ROLE SANDBOX;
+
+
+
+
+GRANT USAGE ON DATABASE DEMO_DB_OWNER TO ROLE SANDBOX;
+GRANT USAGE ON SCHEMA DEMO_DB_OWNER.PUBLIC TO ROLE SANDBOX;
+GRANT USAGE ON ALL PROCEDURES IN SCHEMA WH.SP_SCHEMA TO ROLE SANDBOX;
+
+
+
+
+
+
+
+-------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ASSIM QUE VC CRIAR ESSE USER,
+VC PODE LOGGAR COM O USERNAME E PASSWORD...
+
+
+
+
+
+
+
+
+
+--> AÍ CONFERIMOS O ROLE DE SANDBOX AO USER DEVELOPER...
+
+
+
+
+ex:
+
+
+
+
+
+
+
+
+
+GRANT ROLE SANDBOX TO USER DEVELOPER;
+
+GRANT USAGE ON WAREHOUSE COMPUTE_WH TO ROLE SANDBOX;
+
+
+
+
+GRANT USAGE ON DATABASE DEMO_DB_OWNER TO ROLE SANDBOX;
+GRANT USAGE ON SCHEMA DEMO_DB_OWNER.PUBLIC TO ROLE SANDBOX;
+GRANT USAGE ON ALL PROCEDURES IN SCHEMA WH.SP_SCHEMA TO ROLE SANDBOX;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> TAMBÉM A USAGE... --> USAGE DA WAREHOUSE "compute_wh"...
+
+
+
+
+
+
+
+
+
+
+
+
+--> também usage à database de "DEMO_DB_OWNER"
+
+
+e 
+
+
+ao schema de "public", dentro dela...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> COM ISSO, VC SERÁ CAPAZ DE SELECIONAR A DATABASE,
+
+
+MAS AINDA 
+
+
+NAO SERÁ CAPAZ DE SELECIONAR QUAISQUER 
+TABLES,
+
+DENTRO DESSA DATABASE E SCHEMA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> o access de "usage" 
+
+apenas te enabla 
+
+a 
+
+VISUALIZAR A DATABASE,
+
+
+
+
+MAS NAO TE DEIXA VER TODAS AS TABLES 
+
+QUE EXISTEM 
+
+NESSA DATABASE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS COMO A PROCEDURE VIVE __DENTRO __ 
+
+
+DO LEVEL DA DATABASE,
+
+
+DENTRO DO SCHEMA DE "PUBLIC",
+
+
+
+
+
+
+
+PRECISAMOS CONFERIR "USAGE"
+
+
+NESSA DATABASE E SCHEMA A ESSE ROLE DE "SANDBOX"...
+
+
+
+
+
+
+
+
+
+
+POR ISSO ESTE CÓDIGO:
+
+
+
+
+
+GRANT USAGE ON DATABASE DEMO_DB_OWNER TO ROLE SANDBOX;
+GRANT USAGE ON SCHEMA DEMO_DB_OWNER.PUBLIC TO ROLE SANDBOX;
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> POR FIM, DEPOIS DE DAR USAGE ACCESS,
+
+
+
+
+
+VC __ DEVE__ DAR ACESSO ÀS PROCEDURES, TAMBÉM....
+
+
+
+
+
+
+
+USAGE DAS PROCEDURES..
+
+
+
+
+
+
+
+
+
+
+-> PARA ISSO,
+
+ESCREVA ASSIM:
+
+
+
+
+
+
+
+
+GRANT USAGE ON PROCEDURE CLONE_TABLE_OWNER(VARCHAR, VARCHAR) TO ROLE SANDBOX;
+
+GRANT USAGE ON PROCEDURE CLONE_TABLE_CALLER(VARCHAR, VARCHAR) TO ROLE SANDBOX;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> isso vai dar acesso a essas procedures, 
+que foram criadas 
+
+
+com o role de "SYSADMIN"...
+
+
+
+
+
+
+
+
+
+
+
+
+-> ISSO TUDO FOI PARA __ ENTREGAR ACESSO A ESSAS PROCEDURES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> A PRÓXIMA COISA 
+
+
+QUE DEVEMOS FAZER É __ O _CREATE__ DE 1 DUMMY TABLE....
+
+
+
+
+
+
+
+
+
+FAZEMOS ISSO COM ESTE CÓDIGO:
+
+
+
+
+
+
+CREATE TABLE DEMO_DB_OWNER.PUBLIC.TEST_CLONE (
+    NAME STRING,
+    AGE NUMBER
+);
+
+
+
+INSERT INTO TEST_CLONE
+SELECT 'mike', '22';
+
+
+
+INSERT INTO TEST_CLONE
+SELECT 'john', '15';
+
+
+
+
+
+
+
+SELECT * FROM TEST_CLONE;
+
+
+
+
+
+
+
+
+--> ESSA TABLE TERÁ 2 RECORDS....
+
+
+
+
+
+
+
+--> ELA SERÁ CRIADA 
+
+
+
+DENTRO DE "DEMO_DB_OWNER"...
+
+
+
+
+
+
+
+
+
+-> SE ESSA TABLE FOR PASSADA COMO PARAMETER 
+
+
+À PROCEDURE,
+
+
+ELA DEVERÁ SER CLONADA 
+
+
+
+DA DATABASE "DEMO_DB_OWNER"
+
+PARA 
+
+A 
+
+DATABASE "DEMO_DB"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+E AS 2 PROCEDURES JÁ ESTAO CRIADAS:
+
+
+
+
+
+
+
+    CREATE OR REPLACE PROCEDURE CLONE_TABLE_OWNER (SRC_TABLE_NAME STRING, TARGET_TABLE_NAME STRING)
+        RETURNS STRING 
+        LANGUAGE JAVASCRIPT
+        EXECUTE AS OWNER -- é aqui se definimos se será uma "OWNER PROCEDURE" ou uma "CALLER PROCEDURE"...
+        AS 
+        $$
+
+        var sql_statement = 'CREATE TRANSIENT TABLE DEMO_DB.PUBLIC.' + CLONE_TABLE_NAME + 'CLONE' + 'DEMO_DB_OWNER.PUBLIC' + SRC_TABLE_NAME;
+
+        var clone_statement = snowflake.createStatement(
+            {
+                sqlText: sql_statement
+            }
+        );
+
+        clone_statement.execute();
+
+
+        var grant = 'GRANT ALL ON TABLE DEMO_DB.PUBLIC.' + CLONE_TABLE_NAME + 'TO ROLE SANDBOX';
+        // return grant
+        var grant_usage = snowflake.createStatement(
+            {
+                sqlText: grant
+            }
+        );
+
+        grant_usage.execute();
+
+        $$
+
+
+
+
+
+
+
+
+
+
+    CREATE OR REPLACE PROCEDURE CLONE_TABLE_CALLER (SRC_TABLE_NAME STRING, TARGET_TABLE_NAME STRING)
+        RETURNS STRING 
+        LANGUAGE JAVASCRIPT
+        EXECUTE AS CALLER -- é aqui se definimos se será uma "OWNER PROCEDURE" ou uma "CALLER PROCEDURE"...
+        AS 
+        $$
+
+        var sql_statement = 'CREATE TRANSIENT TABLE DEMO_DB.PUBLIC.' + CLONE_TABLE_NAME + 'CLONE' + 'DEMO_DB_OWNER.PUBLIC' + SRC_TABLE_NAME;
+
+        var clone_statement = snowflake.createStatement(
+            {
+                sqlText: sql_statement
+            }
+        );
+
+        clone_statement.execute();
+
+
+        var grant = 'GRANT ALL ON TABLE DEMO_DB.PUBLIC.' + CLONE_TABLE_NAME + 'TO ROLE SANDBOX';
+        // return grant
+        var grant_usage = snowflake.createStatement(
+            {
+                sqlText: grant
+            }
+        );
+
+        grant_usage.execute();
+
+        $$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+COM ESSAS 2 PROCEDURES CRIADAS,
+
+BASTA AS EXECUTAR...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+---> devemos fazer call de essa procedure 
+
+como "SYSADMIN",
+
+
+
+
+PARA VER COMO ELA VAI SE COMPORTAR...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+O CÓDIGO DE CALL FICOU ASSIM:
+
+
+
+
+
+
+
+
+
+CALL DEMO_DB_OWNER.PUBLIC.CLONE_TABLE_OWNER('TEST_CLONE', 'CLONE_TEST_CLONE');
+
+CALL DEMO_DB_OWNER.PUBLIC.CLONE_TABLE_CALLER('TEST_CLONE', 'CLONE1_TEST_CLONE');
+
+
+
+
+
+
+
+
+--> UMA CALL PARA CADA UMA DAS PROCEDURES...
+
+
+
+
+
+
+
+
+
+
+
+-> MAS ANTES DE 
+
+
+RODARMOS ESSAS PROCEDURES,
+
+
+RAPIDAMENTE 
+
+CHECAMOS 
+
+
+
+AS PROCEDURES,
+
+COM "SHOW PROCEDURES;"
+
+
+
+
+
+
+
+
+
+
+
+
+
+SHOW PROCEDURES;
+
+
+
+
+
+
+
+
+RODAMOS ESSE STATEMENT DENTRO DA DATABASE 
+
+"DEMO_DB_OWNER",
+
+
+dentro do contexto do schema ".public"...
+
+
+
+
+
+
+
+
+
+
+
+
+--> PODEMOS VER "CLONE_TABLE_CALLER"
+
+
+E 
+
+"CLONE_TABLE_OWNER"...
+
+
+
+
+
+
+
+
+
+
+--> OK... MAS, NESSA VIEW,
+
+TEMOS ALGUNS DETALHES INTERESSANTES...
+
+
+
+
+
+
+
+
+
+
+--> AS COLUMNS
+
+
+
+schema_name 
+
+
+is_builtin 
+
+
+is_aggregate 
+
+
+is_ansi 
+
+
+
+min_num_arguments 
+
+
+max_num_arguments 
+
+
+
+arguments 
+
+
+
+
+
+description   ----------> diz "user-defined procedure"...
+
+
+
+
+
+
+
+catalog_name ----------> DEMO_DB_OWNER
+
+
+
+
+
+
+
+
+
+is_table_function....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> TEMOS 1 MONTE DE COLUMNS, SIM...
+
+
+
+
+
+
+
+
+MAS 1 COISA QUE VC TEM QUE OBSERVAR, INTERESSANTE,
+
+É QUE 
+
+
+
+
+
+____ NAO EXISTE__NENHUMA COLUMN QUE DIFERENCIE 
+
+
+"OWNER PROCEDURES" 
+
+DE 
+
+"CALLER PROCEDURES"...
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE NAO TEMOS NADA QUE CATEGORIZE NOSSAS PROCEDURES,
+
+
+DE 1 "METADATA LEVEL"...
+
+
+
+
+
+
+
+
+
+--> POR NAO EXISTIR DIFERENCIACAO ENTRE CALLER E OWNER PROCEDURES 
+
+NA SUA METADATA,
+
+
+É SEMPRE UMA 
+
+GOOD PRACTICE,
+
+QUANDO VC 
+
+
+CRIA SUA PROCEDURE,
+
+
+
+
+COLOCAR "OWNER" 
+
+OU 
+
+"CALLER"
+
+
+
+NO NOME DA PROCEDURE EM SI... 
+
+
+(
+
+    COMO FIZEMOS AQUI,
+
+
+    COM "CLONE_TABLE_CALLER",
+
+    "CLONE_TABLE_OWNER"...
+)
+
+
+
+
+
+
+
+
+
+
+
+--> ISSO TE DEIXA FACILMENTE DIFERENCIAR
+ 
+
+
+ ENTRE OS TYPES DE PROCEDURE,
+
+ QUANDO VC FOR AS UTILIZAR...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ --> PARA CHAMAR A PROCEDURE,
+
+ O PROFESSOR ESCREVE ASSIM:
+
+
+
+
+
+
+CALL DEMO_DB_OWNER.PUBLIC.CLONE_TABLE_OWNER('TEST_CLONE', 'CLONE_TEST_CLONE');
+
+CALL DEMO_DB_OWNER.PUBLIC.CLONE_TABLE_CALLER('TEST_CLONE', 'CLONE1_TEST_CLONE');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> RODAMOS AS 2...
+
+
+
+
+
+
+
+
+
+
+--> PERCEBEMOS QUE ESSAS TABLES FORAM CRIADAS 
+
+NA OUTRA 
+
+DATABASE/SCHEMA...
+
+
+
+
+
+
+
+
+
+AGORA VAMOS ANALISAR O CÓDIGO DA PROCEDURE:
+
+
+
+
+
+
+
+
+    CREATE OR REPLACE PROCEDURE CLONE_TABLE_CALLER (SRC_TABLE_NAME STRING, TARGET_TABLE_NAME STRING)
+        RETURNS STRING 
+        LANGUAGE JAVASCRIPT
+        EXECUTE AS CALLER -- é aqui se definimos se será uma "OWNER PROCEDURE" ou uma "CALLER PROCEDURE"...
+        AS 
+        $$
+
+        var sql_statement = 'CREATE TRANSIENT TABLE DEMO_DB.PUBLIC.' + CLONE_TABLE_NAME + 'CLONE' + 'DEMO_DB_OWNER.PUBLIC' + SRC_TABLE_NAME;
+
+        var clone_statement = snowflake.createStatement(
+            {
+                sqlText: sql_statement
+            }
+        );
+
+        clone_statement.execute();
+
+
+        var grant = 'GRANT ALL ON TABLE DEMO_DB.PUBLIC.' + CLONE_TABLE_NAME + 'TO ROLE SANDBOX';
+        // return grant
+        var grant_usage = snowflake.createStatement(
+            {
+                sqlText: grant
+            }
+        );
+
+        grant_usage.execute();
+
+        $$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+O INTERESSANTE, TAMBÉM,
+
+
+É QUE 
+
+
+CONFERIMOS TODAS AS PERMISSIONS 
+
+NA TABLE QUE CRIAMOS NO DEMO_DB:
+
+
+
+
+
+
+
+
+   var grant = 'GRANT ALL ON TABLE DEMO_DB.PUBLIC.'
+    + CLONE_TABLE_NAME + 'TO ROLE SANDBOX';
+
+
+
+
+
+
+
+
+
+
+
+--> CONFERIMOS ESSAS PERMISSIONS AO ROLE DE "SANDBOX",
+
+
+
+que originalmente nao terá essas permissions...
+
+
+
+
+
+
+
+
+--> mas pq fizemos isso?
+
+
+
+
+-->  É PQ _ ESSA TABLE 
+
+
+SERÁ __ CRIADA___ CONSIDERANDO 
+
+
+O ROLE DE "SYSADMIN"....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS A PERGUNTA AGORA É 
+
+
+
+""QUE DIFERENÇA EXISTE ENTRE ESSES 2 TYPES 
+
+DE PROCEDURES...?""
+
+
+
+
+
+
+
+
+--> PQ AMBAS ESTAO FAZENDO O MESMO TRABALHO,
+
+SEM PROBLEMA...
+
+
+
+
+
+
+
+
+
+
+
+
+-> BEM, O BEHAVIOR DELAS É UM POUCO DIFERENTE,
+
+COMO VEREMOS AGORA...
+
+
+
+
+
+
+
+
+
+
+
+--> VAMOS CHAMAR AS 2 PROCEDURES DE NOVO,
+
+
+
+MAS AGORA 
+
+
+
+COM O LOGIN 
+
+
+DO "DEVELOPER",
+
+
+
+QUE TEM AQUELE ROLE DE "SANDBOX"....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+---> o role de sandbox consegue acessar a warehouse compute_wh,
+E 
+
+TAMBÉM É CAPAZ 
+
+DE ACESSAR A DATABASE DEMO_DB E SEU SCHEMA "PUBLIC"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+MAS ANTES DE EXECUTARMOS 
+
+
+AS 2 PROCEDURES,
+
+
+
+TEMOS QUE 
+
+CHECAR 
+
+
+AS 2 PROCEDURES...
+
+
+
+
+
+
+
+
+
+--> COMO TEMOS APENAS "USAGE" 
+
+ACCESS NA DATABASE DE "DEMO_DB_OWNER",
+
+
+
+e nao PRIVILEGES NAS TABLES EM SI,
+
+
+
+
+
+ESSE ROLE DE "SANDBOX"
+
+
+
+
+
+___ NAO É __ CAPAZ__ DE VISUALIZAR 
+
+AS TABLES EM SI...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS O ROLE DE "SANDBOX"
+
+AINDA CONSEGUE VER AS PROCEDURES,
+
+
+
+PQ 
+
+
+COLOCAMOS 
+
+
+1
+ PRIVILEGE DE 
+
+ "GRANT USAGE ON PROCEDURE"
+
+
+ a
+  ele,
+
+  TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+GRANT USAGE ON PROCEDURE CLONE_TABLE_OWNER(VARCHAR, VARCHAR) TO ROLE SANDBOX;
+
+GRANT USAGE ON PROCEDURE CLONE_TABLE_CALLER(VARCHAR, VARCHAR) TO ROLE SANDBOX;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+COM ISSO,
+
+
+TEMOS ACESSO 
+
+A ESSA CALLER PROCEDURE E ESSA OWNER PROCEDURE...
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS SE ESSE ROLE NAO TIVER ESSA PERMISSION DE "GRANT USAGE"
+
+
+
+em cima dessas procedures,
+
+
+ELE NAO 
+
+
+
+SERÁ CAPAZ DE AS VISUALIZAR...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS O IMPORTANTE, AQUI,
+
+
+É QUE 
+
+
+
+ESSAS 2 PROCEDURES 
+
+FORAM CRIADAS PELO ROLE DE "SYSADMIN",
+
+
+
+
+QUE TAMBÉM 
+
+
+
+
+
+CONFERIU/GRANT 
+A PERMISSION DE 
+
+"USAGE" 
+
+DELAS,
+
+AO ROLE DE "SANDBOX"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... AGORA EXECUTAMOS 
+A ___OWNER___ PROCEDURE:
+
+
+
+
+
+
+
+
+
+
+
+
+CALL DEMO_DB_OWNER.PUBLIC.CLONE_TABLE_OWNER('TEST_CLONE', 'CLONE_TEST_CLONE');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> O QUE ISSO VAI FAZER É __ CLONAR__ A TABLE 
+"TEST_CLONE",
+
+
+
+lá no DEMO_DB...
+
+
+
+
+
+
+
+
+--> OK... MAS 1 COISA QUE DEVEMOS PERCEBER,
+
+AQUI,
+
+É QUE 
+
+
+
+
+___NAO__ TEMOS ACESSO DIRETO 
+
+
+A TABLE DE 
+
+
+"TEST_CLONE",
+
+
+
+QUE AGORA 
+
+
+ESTÁ VIVENDO DENTRO 
+
+
+DO DEMO_DB_OWNER...
+
+
+
+
+
+
+
+
+
+
+
+
+ok... agora, finalmente,
+
+vemos a diferença entre 
+
+
+os 2 tipos de procedure...
+
+
+
+
+
+
+
+
+
+
+
+
+COM O CALL DE "CLONE_TABLE_OWNER",
+
+
+
+conseguimos fazer o clone da table, de 1 database 
+para a outra...
+
+
+
+
+
+
+
+
+
+
+
+--> MAS COM O CALL DE 
+
+
+"CLONE_TABLE_CALLER",
+
+
+IMEDIATAMENTE RECEBEMOS 1 ERROR...
+
+
+
+
+
+
+
+EX:
+
+
+CALL DEMO_DB_OWNER.PUBLIC.CLONE_TABLE_CALLER('TEST_CLONE', 'CLONE3_TEST_CLONE');
+
+
+
+
+
+
+O ERRO FOI 
+
+
+"DEMO_DB_OWNER.PUBLIC.TEST_CLONE" DOES NOT 
+EXIST OR NOT AUTHORIZED. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE ESSA TABLE
+
+ORIGINÁRIA NAO PODE SER ACESSADA,
+
+e por isso nao pode ser feito esse clone...
+
+
+
+
+
+
+
+
+
+
+
+
+QUER DIZER QUE ,
+
+
+COM CALLER PROCEDURES,
+
+
+NAO CONSEGUIMOS 
+
+
+ACESSAR 
+
+
+
+OBJECTS AOS QUAIS NÓS, CALLERS, NAO 
+
+TEMOS PERMISSION...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ESSA É A MAIN DIFFERENCE ENTRE ESSES 2 
+
+
+TYPES DE PROCEDURE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> COMO VC PODE PERCEBER,
+
+UMA OWNER'S RIGHTS 
+
+STORED PROCEDURE 
+
+
+RODA PRINCIPALMENTE 
+
+COM OS PRIVILEGES DO DONO DA STORED PROCEDURE...
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA VERIFICAR ISSO,
+
+
+
+RODAMOS 
+
+
+
+"SHOW TABLES;" DENTRO 
+
+
+
+DA DATABASE "DEMO_DB"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> VEREMOS QUE TODAS AS TABLES TERÃO SIDO 
+
+CRIADAS __ SOB O OWNER "SYSADMIN" (
+
+    mesmo que tenham sido 
+
+    EXECUTADAS/CALLED 
+
+
+    POR OUTRO ROLE...
+)...
+
+
+
+
+
+
+
+
+
+
+--> ISSO ACONTECE PQ 
+
+"OWNER PROCEDURES" 
+
+
+
+USAM PRATICAMENTE O ROLE 
+
+
+QUE AS CRIOU PARA RODAR AS OPERACOES...
+
+
+
+
+
+
+
+----------> JÁ AS "CALLER PROCEDURES"
+
+usam o role 
+
+DE 
+QUEM AS CHAMOU....
+
+
+
+
+
+
+
+
+
+
+
+
+--> como o owner é o sysadmin,
+
+
+
+essa procedure, chamada pelo role de "SANDBOX",
+
+
+é capaz de acessar a table de "TEST_CLONE" 
+
+
+e a clonar...
+
+
+
+
+
+
+------> MAS NO CASO DO CALLER,
+
+É O CONTRÁRIO...
+
+
+
+
+
+--> A CALLER PROCEDURE VAI USAR OS PRIVILEGES 
+
+
+DO ROLE "SANDBOX",
+
+QUE NAO TEM 
+
+
+OS PRIVILEGES DE ACESSO à TABLE "TEST_CLONE"...
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE ELE VAI INHERIT 
+
+
+
+
+OS PRIVILEGES E CONTEXT DA DATABASE E SCHEMA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+""OWNER PROCEDURE WORKS UNDER ITS OWNER's ROLE""
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+"CALLER PROCEDURE WORKS UNDER CALLER ROLE"..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... MAS AINDA TEMOS QUE DISCUTIR MAIS DIFERENÇAS,
+
+A RESPEITO 
+
+DE SESSION VARIABLES E O PROPÓSITO 
+
+
+
+DE EXISTIREM OWNER E CALLER PROCEDURES...
+
+
+
+
+
+
+
+
+
+
+--> veremos isso na próxima aula...

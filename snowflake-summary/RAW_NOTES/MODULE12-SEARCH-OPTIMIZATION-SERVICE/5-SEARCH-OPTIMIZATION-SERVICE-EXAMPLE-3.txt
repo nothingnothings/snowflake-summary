@@ -1,0 +1,508 @@
+
+
+
+
+
+
+
+AGORA VEREMOS MAIS UM CENÁRIO...
+
+
+
+
+
+
+
+TEMOS ESTA QUERY:
+
+
+
+SELECT * FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1000.pARTSUPP limit 100;
+
+SELECT * FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1000.pARTSUPP WHERE PS_AVAILQTY='1495'
+
+CREATE TABLE DEMO_DB.PUBLIC.PARTSUPP_SOS
+AS
+SELECT * FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1000.PARTSUPP;
+
+ALTER TABLE DEMO_DB.PUBLIC.PARTSUPP_SOS ADD SEARCH OPTIMIZATION ON EQUALITY(PS_AVAILQTY);
+
+SELECT * FROM DEMO_DB.PUBLIC.PARTSUPP_SOS  WHERE PS_AVAILQTY='1495'
+SHOW TABLES
+
+
+ALTER TABLE SNOWFLAKE_SAMPLE_DATA.TPCH_SF1000.pARTSUPP ADD SEARCH OPTIMIZATION ON EQUALITY(PS_AVAILQTY);
+
+SNOWFLAKE_SAMPLE_DATA.TPCH_SF1000.pARTSUPP
+
+
+
+
+
+
+
+
+
+
+
+
+
+É UMA TABLE GRANDE,
+
+
+DE TAMANHO 35GB...
+
+
+
+
+
+
+
+
+
+--> CHECAMOS A DATA 
+
+
+DESSA TABLE, COM LIMIT 100...
+
+
+
+
+
+
+
+--> ok.... digamos 
+
+
+que queremos 
+
+
+pegar todos os records com a availability 
+
+
+de 1495...
+
+
+
+
+
+
+EX:
+
+
+
+
+
+
+
+
+
+SELECT * FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1000.pARTSUPP WHERE PS_AVAILQTY='1495'
+
+
+
+
+
+
+
+--------------------------
+
+
+
+
+
+
+EXECUTAMOS ESSA QUERY, E ENTAO ELA 
+
+
+
+DEMORA 
+
+
+
+1 MINUTO E 3 SEGUNDOS...
+
+
+
+
+RETORNOU 80 mil RECORDS...
+
+
+
+
+
+
+
+
+QUER DIZER QUE ESSA QUERY:
+
+
+
+
+
+
+
+1) DEMOROU UM BOM TEMPO (porque a table é grande)
+
+
+
+
+
+
+
+2) AINDA ASSIM, RETORNOU BASTANTES RECORDS (80K... o ideal 
+do search optimization é retornar POUCOS RECORDS, 10-20 rows)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SERIA UMA BOA IDEIA 
+
+
+ADICIONAR SEARCH OPTIMIZATION SERVICE 
+
+
+
+NESSA COLUMN PELA QUAL QUERIAMOS?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+O PROFESSOR RODA ESSA QUERY EM UMA COPIA DESSA TABLE,
+
+
+MAS QUE AGORA TEM SOS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> NESSA SEGUNDA TABLE,
+
+O QUERY TIME 
+
+
+FOI DE 38 SEGUNDOS --> QUER DIZER QUE TIVEMOS UMA 
+
+MELHORA DE 50%...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> ficamos com query execution menor, sim... -> 
+
+
+
+MAS O QUE TEMOS QUE ENTENDER, AQUI,
+
+É QUE 
+
+
+NO CASO 
+
+
+
+
+DE ESSAS QUERIES,
+
+
+
+
+MESMO DEPOIS 
+
+
+
+
+
+DE ADICIONARMOS 
+
+
+
+
+ESSA OPTIMIZATION,
+
+
+
+
+A QUERY AINDA ESTÁ INDO POR DENTRO 
+
+
+DE TODAS AS PARTITIONS...
+
+
+
+
+
+
+
+QUER DIZER QUE 
+
+
+TODAS AS PARTITIONS 
+
+ESTAO SENDO ESCANEADAS --> E ISSO NAO É CORRETO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+QUAL O PROBLEMA, AQUI?
+
+
+
+
+
+
+O PROBLEMA É QUE 
+
+
+A COLUMN DE "PS_AVAILQTY"
+
+
+NAO É A COLUMN APROPRIADA PARA APLICAR 
+
+O 
+
+
+SEARCH OPTIMIZATION SERVICE --->  mas pq?
+
+
+
+
+
+
+
+
+É 
+
+
+
+PQ COM ESSA COLUMN,
+
+
+
+QUANDO VC ESTÁ TENTANDO QUERIAR POR ESSA TABLE,
+
+
+
+ELA VAI 
+
+
+TE 
+
+
+RETRIEVAR UMA QUANTIDADE GRANDE 
+
+DE 
+
+
+DATA,
+
+
+COMO 80k records.... ------> ESSES 
+
+
+RECORDS PROVAVELMENTE 
+
+JÁ ESTARAO DISTRIBUÍDOS 
+
+AO LONGO DE TODAS AS PARTITIONS DESSA TABLE --> NESSE CASO,
+
+
+
+MESMO APLICANDO O SOS,
+
+
+O 
+SNOWFLAKE AINDA TEM QUE "GO AHEAD"
+
+
+E ESCANEAR TODAS AS PARTITIONS 
+
+
+DISPONIVEIS NO BACKGROUND ------------_> quer dizer que 
+
+
+NAO FAZ NENHUM SENTIDO 
+
+
+APLICAR 
+
+
+SOS 
+
+
+EM COLUMNS DE TABLES QUE, QUANDO FILTRADAS,
+
+
+RETORNARAO MILHARES DE RESULTADOS/RECORDS (
+    pq esses records estarao distribuídos 
+    ao longo das partitions...
+) 
+
+
+
+
+
+
+QUER DIZER QUE SOS SÓ É ÚTIL SE VC 
+
+
+QUER 
+
+RETRIEVAR 1 NÚMERO MENOR DE RECORDS,
+
+COMO 50 RECORDS, 40 RECORDS,
+
+OU 
+
+
+ATÉ UM MÁXIMO DE 1K records...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... QUER DIZER QUE 
+
+QUANDO APLICAMOS O SOS,
+
+DEVEMOS GARANTIR QUE 
+
+
+
+
+A QUERY VAI RETORNAR 
+
+
+
+
+NAO TANTOS RECORDS...
+
+
+
+PQ MESMO QUE 
+
+
+VC APLIQUE 
+
+
+SOS NAQUELA COLUMN,
+
+
+NAO SERÁ TAO HELPFUL...
+
+
+
+
+
+
+
+
+
+
+
+--> PQ A QUERY VAI ESCANEAR TODAS AS 
+
+MICRO PARTITIONS,
+O QUE VAI 
+
+RESULTAR 
+
+
+em mais data transfer cost 
+
+
+entre o remote storage layer e o virtual warehouse layer...
+
+
+
+
+
+(
+    quer dizer que nao faz sentido
+    aplicar sos na table se 
+
+    a query está te retornando milhares de 
+
+    records 1K+ records...
+)
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE SUA QUERY/FILTER TEM QUE TARGETTAR 1 BASE 
+
+IMENSA DE RECORDS,
+ E RETORNAR POUCOS RECORDS A PARTIR DISSO...
+
+ (
+    ou seja,
+    columns com ids, com 
+
+    centenas de milhares de distinct values...
+ )

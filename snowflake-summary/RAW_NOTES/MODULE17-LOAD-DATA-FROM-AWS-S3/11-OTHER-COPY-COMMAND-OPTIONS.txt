@@ -1,0 +1,250 @@
+
+
+
+
+
+
+
+
+PROFESSOR COLOCA ESTAS ANOTACOES:
+
+
+
+
+
+
+
+
+CREATE STAGING
+------------------
+
+
+
+CREATE OR REPLACE STAGE my_ext_stage2
+    URL='s3://load/encrypted_files/'
+    credentials=(
+        AWS_KEY_ID='1a2b3c'
+        AWS_SECRET_KEY='4x412g'
+    )
+    encryption=(master_key='adasdad1nkbnkzkxn1k');
+
+
+
+
+
+
+
+
+DIRECT COPY OPTIONS 
+----------------------
+
+
+
+
+
+COPY INTO 's3:<path>'
+    FROM <TABLE>
+HEADER=TRUE
+CREDENTIALS=(
+        AWS_KEY_ID='1a2b3c'
+        AWS_SECRET_KEY='4x412g'
+)
+FILE_FORMAT=(
+    TYPE='PARQUET'
+    SNAPPY_COMPRESSION=TRUE
+)
+MAX_FILE_SIZE=400000000000;
+
+
+
+
+
+
+
+COPY INTO <TABLE>
+    FROM 's3:<path>'
+HEADER=TRUE 
+credentials=(
+        AWS_KEY_ID='1a2b3c'
+        AWS_SECRET_KEY='4x412g'
+)
+FILE_FORMAT=(
+    TYPE='PARQUET'
+    SNAPPY_COMPRESSION=TRUE
+)
+MAX_FILE_SIZE=40000000000;
+
+
+
+
+
+
+
+
+
+
+
+
+OK... ESSES SAO ALGUNS EXEMPLOS DE 
+
+COISAS QUE NAO SAO BEST PRACTICES...
+
+
+
+
+
+
+
+
+
+
+
+--> A BEST PRACTICE MSM É CRIAR 1 INTEGRATION OBJECT 
+
+SEPARADO,
+
+
+
+JUNTO COM 1 FILE FORMAT E STAGE SEPARADOS...
+
+
+
+
+
+
+
+
+
+---------------------------------------
+
+
+
+
+
+
+
+
+AS CREDENTIALS ESTAO SENDO ESCRITAS DIRETAMENTE NO STAGE..
+
+
+
+
+-> ISSO É RUIM...
+
+
+
+
+
+
+
+
+
+--> SE TEMOS QUALQUER ENCRYPTION PRESENTE,
+
+PODEMOS COLOCAR A MASTER KEY ALI TBM...
+
+
+
+
+
+
+
+
+
+
+
+
+--> ISSO ESTÁ EXPONDO TODAS NOSSAS COISAS...
+
+
+E PODE SER FACILMENTE COMPROMISED...
+
+
+
+
+
+
+
+
+
+--> E, ASSIM QUE CRIAMOS ESSA STAGING AREA,
+
+
+
+VAMOS A UTILIZAR DENTRO 
+
+DE 
+1 
+
+
+
+COPY COMMAND...
+
+
+
+
+
+--> COPY COMMANDS podem 
+
+nao usar staging areas,
+
+
+
+podemos escrever tudo inline,
+
+mas é horrível...
+
+
+
+
+
+
+
+
+
+
+
+
+-------------------------
+
+
+
+
+
+
+
+
+
+
+o nosso acesso estará exposto,
+
+
+com essa maneira de fazer as coisas...
+
+
+
+
+
+
+
+
+
+--> e teríamos de reescrever 
+
+
+
+o file_format 100x, 
+
+
+se nao criarmos 1 file_format standalone...
+
+
+
+
+
+
+
+
+--> mt repeticao de código...
+
+

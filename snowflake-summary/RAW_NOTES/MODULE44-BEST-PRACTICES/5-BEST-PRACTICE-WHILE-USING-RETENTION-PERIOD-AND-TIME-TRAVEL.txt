@@ -1,0 +1,757 @@
+
+AGORA TENTAREMOS ENTENDER ALGUMAS DAS BEST 
+
+PRACTICES PARA RETENTION PERIOD 
+
+E TIME TRAVEL...
+
+
+
+
+
+
+
+
+
+
+AS BEST PRACTICES SAO:
+
+
+
+
+
+
+
+
+
+1) SET RETENTION PERIOD OF STAGE TABLES TO 0 
+
+(create as transient, and then set retention period to 0)...
+
+
+
+
+
+2) FOR PRODUCTION TABLES, SET RETENTION PERIOD 
+TO MAX (90 days? I think its crazy...)
+
+
+
+
+3) SET RETENTION PERIOD TO 0 FOR CLONED 
+DATABASE, FOR ANALYTICS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1) SET RETENTION PERIOD OF STAGE TABLES TO 0 
+
+
+
+
+
+
+
+
+
+
+
+
+
+NAQUELE DIAGRAMA DE ETL
+
+
+
+MOSTRADO NAS AULAS ANTERIORES,
+
+
+ESTE AQUI:
+
+
+
+
+
+
+
+[              ETL           LOAD       ]           [          ANALYTICS          ]
+
+
+                                                                                    |-------> TABLEAU 
+                                                                                    |
+SOURCE 1   --                                                  [ DASHBOARD VIEWS ] ---------> POWER BI  
+            |                                                       |               |
+            |                                                       |               |-------> TIBC SPOTFIRE
+            |                                                       |
+SOURCE 2   --------> STAGE DB -----> PROD DB -------------> PROD DB CLONE
+            |                                                       |
+            |                                                       |
+            |                                                       |
+            |                                                       USER VIEWS 
+SOURCE 3 ---                                                        |
+                                                                    |
+                                                                 YOUR COMMON USERS   
+
+
+
+
+
+
+
+,
+
+
+
+
+
+
+
+NESSE DIAGRAMA,
+
+
+
+VIMOS QUE O STAGE DATABASE 
+
+
+FOI DEFINIDO COMO 
+
+
+1 
+
+"TRANSIENT DATABASE",
+
+
+PARA ECONOMIZAR CUSTOS COM FAILSAFE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... --> MAS 1 QUESTAO, NO CASO,
+
+
+
+É QUE 
+
+
+_ QUANDO DEFINIMOS UMA DATABASE COMO "TRANSIENT",
+
+
+
+MESMO ASSIM 
+
+
+SEU DATA_RETENTION_TIME_IN_DAYS
+ 
+
+ NAO FICARÁ DEFINIDO COMO 0...
+
+
+
+
+
+
+
+
+
+
+
+
+--> SE QUISERMOS DEFINIR ESSE RETENTION TIME 
+
+COMO 0,
+
+
+PRECISAMOS ESCREVER ISSO EXPLICITAMENTE,
+
+OU NO MOMENTO DO CREATE,
+
+OU POSTERIORMENTE,
+
+COM UM ALTER...
+
+
+
+
+
+
+
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+CREATE OR REPLACE TRANSIENT TABLE DEMO_DB.PUBLIC.EXAMPLE_TABLE 
+    DATA_RETENTION_TIME_IN_DAYS=0; 
+
+
+
+
+
+
+
+
+ou assim:
+
+
+
+
+
+
+ALTER TABLE DEMO_DB.PUBLIC.EXAMPLE_TABLE 
+    SET DATA_RETENTION_TIME_IN_DAYS=0;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SE DEFINIMOS 
+
+NOSSO RETENTION TIME COMO 0,
+
+
+
+NAO PODEMOS FAZER TIME TRAVEL NESSA TABLE,
+
+NAO PODEMOS UNDO MISTAKES....
+
+
+
+
+
+
+
+
+
+
+--> ENTRETANTO,
+
+COMO TODAS STAGE TABLES PODEM SER FACILMENTE 
+
+REPRODUZIDAS,
+
+
+
+
+NAO PRECISAMOS FAZER TIME TRAVEL AT ALL...
+
+
+
+
+
+
+
+
+
+
+
+--> É POR ISSO QUE DEVEMOS SETTAR 
+
+O DATA_RETENTION_TIME_IN_DAYS 
+
+DESSE TIPO 
+
+
+
+DE TABLE COMO "0"...
+
+
+
+
+
+
+
+--> JÁ VIMOS ISSO, EM AULAS ANTERIORES...
+
+
+
+
+
+
+
+
+
+--> AGORA VEREMOS O PRÓXIMO PONTO:
+
+
+
+
+
+
+
+
+
+
+
+
+2) PARA PRODUCTION TABLES,
+
+
+SETTAR O "DATA_RETENTION_TIME_IN_DAYS"
+
+
+COMO MÁXIMO (90 dias)... ----->  ISSO 
+
+
+SERIA ÓPTIMO,
+
+
+
+MAS AINDA ASSIM,
+
+
+É MT CARO...
+
+
+
+
+
+--> geralmente compute é 5x o preço da storage.
+
+
+
+
+
+
+
+
+
+
+
+
+
+SE O TIME-TRAVEL É DEFINIDO COMO 1 DIA,
+
+
+VC PODE VOLTAR APENAS 1 DIA.... 
+
+
+
+
+AÍ VOCE TERÁ MAIS 7 DIAS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+3) o professor menciona 
+
+
+QUE UM VALOR BOM PARA TIME-TRAVEL É 
+
+
+4-5 dias... O MÁXIMO ÓPTIMO SERIA DE 1 SEMANA... mas ainda 
+meio overkill
+
+
+
+( voce pode settar até 90 dias,
+mas nao é necessário)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... E, CONFORME DISCUTIMOS 
+
+NAS LECTURES ANTERIORES,
+
+
+
+A RELACAO ENTRE 
+
+
+"RETENTION TIME" 
+
+E 
+
+"FAILSAFE ZONE"....
+
+
+
+
+
+
+
+
+
+-> ASSIM QUE 
+
+O RETENTION TIME ACABA,
+
+
+A DATA CAI NO FAIL SAFE ZONE...
+
+
+
+
+
+
+
+
+
+
+
+--> ISSO QUER DIZER QUE,
+
+
+SE VC 
+
+DEIXA SEU RETENTION TIME COMO 1 DIA,
+
+
+A CADA __ DIA__ O __ SNOWFLAKE 
+
+
+VAI __ PEGAR A __ DATA DA SUA 
+
+DATABASE 
+
+E A COLOCAR NA FAILSAFE ZONE... ENTAO 
+
+ESSA SUA DATA SERÁ MANTIDA POR 1 SEMANA, 7 DIAS..
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE 
+
+SETTAR O RETENTION TIME 
+
+
+COMO 1 DIA VA FAZER COM QUE, A CADA DIA,
+
+
+SUA DATA SEJA ENVIADA à FAILSAFE ZONE...
+
+
+(e isso também nao é bom, pq 
+vai aumentar seu custo)...
+
+
+
+
+
+
+
+
+
+
+--> SE VC SETTA 1 PERÍODO MAIOR, 
+
+COMO 5-7 DIAS,
+
+
+SUA DATA SÓ VAI PARA A FAILSAFE ZONE 
+
+DEPOIS 
+
+DE 5-7 DIAS...
+
+
+
+
+
+
+
+
+
+--> AÍ, NESSES 7 DIAS,
+
+SE VC 
+
+FEZ "MESS UP" 
+
+
+
+COM QUALQUER PRODUCTION DATA,
+
+VC 
+
+PODE FACILMENTE CONSERTAR ESSA MESS,
+
+BASTA FAZER 1 TIME TRAVEL, DO DIA DO ERRO,
+
+ATÉ O 
+
+DIA EM QUE SUA DATA ESTAVA CORRETA...
+
+
+
+
+
+
+
+
+
+
+nesse caso, isso será útil,
+
+e vai nos ajudar A SALVAR CUSTOS 
+
+COM RESPEITO ao fail safe zone...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+FINALMENTE, TEMOS O ÚLTIMO POINT:
+
+
+
+
+
+
+
+
+
+
+
+
+3) SET RETENTION PERIOD TO 0 FOR 
+CLONED DATABASE FOR ANALYTICS....
+
+
+
+
+
+
+
+
+
+
+
+
+ISSO PQ, NAS AULAS ANTERIORES, VIMOS ISTO:
+
+
+
+
+
+
+
+[              ETL           LOAD       ]           [          ANALYTICS          ]
+
+
+                                                                                    |-------> TABLEAU 
+                                                                                    |
+SOURCE 1   --                                                  [ DASHBOARD VIEWS ] ---------> POWER BI  
+            |                                                       |               |
+            |                                                       |               |-------> TIBC SPOTFIRE
+            |                                                       |
+SOURCE 2   --------> STAGE DB -----> PROD DB -------------> PROD DB CLONE
+            |                                                       |
+            |                                                       |
+            |                                                       |
+            |                                                       USER VIEWS 
+SOURCE 3 ---                                                        |
+                                                                    |
+                                                                 YOUR COMMON USERS   
+
+
+
+
+
+
+
+
+
+VIMOS QUE VAMOS FAZER O CLONE 
+
+
+DESSA "PROD_DB",
+
+
+e aí 
+
+vamos 
+
+GIVE ACCESS para essa clone database 
+
+
+
+A "ALL USERS" + "ANALYTICS TEAM"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CERTO.... E NÓS TAMBÉM SABEMOS QUE,
+
+POR MEIO DE 1 CLONE,
+
+VC 
+
+
+__TAMBÉM COPIA __ TODA A METADATA 
+
+DA TABLE ORIGINAL --> QUER DIZER QUE 
+
+TODAS AS PROPRIEDADES 
+
+DAQUELA TABLE __ TAMBÉM 
+
+SAO COPIADAS...
+
+(
+    ou seja,
+
+    O RETENTION PERIOD DA TABLE 
+    ORIGINAL TAMBÉM É COPIADO...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> BASICAMENTE, QUANDO VC CRIA O CLONE,
+
+VC DEVE TER CUIDADO COM 2 COISAS:
+
+
+
+
+
+A) SUA CLONED DATABASE DEVE SER UMA 
+"TRANSIENT DATABASE" (PARA NAO TER FAILSAFE)
+
+
+
+
+
+
+B) SUA CLONED DATABASE __ DEVE __ TER 
+
+
+O RETENTION PERIOD DELA DEFINIDO COMO 0...
+
+
+
+
+
+
+PQ DEVEMOS FAZER ASSIM?
+
+
+
+
+
+
+
+
+--> É PQ ESSA DATABASE __"CLONE" 
+
+PODE SER FACILMENTE REPRODUZIDA 
+
+
+DE SUA PRODUCTION DATABASE...-->  por isso 
+
+nao 
+há importância 
+
+em deixar esse seu clone como "transient",
+
+
+
+e também nao há importancia em definir seu 
+retention period como 0...

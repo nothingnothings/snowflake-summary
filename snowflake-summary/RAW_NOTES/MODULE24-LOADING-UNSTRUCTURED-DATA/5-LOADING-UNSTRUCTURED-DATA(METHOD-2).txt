@@ -1,0 +1,1071 @@
+
+
+
+
+
+
+
+OK... 
+
+
+VIMOS O METHOD 1, QUE ERA ESTE:
+
+
+
+
+
+ele NAO CONVERTEU A UNSTRUCTURED DATA (
+
+   nessa table de "variant"
+) 
+
+
+PARA UMA TABLE COMUM, PERMANENT (
+
+   e é por isso que esse approach é ruim,
+
+   ficamos dependendo dessas optimizacoes do 
+
+   snowflake em cima de unstructured data...
+)
+
+
+
+
+
+
+
+--> OU SEJA,
+
+
+
+
+OS PASSOS ERAM ESTES:
+
+
+
+
+
+
+
+
+1) data inicial está armazenada 
+
+NO AWS S3...
+
+(aws s3 external staging area)
+
+
+
+
+
+2) CRIACAO DE TABLE DO SNOWFLAKE,
+
+DE TIPO VARIANT (e de tipo TRANSIENT, para 
+nao gastar tanta storage com fail safe e time travel)...
+
+
+
+
+3) A DATA, JSON, FICA DENTRO 
+
+DESSA COLUMN DE TYPE "VARIANT",
+
+
+dentro dessa transient table...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+AGORA TEMOS O METHOD 2, CUJOS PASSOS SAO:
+
+
+
+
+
+
+
+
+
+
+1) data inicial está armazenada 
+
+NO AWS S3...
+
+(aws s3 external staging area)
+
+
+
+
+
+
+
+
+2) CRIACAO DE TABLE DO SNOWFLAKE,
+
+DE TIPO VARIANT (e de tipo TRANSIENT, para 
+nao gastar tanta storage com fail safe e time travel)...
+
+(table INCREMENTAL, pelo visto)..
+
+
+
+
+
+
+
+
+
+
+3) PARSE E LOAD DA DATA, UNSTRUCTURED,
+
+A UMA TABLE FINAL, STRUCTURED (FINAL, PERMANENT TABLE)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE VAMOS CRIAR 1 INCREMENTAL TABLE,
+
+QUE VAI SEGURAR NOSSA UNSTRUCTURED DATA..
+
+
+
+
+
+
+
+
+
+
+--> DEPOIS VAMOS TRANSFORMAR ESSA TABLE E A ENCAIXAR 
+
+
+
+
+EM 1 TABLE __ FINAL,
+
+
+
+TABLE PERMANENTE...
+
+
+
+
+
+
+--> CERTO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ESSE É UM METHOD DE OFFLOAD ESSA UNSTRUCTURED DATA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> CHECAREMOS ESSE METHOD COM 1 EXEMPLO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> NO METHOD 1, JÁ TÍNHAMOS CARREGADO A DATA 
+
+
+PARA DENTRO DA TABLE "BOOK_JSON_RAW"...
+
+
+
+
+
+
+
+
+
+
+
+-> BOOK_JSON_RAW É UMA 
+
+
+TABLE DE TIPO TRANSIENT,
+
+
+É A NOSSA "INCREMENTAL" TABLE,
+
+
+
+QUE VAI 
+
+SEGURAR 
+
+
+A UNSTRUCTURED DATA..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> O PRÓXIMO PASSO É 
+CRIAR 
+
+
+1 
+
+TABLE 
+
+COM TODAS AS COLUMNS DE NOSSO JSON,
+
+E AÍ CARREGAR A DATA PARA DENTRO 
+
+DESSA TABLE PERMANENTE..
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA NOS MOSTRAR COMO FAZER ISSO,
+
+O PROFESSOR CRIA NOVAS TABLES:
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE TRANSIENT TABLE BOOK_JSON_DATA
+(
+    OID VARCHAR,
+    AUTHOR VARCHAR,
+    TITLE VARCHAR,
+    BOOKTITLE VARCHAR,
+    YEAR VARCHAR,
+    TYPE VARCHAR
+);
+
+
+
+
+
+
+
+
+
+
+
+
+--> AÍ INSERIMOS NOSSA DATA PARA DENTRO 
+
+DESSA TABLE, COM ESTE COMANDO:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+INSERT INTO BOOK_JSON_DATA
+SELECT 
+book:"_id"::"$oid" AS OID,
+book:"author"::array AS AUTHOR,
+book:"title"::string AS TITLE,
+book:"booktitle"::string AS BOOKTITLE,
+book:"year"::string AS YEAR,
+book:"year"::string AS TYPE
+FROM BOOK_JSON_RAW; 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> isso é o que o segundo method faz...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AGORA NOSSA DATA ESTARÁ TODA 
+
+
+NESSAS COLUMNS ESTRUTURADAS,
+
+
+
+
+
+TUDO CERTINHO,
+
+NESSA "FINAL TABLE"....
+
+
+
+
+
+
+
+
+--> ISSO PARECE FINE... MAS DEPOIS DISCUTIREMOS
+
+SOBRE AS VANTAGES E ADVANTAGES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS PARECE FINE,
+
+
+
+LOADAMOS A UNSTRUCTURED DATA 
+
+
+PARA DENTRO DAQUELA TABLE DE COLUMN DE TYPE VARIANT,
+
+
+E DEPOIS 
+
+COPIAMOS ESSA DATA 
+
+
+PARA DENTRO DESSA STRUCTURED 
+
+TABLE...
+
+
+
+
+
+
+
+
+--> OK....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS QUAL É O PROBLEMA COM ESSE METHOD?
+
+
+
+
+
+
+
+
+
+
+
+
+BEM, DIGAMOS QUE TEMOS
+
+
+
+1 COLUMN DE TYPE "YEAR"...
+
+
+
+
+
+
+
+
+-> E ESSA COLUMN, NESSE EXEMPLO,
+
+ESTÁ COM 1 DATA TYPE 
+
+
+
+DE "VARCHAR"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--. TIPO ASSIM:
+
+
+
+
+
+
+CREATE OR REPLACE TRANSIENT TABLE BOOK_JSON_DATA
+(
+    OID VARCHAR,
+    AUTHOR VARCHAR,
+    TITLE VARCHAR,
+    BOOKTITLE VARCHAR,
+    YEAR VARCHAR,
+    TYPE VARCHAR
+);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+MAS DIGAMOS QUE __ ANTERIORMENTE,
+
+COLOCAMOS 
+
+
+1 VALUE DE "NUMBER"
+
+PARA ESSA COLUMN:
+
+
+
+
+
+
+
+CREATE OR REPLACE TRANSIENT TABLE BOOK_JSON_DATA
+(
+    OID VARCHAR,
+    AUTHOR VARCHAR,
+    TITLE VARCHAR,
+    BOOKTITLE VARCHAR,
+    YEAR INT, -- eis o código em questao...
+    TYPE VARCHAR
+);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CERTO... AGORA DIGAMOS QUE FIZEMOS UMA CAGADA,
+
+
+NA HORA DO INSERT... DEIXAMOS 
+
+
+A CONVERSAO/TYPE CASTING COMO "string",
+
+e nao NUMBER...
+
+
+
+
+
+
+
+EX:
+
+
+
+
+
+
+
+
+INSERT INTO BOOK_JSON_DATA
+SELECT 
+book:"_id"::"$oid" AS OID,
+book:"author"::array AS AUTHOR,
+book:"title"::string AS TITLE,
+book:"booktitle"::string AS BOOKTITLE,
+book:"year"::string AS YEAR,
+book:"year"::string AS TYPE
+FROM BOOK_JSON_RAW; 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ISSO VAI IMEDIATAMENTE 
+
+
+
+
+GERAR 1 ERRO....
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> O QUE O PROFESSOR QUER NOS MOSTRAR/DEMONSTRAR É QUE 
+
+
+
+
+""SE VC TEM QUALQUER DATA TYPE ISSUE"",
+
+SE ISSO ACONTECER 
+
+""ENQUANTO ESTOU RODANDO 1 INSERT"",
+
+
+
+QUANDO A QUERY DER "FAIL",
+
+
+
+NAO TEREMOS NENHUMA FACILIDADE PARA __ CONSEGUIR COLETAR 
+
+
+OS "BAD RECORDS" QUE RESULTARAM NO ERRO...
+
+(
+    ou seja,
+
+    se usarmos o "insert into",
+
+    nao teremos info útil sobre os rejected 
+    records,
+
+    nao teremos a mesma info que temos quando 
+
+    rodamos o comando de "COPY", por exemplo,
+
+
+    e nao poderemos pegar os records comO REJECTED RECORDS...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE SE EXISTIR 1 FAIL DURANTE O PROCESSO 
+DE INSERT,
+
+SEU PROCESSO SÓ SERÁ INTERROMPIDO,
+E VC 
+
+NAO TERÁ INFO SOBRE CADA REJECTED RECORD...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+---> O PROFESSOR COLOCA O TYPE DE "YEAR" COMO 
+NUMBER, AGORA...
+
+
+
+
+--> O PROFESSOR RODA ISTO, TAMBÉM:
+
+
+
+
+
+INSERT INTO BOOK_JSON_DATA
+SELECT 
+book:"_id"::"$oid" AS OID,
+book:"author"::array AS AUTHOR,
+book:"title"::string AS TITLE,
+book:"booktitle"::string AS BOOKTITLE,
+book:"year"::number AS YEAR,
+book:"type"::string AS TYPE
+FROM BOOK_JSON_RAW; 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> ENTRETANTO,
+
+O PROFESSOR GANHA 1 __ ERRO__, IMEDIATAMENTE...
+
+
+
+
+
+-->  O ERRO FOI ESTE:
+
+
+
+
+
+
+
+
+
+"FAILED TO CAST VARIANT VALUE ["2013", "2014"] 
+
+TO FIXED(number)"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> A MAIN THING QUE TEMOS QUE TER EM mente,
+
+SOBRE ESSE ERROR,
+
+
+
+É QUE ALGUNS RECORDS 
+
+
+
+DESSA DATA 
+
+
+
+
+
+ESTAVAM COM 1 ARRAY NO LUGAR DE "year",
+
+
+ e nao 
+
+
+
+ 1 value único como "2013" (number)...
+
+
+
+
+
+
+
+
+
+
+--> PARA RESOLVER ISSO, TERÍAMOS DE TRANSFORMAR ESSA DATA,
+
+
+PEGAR APENAS 1 ÚNICO ELEMENTO DO ARRAY, ETC...
+
+
+
+
+
+
+
+
+
+--> MAS COMO ESTÁVAMOS FAZENDO 1 INSERT,
+
+
+
+O INSERT INTEIRO VAI FALHAR,
+
+
+E NENHUM RECORD SERÁ INSERIDO NA NOSSA PERMANENT TABLE...
+
+
+
+
+
+
+
+--> E, COMO ESTAMOS FAZENDO 1 INSERT,
+
+
+NAO TEMOS NENHUMA FEATURE PARA 
+
+"COLLECT THE REJECTED RECORD" 
+
+
+E PARA, AO MESMO TEMPO, CONTINUAR COM A LOAD 
+
+
+
+DE DATA PARA DENTRO 
+
+DESSA STRUCTURED PERMANENT TABLE...
+
+
+
+
+
+
+
+
+
+
+
+OK... ESSA É UMA DAS GRANDES DESVANTAGENS DE 
+
+USAR 
+ESSE METHOD...
+
+
+
+
+
+
+
+
+
+
+
+
+-----------> ok, EM DETALHE, QUAIS 
+
+SAO AS VANTAGENS E DESVANTAGENS DESSE APPROACH?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+VANTAGENS:
+
+
+
+
+
+
+
+
+1)  COMO VC TEM CIÊNCIA DA ESTRUTURA 
+DA SUA TABLE,
+
+
+VC PODE PARSEAR E FAZER LOAD DA DATA DIRETAMENTE 
+
+NA SUA FINAL TABLE...
+
+
+
+(
+    quer dizer que nao temos que sempre rodar 
+
+    aquela QUERY DE "PARSE" de novo e de novo 
+
+    em 1 unstructured table, no snowflake...
+
+)
+
+
+
+
+
+OU SEJA, VC VAI SABER A ESTRUTURA DA TABLE,
+
+E VAI 
+
+PRECISAR RODAR A QUERY DE PARSE 
+DE DATA APENAS UMA VEZ, PARA A TABLE FINAL APENAS 1 VEZ,
+
+A PARTIR DA TABLE INCREMENTAL....
+
+
+
+
+
+
+
+
+
+
+2) A DATA, AO FINAL, 
+
+
+SEMPRE FICARÁ DISPONÍVEL EM UM FORMATO JÁ PARSEADO...
+
+QUER DIZER QUE VC NAO PRECISARÁ DEPENDER 
+
+DAS CAPACIDADES DE PARSE DE JSON DO SNOWFLAKE (
+    ponto super positivo...
+)
+
+
+
+
+(ainda que o snowflake realize 1 monte de 
+optimization em relacao 
+a json data e unstructured data, nao é bom depender
+ totalmente disso)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DESVANTAGENS:
+
+
+
+
+
+
+
+1) SE QUALQUER UMA DAS PARSED COLUMNS TIVER 1 DATA 
+
+TYPE DIFERENTE DA DATA QUE É CARREGADA,
+
+SEU LOAD __ VAI __ FALHAR____...
+
+
+
+EX: ""SE VC TEM 1 COLUMN DE DATATYPE  STRING E TENTOU 
+CARREGAR 1 INT,
+
+O LOAD VAI FALHAR""....
+
+
+
+
+O PROBLEMA E QUE, QUANDO SEU INSERT FALHAR,
+
+VC NAO VAI PODER 
+
+FAZER "GET" DOS REJECTED RECORDS E DAS MESSAGES 
+DE ERROR PARA CADA RECORD,
+COMO 
+
+VC FAZ COM O COPY...
+
+
+
+
+
+
+
+
+
+
+OK... ESSA É A MAIN ADVANTAGE DO LOAD DE 
+
+UNSTRUCTURED DATA PARA DENTRO DE STRUCTURED TABLES...
+
+
+
+
+
+
+
+
+
+
+
+--> NA PRÓXIMA AULA, VEREMOS O APPROACH 3,
+
+SUAS VANTAGENS E DESVANTAGENS...

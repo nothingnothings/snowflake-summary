@@ -1,0 +1,605 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AGORA VEREMOS A CLAUSE DE "CHANGE"...
+
+
+
+
+
+
+
+
+
+
+--> ELA É PARECIDA COM STREAMS,
+
+
+
+
+PQ CAPTURA 
+
+
+
+AS CHANGES REALIZADAS EM 1 GIVEN TABLE....
+
+
+
+
+
+
+
+
+
+
+
+
+--> A DIFERENÇA DESSA CLAUSE, EM RELACAO A STREAMS,
+
+É QUE 
+
+
+
+__ A DATA__ CAPTURADA 
+
+
+
+COM ESSA CLAUSE __NUNCA É REMOVIDA,
+
+
+NUNCA É CONSUMIDA (pode ser REUTILIZADA)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ESSA FEATURE SÓ FUNCIONA COM O TIME TRAVEL LIGADO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+SUA SINTAXE É TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE DATABASE SALES_DB;
+
+
+CREATE OR REPLACE TABLE SALES_RAW (
+    ID VARCHAR,
+    PRODUCT VARCHAR,
+    PRICE VARCHAR,
+    AMOUNT VARCHAR,
+    STORE_ID VARCHAR
+);
+
+
+
+
+--- Insert values 
+INSERT INTO SALES_RAW 
+    VALUES 
+        (1, 'Eggs', 1.39, 1, 1),
+		(2, 'Baking powder', 0.99, 1, 1),
+		(3, 'Eggplants', 1.79, 1, 2),
+		(4, 'Ice cream', 1.89, 1, 2),
+		(5, 'Oats', 1.98, 2, 1);
+
+
+
+-- TO USE THE CHANGE CLAUSE, TO TRACK CHANGES, WE NEED TO SET THIS PROPERTY:
+ALTER TABLE sales_raw
+    SET CHANGE_TRACKING=TRUE;
+
+
+
+
+
+
+ISSO FEITO,
+
+
+PODEMOS ACTUALLY USAR __ O STATEMENT DE 
+
+"CHANGES"...
+
+
+
+
+
+
+tipo assim:
+
+
+
+
+
+
+SELECT * FROM SALES_RAW 
+CHANGES(information => default)
+AT (offset => -0.5*60);
+
+
+
+
+
+
+
+
+
+
+-------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+O SEGUNDO PROFESSOR EXPLICA ASSIM:
+
+
+
+
+
+
+
+CREATE OR REPLACE TABLE T1 (
+    ID NUMBER(8) NOT NULL,
+    C1 VARCHAR(255) DEFAULT NULL
+);
+
+
+
+
+
+-- enable change tracking on the table 
+ALTER TABLE T1
+SET CHANGE_TRACKING=TRUE;
+
+
+
+
+-- Initialize a session variable for the current timestamp 
+
+SET ts1 = (SELECT CURRENT_TIMESTAMP());
+
+
+
+
+
+INSERT INTO T1 (id, c1)
+VALUES 
+(1, 'red'),
+(2, 'green'),
+(3, 'blue');
+
+
+
+
+
+
+
+
+
+DELETE FROM T1 WHERE id=1;
+
+
+
+
+
+UPDATE T1 
+SET C1='purple'
+WHERE ID=2;
+
+
+
+
+
+
+
+
+--> QUANDO VC USA ESSA CLAUSE,
+
+
+
+VC PODE TRACKAR AS CHANGES OCORRIDAS 
+
+NA SUA TABLE A PARTIR 
+
+DE 1 
+
+CERTO PERÍODO DE TEMPO...
+
+
+
+
+
+
+
+
+
+
+ESPECIFICAMOS 1 PERÍODO DE TEMPO,
+
+TIPO ASSIM:
+
+
+
+
+
+SELECT * 
+FROM T1 
+CHANGES(information => default)
+AT(TIMESTAMP => $ts1);
+
+
+
+
+
+
+
+
+
+
+
+
+--> PODEMOS 
+
+
+VER TODAS AS CHANGES OCORRIDAS DESDE ESSE MOMENTO,
+
+COM AQUELE SELECT ALI....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> CERTO.... E QUANDO USAMOS ESSA CLAUSE,
+
+
+NAO TEMOS O CONCEITO DE OFFSET (ao contrário 
+
+do que tínhamos com 
+
+os STREAM OBJECTS...
+).
+
+
+
+
+
+
+
+
+
+
+CLARO QUE PRECISAMOS ENABLAR 
+
+
+"change_tracking" como TRUE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+----> ok... mas é claro que vc nao pode queriar 
+
+
+
+a clause de "CHANGES" em si,
+
+pq ela nao é um object...
+
+
+
+
+
+
+
+
+ENTRETANTO,
+
+PODEMOS 
+
+
+USÁ-LA 
+
+COM O SELECT..
+
+
+
+
+
+
+
+
+
+
+tipo assim:
+
+
+
+
+
+
+
+
+
+-- QUERY THE CHANGE TRACKING METADATA IN THE TABLE USING THE INTERVAL FROM 
+-- $ts1 TO THE CURRENT TIME...
+
+
+
+
+
+SELECT *
+FROM T1
+    CHANGES(information => default)
+    AT (timestamp => $ts1);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PODEMOS USAR TAMBÉM 
+
+
+
+UMA OPTION DE "APPEND_ONLY",
+tipo assim:
+
+
+
+
+
+
+SELECT * FROM SALES_RAW 
+CHANGES(information => append_only)
+AT(timestamp => 'your-timestamp'::timestamp_tz');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OUTRA DIFERENÇA DE "CHANGES"
+
+
+EM RELACAO 
+
+
+
+AOS STREAM OBJECTS É QUE 
+
+
+
+
+
+STREAM OBJECTS AUTOMATICAMENTE 
+
+FAZEM INCREMENT DO "OFFSET TIME",
+
+
+
+
+
+O QUE QUER DIZER QUE NAO TEMOS QUE NOS PREOCUPAR 
+
+COM O OFFSET...
+
+
+
+
+
+
+
+
+
+
+
+--> CONTRARIAMENTE,
+
+COM A CHANGES CLAUSE,
+
+TEMOS QUE ESPECIFICAR DE QUE PERÍODO 
+
+
+QUEREMOS VER QUAIS CHANGES ACONTECERAM....
+
+
+
+
+
+
+
+
+
+
+--> ISSO TUDO É CONSTRUÍDO 
+
+
+A PARTIR DO CONCEITO 
+
+DE VERSIONING 
+
+
+
+DO S3.... --> essas features aí...
+
+
+
+
+
+
+
+
+
+
+--> STREAM OBJECTS,
+
+
+
+--> CHANGES CLAUSE 
+
+
+
+--> TIME TRAVEL 
+
+
+
+--> RETENTION PERIOD...
+
+
+
+
+
+
+
+
+
+TODAS ESSAS SAO FEATURES DO SNOWFLAKE 
+
+
+QUE SAO BASEADAS 
+
+
+NO CONCEITO SIMPLES DE FILE VERSIONING,
+
+
+
+QUE OCORRE NO BACKEND 
+
+
+DO SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CERTO... FAZ TOTAL SENTIDO...
+
+
+
+
+
+
+
+
+
+
+
+TODAS ESSAS FEATURES SAO DERIVADAS 
+
+DA 
+
+NATURE BÁSICA DE COMO ESSA 
+
+DATA É ARMAZENADA NO AWS...

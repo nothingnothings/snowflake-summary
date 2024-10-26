@@ -1,0 +1,580 @@
+
+
+
+
+
+
+
+
+HOW UPDATES WORK:
+
+
+
+
+
+
+
+
+
+
+1) EM SNOWFLAKE, UPDATES SAO UM COMBO 
+
+
+ENTRE OPERATIONS DE "DELETE" E "INSERT"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> mas como?
+
+
+
+
+
+
+
+
+
+
+
+
+bem, quando executamos esse tipo 
+
+de statement,
+
+
+
+
+1 EXISTING SET OF FILES 
+
+
+É MARCADO COMO 'DELETED",
+
+
+
+
+
+E UM NOVO SET DE FILES É INSERIDO NO LUGAR 
+
+DO SET ANTIGO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ESSA TRANSACTION É RECORDED 
+
+
+NO "CLOUD SERVICES KEY-VALUE STORE",
+
+
+
+QUE ARMAZENA TODA A METADATA INFORMATION 
+
+
+DA TABLE...
+
+
+
+
+
+
+
+
+
+
+
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+KEY         VALUE   ACTIVE            FILES
+
+EMP         1           Y           []  []  []
+
+EMP         2           N           []  []  [] MARKED AS DELETED.
+
+EMP         3           Y           []  []  []
+
+EMP         4           Y           []  []  []
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+---> AQUI, NESSE EXEMPLO, representamos 
+
+
+cada set de files como values 1,2,3,4...
+
+
+
+
+
+
+
+
+--> o value do set 2 é marcado como inactive pq 
+
+
+
+
+FOI MARCADO PARA DELECAO....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> mas aqui temos 1 exemplo melhor,
+que nos dá maior claridade:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Partitioned table and DML....
+
+
+
+
+
+-- No update-in-place  (AWS S3, Azure Blob are IMMUTABLE FILE SYSTEMS)
+-- DML  __ADDS__ or DELETES__ partition files -> partition files are written in full...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DML 1 
+
+"Copy into t from @stage1"
+
+
+
+
+
+
+
+
+ID      Name
+1        John        --
+2        Scott        I  P1
+3        Mary        --
+
+4        John        --
+5        Scott        I  P2
+6        Mary        --
+
+
+
+
+
+DML1: +P1 +P2 
+
+
+
+
+
+
+
+
+
+
+
+
+DML 2:
+
+
+
+
+INSERT INTO t values(7, 'Pierre')
+
+
+
+ID      Name
+1        John        --
+2        Scott        I  P1
+3        Mary        --
+
+4        John        --
+5        Scott        I  P2
+6        Mary        --
+
+                    --
+7        Pierre       I  P3
+                    --
+
+
+        
+
+DML 2: +P3 
+
+
+
+
+
+
+
+
+
+
+DML 3 
+
+
+
+DELETE FROM t where name = 'Jane':
+
+
+
+
+
+
+
+
+
+ID      Name
+1        John        --
+2        Scott        I  P1
+3        Mary        --
+
+4        John        --
+5        Scott        I  P4
+6        Mary        --
+
+                    --
+7        Pierre       I  P3
+                    --
+
+
+
+DML 3:  -P2 (INTEIRO) + P4
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SE VC RODA 
+
+
+
+
+
+
+
+
+
+1 OPERATION DE DELETE 
+
+DO ROW DE "JANE",
+
+
+
+
+A PARTITION 2 INTEIRA (P2) 
+
+SERÁ MARCADA COMO "DELETED",
+
+e nao só o row de "jane"...
+
+
+
+
+
+
+
+DEPOIS DISSO, 1 NOVA PARTITION,
+
+
+COM APENAS "JACK" E "CLAIRE"
+
+
+
+
+SERÁ 
+
+
+CRIADA E ADICIONADA NA TABLE...
+
+
+
+
+
+
+
+
+
+
+
+isso quer dizer que estamos basicamente 
+
+
+
+
+APAGANDO "THE WHOLE FILE"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS PQ DIABOS A FILE INTEIRA É APAGADA,
+
+EM VEZ DE APENAS 1 ÚNICO ROW?
+
+
+
+
+
+
+1) JUSTAMENTE PORQUE ESTAMOS 
+
+USANDO 1 BLOB STORAGE AREA (s3),
+
+
+QUE É 1 AREA/SERVICE QUE 
+
+
+SÓ __ TE DEIXA __ OVERWRITTAR 
+
+
+FILES INTEIRAS....
+
+
+
+
+
+
+
+(ok... é assim que isso funciona)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+MAS QUAL É A LICAO QUE TIRAMOS DE TUDO ISSO?
+
+
+
+
+
+
+
+
+
+
+
+--> ""ANTES DE RODAR 1 UPDATE STATEMENT,
+
+CONSTATE QUANTOS RECORDS SERAO IMPACTADOS...
+
+SE MAIS DE 80% DOS RECORDS FOREM IMPACTADOS,
+
+VOCE DEVE, EM VEZ DE USAR O UPDATE,
+
+
+CONSIDERAR _ RECRIAR __ A TABLE INTEIRA"...
+
+
+
+
+
+
+(menos cost)...
+
+
+
+
+
+2) ALTERNATIVAMENTE,
+
+PARA QUE VC NAO RODE O UPDATE STATEMENT,
+
+
+VC PODE 
+
+
+
+
+""YOU CAN EXECUTE DELETE AND INSERT STATEMENTS 
+SEPARATELY"....
+
+
+
+
+
+
+
+
+
+
+
+
+3) QUANDO VC ESTÁ TENTANDO 
+
+UPDATAR OU DELETAR 
+
+ROWS,
+
+
+CONSIDERE O USO DE NUMERIC COLUMNS,
+
+PQ 
+
+
+
+
+SEU SCAN É MAIS FÁCIL DO QUE O SCAN DE 
+
+STRINGS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK.... ESSAS FORAM BOAS DICAS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

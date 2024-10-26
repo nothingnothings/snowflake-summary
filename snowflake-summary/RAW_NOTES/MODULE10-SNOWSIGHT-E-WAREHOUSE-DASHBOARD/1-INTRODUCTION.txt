@@ -1,0 +1,128 @@
+
+
+
+
+
+Nessa section,
+
+
+
+veremos o SNOWSIGHT,
+
+
+UM APP QUE AINDA ESTÁ EM PREVIEW PELO 
+
+
+SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+--> VEREMOS O QUE É ELE...
+
+
+
+
+
+
+
+--> SNOWSIGHT:
+
+
+
+
+
+
+1) TE DEIXA RODAR QUERY COM VERSION CONTROL ENABLED...
+
+
+
+
+
+
+2) TE DEIXA CRIAR FOLDERS E ORGANIZAR WORKSHEETS...
+
+
+
+3) TE DEIXA SHARE WORKSHEETS...
+
+
+
+
+
+4) TE DEIXA VISUALIZE DATA 
+
+
+
+5) TE DEIXA PROFILE DATA...
+
+
+
+
+6) TE DEIXA CRIAR DASHBOARDS e os compartilhar...
+
+
+
+
+
+
+
+--> também te deixa adicionar dynamic filter nas suas queries,
+
+
+
+e te dá uma interface para visualizar a hierarchy de roles..
+
+
+
+
+
+
+
+--> te deixa viusalizar a billing information,
+
+users information..
+
+
+
+
+
+
+
+
+
+--> te deixa ver query histroy,
+
+
+warehouse usage  e resource monitors...
+
+
+
+
+
+
+
+
+
+
+--> integrates well with snowflake market place data...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

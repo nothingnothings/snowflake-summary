@@ -1,0 +1,595 @@
+
+
+
+
+
+
+
+NESSA LECTURE,
+
+
+DISCUTIREMOS 
+
+SOBRE "COMO ESCOLHER UMA WAREHOUSE ENQUANTO
+ESTAMOS RODANDO O COMANDO DE COPY"...
+
+
+
+
+
+
+
+--> BAIXAMOS AQUELE ARQUIVO DE 2GB...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+---> O MAIN POINT DESSA LESSON É:
+
+
+
+
+
+
+
+TEMOS 1 FILE GIGANTE.... --> 1 MANEIRA DE COPIAR 
+
+ESSA FILE 
+
+
+É 
+
+COPIÁ-LA PARA DENTRO 
+
+
+DO SNOWFLAKE,
+
+UPLOADAR....
+
+
+
+
+
+
+
+
+--> UPLOADAR PARA 1 TABLE STAGING AREA/NAMED STAGING AREA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ESSA É UMA FILE QUE FOI UPLOADADA....
+
+
+
+
+
+
+
+-> RODAMOS O COPY COMMAND EM CIMA 
+
+DESSA FILE,
+
+
+
+
+COM ESTE COMANDO:
+
+
+
+
+
+COPY INTO TAXI_DRIVE FROM 
+(
+SELECT 
+T.$1,
+T.$2,
+iff(T.$3='', null, T.$3),
+iff(T.$4='', null, T.$4),
+T.$5,
+T.$6,
+T.$7,
+T.$8,
+T.$9
+FROM @DEMO_DB.PUBLIC.%TAXI_DRIVE AS T
+
+)
+    FILE_FORMAT=(
+        FORMAT_NAME='TAXI_CSV_FORMAT'
+        field_optionally_enclosed_by='"'
+    )
+ON_ERROR='CONTINUE';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> E O PROFESSOR USOU UMA WAREHOUSE 
+
+
+DE TAMANHO EXTRA SMALL...
+
+
+
+
+
+
+
+
+1.7 MILHAO DE ROWS FORAM CARREGADOS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> FOI USADA 1 EXTRA SMALL WAREHOUSE...
+
+
+
+
+
+
+
+
+
+
+
+--> DEMOROU 1MIN E 48 SEGUNDOS PARA COMPLETAR 
+
+ESSE COMANDO DE COPY...
+
+
+
+
+
+
+
+
+
+--> e, no segundo cenário,
+
+
+
+
+
+o professor,
+
+em vez de 
+
+
+ 
+ copiar o ARQUIVO INTEIRO,
+
+
+
+
+ ELE RODOU UM COMANDO DE "SPLIT"....
+
+
+
+
+
+
+
+
+ TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+ split -b 50000000 train.csv split/train_split_
+
+
+
+
+
+
+
+
+
+ COM ISSO, O PROFESSOR SPLITOU NOSSA FILE ENORME,
+
+ "train.csv",
+
+ em arquivos menores,
+
+ de 50mb
+
+
+
+
+
+
+
+
+
+
+ --> AÍ ELE CRIOU UMA SEGUNDA TABLE,
+
+
+ DESTINADA AO COPY DESSAS FILES MENORES,
+
+ TIPO ASSIM:
+
+
+
+
+
+
+
+
+ CREATE OR REPLACE TABLE TRANSIENT TAXI_DRIVE_SMALL_FILES (
+
+    TRIP_ID NUMBER,
+    CALL_TYPE VARCHAR(2),
+    ORIGIN_CALL NUMBER,
+    ORIGIN_STAND NUMBER,
+    TAXI_ID NUMBER,
+    TIMESTAMP NUMBER,
+    DAY_TYPE VARCHAR(1),
+    MISSING_DATA BOOLEAN,
+    POLYLINE ARRAY
+ );
+
+
+
+
+
+
+
+
+
+
+
+ --> o professor splittou 
+
+ essa file em várias files de 50mb....
+
+
+
+
+
+
+
+
+
+
+
+ --> DEPOIS DISSO,
+
+ O PROFESSOR UPLOADOU ESSAS SMALL FILES 
+
+
+
+ À STAGING AGREA...
+
+
+
+
+
+
+
+ ISSO FEITO, O PROFESSOR RODOU O COMANDO 
+
+
+ DE "COPY"
+
+
+
+
+em cima dessas files,
+
+
+tipo assim:
+
+
+
+
+
+
+COPY INTO TAXI_DRIVE FROM 
+(
+SELECT 
+T.$1,
+T.$2,
+iff(T.$3='', null, T.$3),
+iff(T.$4='', null, T.$4),
+T.$5,
+T.$6,
+T.$7,
+T.$8,
+T.$9
+FROM @DEMO_DB.PUBLIC.%TAXI_DRIVE/SMALL_FILES AS T
+
+)
+    FILE_FORMAT=(
+        FORMAT_NAME='TAXI_CSV_FORMAT'
+        field_optionally_enclosed_by='"'
+    )
+ON_ERROR='CONTINUE';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+isso pega todas essas files pequenas nesse folder,
+
+
+que possuem tamanho de 50mb...
+
+
+
+
+
+
+
+
+
+
+
+--> COM ISSO,
+
+
+
+O SNOWFLAKE DEMOROU APENAS 32 SEGUNDOS PARA COMPLETAR 
+
+ESSE PROCESSO...
+
+
+
+
+
+
+
+
+
+--> HÁ ALGUNS REJECTED RECORDS (
+    devido a algum special character produzido durante o 
+    split....
+)
+
+
+
+
+
+
+
+
+
+
+
+
+--> O QUE O PROFESSOR QUER DIZER É QUE 
+
+ESSE COMANDO DE COPY 
+
+
+
+
+
+LEVA ___bEM___ MENOS TEMPO PARA_ COPIAR 
+
+
+
+PARA AS TABLES DO SNOWFLAKE 
+
+
+
+
+__ SE AS FILES __ ESTAO EM CHUNKS MELHORES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUANDO VC RODA O COMANDO DE COPY,
+
+SEMPRE É MELHOR SPLITTAR AS FILES QUE 
+VC 
+
+ESTÁ TENTANDO 
+
+CARREGAR...
+
+
+
+
+
+
+--> DESSA MANEIRA, EVITAMOS TER DE ESCOLHER 
+
+
+WAREHOUSES MT GRANDES....
+
+
+
+
+
+
+--> SE TENTAMOS COPIAR FILES DE TAMANHO TB,
+
+
+ANTES DE RODAR O COMANDO DE "COPY",
+
+
+
+SEMPRE DEVEMOS
+
+
+
+SPLITTAR AS FILES, ANTES DE AS COPIAR....
+
+
+
+
+
+10MB --> É O FILE SIZE IDEAL 
+
+
+
+
+MAS 
+
+
+PODEMOS ESCOLHER 
+
+40MB,
+
+
+50MB...
+
+
+
+
+
+
+
+
+
+--> QUANTO MENOR O TAMANHO, MELHOR... (por isso 10mb é ideal)...
+
+
+
+
+-> ISSO ACONTECE PQ 
+O COMANDO 
+
+DE 
+
+"COPY"
+
+EXECUTA DE UMA MANEIRA BEM PARALLEL...
+
+
+
+
+
+
+
+
+
+
+--> NAO TEMOS QUE ESCOLHER 1 WAREHOUES MAIOR 
+
+SÓ PARA RODAR 
+
+COPY COMMANDS COM FILES MAIORES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE 
+
+SE VC 
+
+ESTÁ TENTANDO USAR O COPY COMMAND,
+
+
+SEMPRE 
+TENTE 
+
+SPLITTAR SUAS FILES ANTES DE RODAR O COPY COMMAND (
+    para que 
+    o  copy command 
+    termine a execucao
+
+
+    bem mais rápido...
+)
+
+
+
+
+
+
+
+
+aqui, nesse exemplo, o copy time foi 3 vezes 
+
+mais rápido...
+
+

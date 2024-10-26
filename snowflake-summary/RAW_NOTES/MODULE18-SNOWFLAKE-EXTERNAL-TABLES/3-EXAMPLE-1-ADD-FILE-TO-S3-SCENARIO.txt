@@ -1,0 +1,352 @@
+
+
+
+SCENARIO 1:
+
+
+
+
+
+""INSERT NEW FILES IN S3 LOCATION AND CHECK HOW FILE/FILES 
+ARE SCANNED, IN EXTERNAL TABLE"">..
+
+
+
+
+
+
+
+TEMOS QUE ENTENDER O BEHAVIOR 
+
+
+DA EXTERNAL TABLE QUANDO 1 NOVA FILE 
+É ADICIONADA 
+
+
+NA S3 LOCATION...
+
+
+
+
+
+
+
+
+
+
+
+
+-------> TEMOS 5 FILES,
+
+
+EMPLOYEE 1- 5...
+
+
+
+
+
+
+
+
+
+
+
+-> AÍ QUERIAMOS ESSA EXTERNAL TABLE,
+
+
+COM ISTO:
+
+
+
+
+
+
+
+SELECT * FROM emp_ext_table;
+
+
+
+
+
+
+
+
+--> AÍ ENXERGAMOS 25 RECORDS...
+
+
+
+
+
+
+
+
+--> MAS DIGAMOS QUE ADICIONAMOS 1 NOVA FILE 
+
+AO S3...
+
+
+
+
+
+
+
+
+
+--> PROFESSOR ADICIONA 1 ARQUIVO employees10.csv....
+
+
+
+
+--> ADICIONAMOS ESSE ARQUIVO,
+
+
+
+E AÍ 
+
+
+RODAMOS 
+
+
+O SELECT NA EXTERNAL TABLE MAIS UMA VEZ...
+
+
+
+
+
+
+
+
+
+
+--. VEREMOS QUE __ A TABLE AINDA NAO TERÁ SIDO UPDATADA..
+
+
+
+
+
+
+MAS PQ?
+
+
+
+
+
+É PQ A METADATA TABLE AINDÁ NAO TERÁ SIDO UPDATADA...
+
+
+
+
+
+
+
+
+
+
+
+-> se checarmos a metadata table 
+
+DESSA TABLE ESPECÍFICA,
+
+
+COM ESTE COMANDO:
+
+
+
+
+
+
+
+
+
+
+
+SELECT 
+*
+FROM TABLE(information_schema.external_table_files(TABLE_NAME=> 'emp_ext_table')),
+
+
+
+
+
+
+
+
+
+
+
+
+SE RODAMOS ISSO,
+
+
+PERCEBEMOS QUE NOSSA FILE AINDA NAO TERÁ SIDO 
+
+
+INCLUÍDA NESSA TABLE DE METADATA...
+
+
+
+
+
+
+
+
+
+
+
+
+-> E É EXATAMENTE POR ISSO QUE ESTAMOS VENDO APENAS 
+
+OS 25 RECORDS,
+
+E NENHUM DOS NOVOS RECORDS..
+
+
+
+
+
+
+
+
+
+
+
+--> SE DESEJAMOS QUE A DATA DO NOVO ARQUIVO,
+
+RECÉM ADICIONADO,
+
+
+APAREÇA NESSA METADATA TABLE (
+    e na external table, por consequencia
+),
+
+
+
+SOMOS OBRIGADOS A RODAR "REFRESH"
+
+
+nessa table,
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+--------------------- QUERY EXT TABLE --------------------
+
+
+
+
+
+SELECT * FROM emp_ext_table;
+
+
+ALTER EXTERNAL TABLE emp_ext_table REFRESH;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DEPOIS DESSE REFRESH,
+
+
+
+
+
+
+OS 5 ROWS VAO APARECER 
+
+
+
+NA EXTERNAL TABLE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+QUER DIZER QUE NOSSAS EXTERNAL TABLES 
+NAO SAO REFRESHADAS AUTOMATICAMENTE....
+
+
+
+
+
+
+
+
+
+--> PRECISAM SER REFRESHADAS MANUALMENTE..,
+
+
+COM ALTER EXTERNAL TABLE <table_name> REFRESH;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--------> OK... QUER DIZER QUE 
+
+
+QUANDO UMA NOVA 
+FILE 
+
+É ADICIONADA 
+
+
+
+
+NA LOCATION/S3 LOCATION DA EXTERNAL TABLE,
+
+
+
+
+
+
+
+É IMPORTANTE SEMPRE REFRESHAR 
+
+
+
+A METADATA TABLE... SE A METADATA TABLE NAO FOR 
+REFRESHADA,
+
+
+VOCE NAO SERÁ CAPAZ DE VER OS NEWLY ADDED FILE RECORDS,
+
+
+nessa external table...

@@ -1,0 +1,135 @@
+
+
+
+
+
+
+
+
+
+
+
+
+AGORA FALAREMOS SOBRE TASK DEPENDENCY...
+
+
+
+
+
+
+
+
+
+
+--> DIGAMOS QUE TEMOS ISTO:
+
+
+
+
+
+
+
+
+
+
+
+            ROOT TASK
+          ---- [] ----
+          i          i 
+          i          i 
+       TASK A      TASK B 
+       I   I       I    i
+   TASK C  TASK D  E     F 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DEPOIS DA EXECUTION DA TASK ROOT,
+
+
+
+
+AS TASKS A E B SERAO EXECUTADAS...
+
+
+
+
+
+
+
+
+
+------> CADA TASK PODE TER QUANTAS 
+
+
+CHILD TASKS QUISER...
+
+
+
+
+
+
+----> A LIMITACAO MAIS IMPORTANTE É 
+
+
+
+
+""CADA TASK PODE TER APENAS 1 ÚNICO PARENT""...
+
+
+
+
+
+
+
+
+
+
+
+--> voce nao pode ter 2 parents para 1 child task...
+
+
+
+
+
+
+
+
+
+
+---> essa é uma CONSTRAINT que temos com snowflake tasks...
+
+
+
+
+
+
+
+
+
+
+
+--> na próxima aula 
+
+
+criaremos uma task, com as dependencies descritas aqui...
+
+
+
+
+

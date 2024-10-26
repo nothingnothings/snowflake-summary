@@ -1,0 +1,97 @@
+
+
+
+
+
+
+O PROFESSOR USA ESTES COMANDOS:
+
+
+
+
+
+
+
+
+
+
+
+CREATE DATABASE demo_db;
+
+
+
+CREATE OR REPLACE TABLE employee (
+    first_name STRING,
+    last_name STRING,
+    email STRING,
+    street_address STRING,
+    city STRING,
+    start_date STRING
+);
+
+
+
+
+
+
+ISSO CRIARÁ ESSA DATABASE E ESSA TABLE NESSA DATABASE (no schema public)....
+
+
+
+
+
+
+
+
+
+
+
+
+
+INFORMATION_SCHEMA -> É O SCHEMA 
+
+
+QUE CONTÉM TODA METADATA INFORMATION 
+
+SOBRE AS QUERIES, FUNCTIONS, STAGES,
+
+PIPES, E QUAISQUER OUTRAS COISAS 
+
+
+
+usadas/criadas nessa database...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> TEMOS TAMBÉM UM OUTRO SCHEMA, QUE É 
+
+"PUBLIC",
+
+que é criado por default....
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> O PROFESSOR TEM 1 FILE CSV...

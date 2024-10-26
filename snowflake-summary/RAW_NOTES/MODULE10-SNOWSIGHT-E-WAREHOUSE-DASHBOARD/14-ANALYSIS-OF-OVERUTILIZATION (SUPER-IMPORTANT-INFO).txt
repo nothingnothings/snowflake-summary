@@ -1,0 +1,795 @@
+
+
+
+
+
+
+
+
+
+VIMOS 1 EXEMPLO DE UNDERUTILIZATION E SUA ANÁLISE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--. AGORA VEREMOS 1 DE OVERUTILIZATION..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PROFESSOR SELECIONA A COMPUTE WAREHOUSE...
+
+
+
+
+
+
+
+
+
+
+
+------> PROFESSOR PEGA 1 DIA QUE FOI MT ACTIVE...
+
+
+
+
+
+
+
+
+
+
+
+
+--> nesse dia,
+
+o idle cost foi de 1.6 dolares... --------> BEM BAIXO....
+
+
+
+
+
+
+
+
+--> O UTILIZATION COST FOI 5.67...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ACTIVE PERCENTAGE FOI DE 77% --> very nice consumption....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> total_hour_consumed --> 1.83 dolares 
+
+
+
+
+
+hours_utilized --> 1.43 dolares --> (
+    quer dizer que usamos mt bem ...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+MAS O QUE TEMOS QUE OBSERVAR,
+
+
+
+COM RESPEITO 
+
+AO OVER UTILIZATION,
+
+
+É O TILE DE "GB SCANNED"...
+
+
+
+
+
+
+
+
+
+
+
+
+NESSE TILE,
+TEMOS:
+
+
+
+
+
+
+1) gb scanned  (209.28GB)
+
+
+
+
+2) gb written  (157.97)
+
+
+
+3) gb written to result ... (28.29)
+
+
+
+
+
+
+
+--> o que devemos perceber 
+
+é 
+
+
+""QUANTO GB ESTÁ SENDO SCANNED,
+
+QUANTO ESTAMOS FAZENDO WRITE AO DATABASE SNOWFLAKE,
+
+
+E QUANTO 
+
+ESTAMOS FAZENDO WRITE AO RESULT (result set 
+no cloud services layer, snowflake web console)""
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> BEM, SE TIVERMOS 
+
+UM VALUE 
+
+DE 
+
+
+"GB WRITTEN" MUITO ALTO,
+
+
+
+
+ISSO QUER DIZER QUE __ UM ___ MONTE__ DE DATA 
+
+
+ESTÁ SENDO PRODUZIDA 
+
+
+
+NO SNOWFLAKE... (
+
+    inserida, updatada..
+)
+
+
+
+
+
+
+
+
+
+
+
+--> QUANDO FALAMOS DE MT WRITE DE DATA NO SNOWFLAKE,
+
+ISSO QUER DIZER 
+
+CUSTOS DE STORAGE BEM MAIORES,
+
+
+E ISSO LEVA A OUTROS STORAGE COSTS (failsafe, time travel)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> A OUTRA COISA É "GB WRITTEN TO RESULT" --> ESSA MÉTRICA NOS COMUNICA 
+
+SE 
+
+""A WAREHOUSE ESTÁ SENDO USADA PARA RODAR ANÁLISES 
+OU NAO"" -----> se temos 1 value 
+
+maior,
+
+isso quer dizer que 
+
+ESSA WAREHOUSE 
+ESTÁ 
+
+SENDO 
+
+USADA PARA RODAR ANÁLISES... -> MAS SE O VOLUME 
+
+
+
+DE GB 
+
+RETORNADO 
+
+
+
+
+AO CLOUD SERVICES LAYER 
+
+
+
+É __ ALTO __ DEMAIS,
+
+
+
+
+ISSO QUER DIZER QUE 
+
+
+A WAREHOUSE NAO ESTÁ SENDO UTILIZADA 
+
+
+
+
+ADEQUADAMENTE PARA PRODUZIR ESSAS ANÁLISES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+MAS PQ?
+
+
+
+
+
+
+
+
+
+
+
+
+
+BEM, SE ELE ESTÁ FAZENDO WRITE DE 28GB, 40GB,
+100GB 
+
+
+OU 1TB DE DATA NO LAYER DE CLOUD SERVICES,
+
+
+
+
+
+ISSO SIGNIFICA QUE VC __ ESTÁ PULLANDO 
+TODA 
+
+
+
+A DATA 
+
+
+E A COLOCANDO 
+
+
+
+NO WEB CONSOLE DO SNOWFLAKE... ---------_> OU SEJA,
+
+VC 
+
+ESTÁ TENTANDO 
+
+
+
+
+COLOCAR 1 MONTE DE DATA/WRITAR 1 MONTE DE DATA 
+
+
+NO CLOUD SERVICES LAYER,
+
+
+
+
+ALGO QUE 
+
+NAO É REALMENTE NECESSÁRIO... -------------_> ISSO PQ,
+
+
+
+NO SNOWFLAKE WEB CONSOLE,
+
+
+
+
+
+VC __ VERÁ __ APENAS ALGUNS POUCOS RECORDS... ---> SE VC 
+
+
+ESTÁ ESCREVENDO 
+1 BILHAO 
+
+
+DE RECORDS NO SNOWFLAKE WEB CONSOLE,
+
+
+VC 
+
+
+NAO VERÁ 
+
+ESSE 
+
+
+1 BILHAO DE RECORDS... --------> QUANDO VC 
+
+
+
+FAZ ANÁLISE,
+ 
+
+
+ VC VE APENAS UNS 10-100 
+
+ ROWS,
+ PARA TER 1 
+
+
+
+ OVERVIEW DA DATA...
+
+
+
+
+
+
+
+
+
+ ----------> QUER DIZER QUE SEMPRE É MELHOR, QUNADO 
+ VC 
+
+
+ ESTÁ 
+
+ FAZENDO ANÁLISE,
+
+
+
+ FAZER O GROUP DE DATA,
+
+
+ AGGREGATE DE DATA,
+
+ E AÍ 
+
+
+
+ APLICAR ALGUMA AGGREGATION LOGIC 
+
+ E CONSEGUIR 
+
+
+
+ OS RESULTS DE VOLTA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ --> ESSA É A BOA MANEIRA DE REALIZAR 
+
+ ANÁLISE...
+
+
+
+
+
+
+
+
+
+
+
+
+ --> MAS SE VC 
+ TIVER 1 VOLUME MT ABSURDO DE GB SENDO RETORNADO 
+
+ AQUI,
+
+
+ COMO 28GB,
+
+
+
+
+
+ VC DEFINITIVAMENTE 
+
+ PRECISA VOLTAR 
+
+ E ANALISAR 
+
+
+ A QUERY QUE ESTÁ SENDO EXECUTADA 
+
+
+ NESSA WAREHOUSE... ----------> E TEMOS
+
+ QUE AVISAR 
+
+ A 
+
+ PESSOA QUE ESTÁ USANDO 
+
+
+
+ ESSA WAREHOUSE 
+
+
+ QUE ELA ESTÁ RODANDO 1 QUERY MT EXAGERADA....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ --> E SE VC 
+
+ ESTIVER COM 1 GB WRITTEN MT ALTO,
+
+
+ VC TBM DEVE FICAR VIGILANTE,
+
+ PQ 
+
+
+
+ VC DEVE TER CERTEZA QUE  ESSA É UMA 
+
+ "BUSINESS REQUIRED DATA",
+
+ e nao junk data 
+
+
+
+ SENDO WRITTEN COM ESSA WAREHOUSE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ --> E SE TEMOS 1 VALUE MT ALTO DE "GB SCANNED",
+
+
+
+ ISSO QUER DIZER QUE 
+
+A QUERY QUE ESTÁ SENDO 
+
+
+ESCRITA 
+
+NAO É NADA EFICIENTE... QUE ELA ESTÁ PULLANDO 
+
+
+TODOS OS RECORDS DA TABLE... ----> que está 
+
+ESCANEANDO 
+
+MT DATA 
+
+E 
+ESCANEANDO TODAS AS PARTITIONS....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> E SE VC VE AQUELE 
+
+"GB SPILLED TO LOCAL STORAGE"
+
+
+MUITO ALTO,
+
+
+HIGH DATA,
+
+
+ISSO QUER DIZER QUE 
+
+SUA 
+
+
+
+QUERY É MT PROCESS-INTENSIVE,
+
+
+O QUE QUER DIZER QUE 
+
+A WAREHOUSE NAO É CAPAZ 
+
+DE 
+
+
+SUPORTAR/EXECUTAR SUAS QUERIES SATISFATORIAMENTE...
+
+
+
+
+
+--> solucao:
+
+
+Using a larger warehouse
+ (effectively increasing the available memory/local disk
+  space for the operation), 
+  
+  and/or Processing data in smaller batches.
+
+
+
+
+
+
+
+https://github.com/dbt-labs/docs.getdbt.com/discussions/1550
+
+
+One of the biggest killers
+ of performance in Snowflake is queries
+  spilling to either local or remote storage.
+  This happens when your query processes more data than
+   your virtual warehouse can hold in memory,
+    and is directly related to the size of your warehouse.
+
+
+
+
+
+
+
+
+
+
+
+
+There are a few things you can do to fix this problem:
+
+
+
+Throw resources at it, and hope it goes away. 
+This will cost you money, but can be a
+ quick fix if you need a solution ASAP.
+  The amount of memory that Snowflake has
+   available for a given query is governed by
+    warehouse size, so if you up the warehouse,
+     you up your memory.
+
+
+
+Process your data in smaller chunks.
+ By limiting the amount of data that a query
+  processes you can potentially prevent spilling
+   anything to local/remote storage.
+
+
+
+Watch out for big CTEs. 
+If you're processing a ton of data
+ in multiple CTEs in the same query
+  there's a good chance you'll hit 
+  this problem. Since CTEs process their 
+  results in memory, it hogs that resource for
+   the query. Try converting your largest CTEs 
+   in to views and see if that solves the problem.
+
+
+
+
+
+
+
+
+
+
+
+OK... TEMOS 
+
+
+
+
+
+
+TAMBÉM:
+
+
+
+
+
+--> GB SPILLED TO REMOTE STORAGE --> se temos 
+
+
+1 value alto aqui,
+
+
+ISSO QUER DIZER QUE 
+
+DEPOIS 
+
+
+DE FAZER O WRITE AO "LOCAL STORAGE",
+
+
+A DATA ESTÁ SENDO PUSHADA AO REMOTE STORAGE -->  ISSO 
+
+QUER DIZER QUE 
+
+A QUERY É MT PROCESS INTENSIVE,
+
+
+OU QUE 
+
+O COMPUTE ASSIGNADO NAO É SUFICIENTE (
+    talvez assignar uma warehouse XL
+) --> temos que aumentar o warehouse size...
+
+
+
+
+
+
+
+
+
+
+
+--> COM TUDO ISSO, VC PODE TER UMA HIGH-LEVEL CONCLUSION...
+
+
+
+
+--> depois disso, vc pode DIG MORE,
+
+TALVEZ TENHA QUE CRIAR DASHBOARDS MAIS FINE-GRAIN...
+
+
+
+
+
+
+
+
+--> mas tudo isso te ajuda...
+
+
+
+
+
+VEREMOS COMO CONSTRUIR O DASHBOARD NA PRÓXIMA AULA...

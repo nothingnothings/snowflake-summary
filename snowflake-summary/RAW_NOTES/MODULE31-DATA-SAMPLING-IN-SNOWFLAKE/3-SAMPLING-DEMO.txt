@@ -1,0 +1,312 @@
+
+
+
+
+
+
+
+
+OK... AGORA VEREMOS COMO PODEMOS TIRAR VANTAGEM 
+
+
+
+DA FEATURE DE SAMPLING DO SNOWFLAKE...
+
+
+
+
+TANTO O ROW METHOD (BERNOULLI)
+
+
+COMO O BLOCK METHOD...
+
+
+
+
+
+
+
+
+tipo assim:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE TRANSIENT TABLE SUPPLIER_BLOCK_ALG
+AS 
+SELECT * FROM
+ SNOWFLAKE_SAMPLE_DATA.TPCH_SF1000.SUPPLIER SAMPLE SYSTEM(3) SEED (82);
+
+
+
+
+
+
+
+
+
+
+
+ --> COM ISSO,
+
+
+ SELECIONAMOS 
+
+
+ 
+
+ PARTITIONS/BLOCKS DE DATA,
+
+
+ COM BASE 
+
+
+ NA PROBABILIDADE "3/100"...
+
+
+
+
+
+
+
+
+
+
+ --> COLOCAMOS TAMBÉM A SEED DE "82",
+
+
+ para que 
+
+ SE ALGUÉM RODAR ESSA __ MESMA QUERY,
+
+
+ ELE GANHARÁ 
+
+ O EXATO RESULT SET QUE 
+
+ ESTAREMOS GERANDO AGORA...
+
+
+
+
+
+
+
+
+
+
+
+
+ PARA DEMONSTRAR ISSO,
+
+ O PROFESSOR 
+
+
+
+
+
+
+ RODA ESSA QUERY 2x,
+
+
+ E NAS 2x ele ganha A MESMA SAMPLE...
+
+
+
+
+
+
+
+
+ EX:
+
+
+
+
+
+
+
+CREATE OR REPLACE TRANSIENT TABLE SUPPLIER_BLOCK_ALG
+AS 
+SELECT * FROM
+ SNOWFLAKE_SAMPLE_DATA.TPCH_SF1000.SUPPLIER SAMPLE SYSTEM(3) SEED (82);
+
+
+
+
+CREATE OR REPLACE TRANSIENT TABLE SUPPLIER_BLOCK_ALG
+AS 
+SELECT * FROM
+ SNOWFLAKE_SAMPLE_DATA.TPCH_SF1000.SUPPLIER SAMPLE SYSTEM(3) SEED (82);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+COM ISSO, FICAMOS COM 1 SAMPLE DE NOSSA 
+
+DATA,
+
+
+1 SUBSET DE DATA BEM MENOR DO QUE 
+
+
+
+AQUELA TABLE GIGANTE..
+
+
+
+
+
+
+
+
+
+FICAMOS COM 1 SAMPLE DE 222 MB...
+
+
+
+
+
+
+
+
+
+
+
+RODAMOS A QUERY NESSA SAMPLE DATA,
+
+
+EM VEZ DE RODAR 
+
+
+NA PRODUCTION DATA,
+
+
+que tem 6.5gb...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK, AGORA VAMOS FAZER A MESMA COISA, MAS 
+
+
+COM O ROW SAMPLING METHOD:
+
+
+
+
+
+
+
+CREATE OR REPLACE TRANSIENT TABLE SUPPLIER_ROW_ALG
+AS 
+SELECT * FROM
+ SNOWFLAKE_SAMPLE_DATA.TPCH_SF1000.SUPPLIER SAMPLE ROW(3) SEED (82);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> isso demora 1 pouco mais,
+
+
+
+
+pq o system method é mais optimizado (
+    n roda contra cada row...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK.... TABLES MENORES --> BERNOULLI
+
+
+
+
+TABLES MAIORES --> SYSTEM...
+
+
+
+
+
+
+
+mas qualquer 1 desses algorithms é bom...
+
+
+
+
+
+
+
+
+
+
+
+
+--> o row algorithm é mais lento,
+
+mas é mais fidedigno..
+
+
+
+
+

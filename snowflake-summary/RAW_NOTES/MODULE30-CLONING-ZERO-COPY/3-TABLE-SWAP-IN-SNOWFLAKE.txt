@@ -1,0 +1,479 @@
+
+
+
+
+VIMOS ESSA FEATURE NO OUTRO CURSO,
+
+
+É O USO DA KEYWORD "SWAP"..
+
+
+
+
+mas essa feature n tinha mt uso...
+
+
+
+
+
+
+aula do outro curso:
+
+
+
+
+-- SWAPPING TABLES 
+
+
+-- SETTING UP DEV TABLE 
+
+SELECT * FROM OUR_FIRST_DB.COPIED_SCHEMA.CUSTOMERS;
+SELECT * FROM OUR_FIRST_DB.PUBLIC.CUSTOMERS;
+
+
+DELETE FROM OUR_FIRST_DB.COPIED_SCHEMA.CUSTOMERS WHERE ID < 500;
+
+
+SELECT * FROM OUR_FIRST_DB.COPIED_SCHEMA.CUSTOMERS;
+
+
+-- eis o código em questao
+ALTER TABLE OUR_FIRST_DB.COPIED_SCHEMA.CUSTOMERS
+SWAP WITH OUR_FIRST_DB.PUBLIC.CUSTOMERS;
+
+
+
+
+
+
+-- Verifying results 
+SELECT * FROM OUR_FIRST_DB.COPIED_SCHEMA.CUSTOMERS;
+SELECT * FROM OUR_FIRST_DB.PUBLIC.CUSTOMERS;
+
+
+
+-- Verifying results (data/rows were swapped)
+SELECT * FROM OUR_FIRST_DB.COPIED_SCHEMA.CUSTOMERS;
+SELECT * FROM OUR_FIRST_DB.PUBLIC.CUSTOMERS;
+
+
+
+
+
+---------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DIGAMOS QUE TEMOS 1 CENÁRIO EM QUE TEMOS 2 TABLES...
+
+
+
+
+
+
+
+
+
+
+
+DEV_TABLE 
+
+
+
+PROD_TABLE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+VC TERMINOU O TESTING COM A DATA DE DEV_tABLE..
+
+
+
+
+
+
+
+
+--> DIGAMOS QUE ESSA TABLE ESTÁ COM 1 DATA 
+
+EM FORMATO FINE...
+
+
+
+
+
+
+
+
+
+
+--> VC ENTAO QUER COPIAR ESSA TABLE DATA 
+
+PARA DENTRO DA PRODUCTION TABLE...
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA COPIAR, 
+
+VC PODERIA:
+
+
+
+
+
+
+
+1) TRUNCAR A TABLE DE PRODUCTION 
+
+
+
+
+
+2) INSERIR A DATA DA TABLE DE DEV 
+
+PARA A TABLE DE PRODUCTION...
+
+
+
+
+
+
+
+
+
+
+
+--> OUTRA MANEIRA É FAZER RECREATE DA 
+
+TABLE DE PROD COM A DATA DE DEV (mas perdemos timeline)....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OUTRA MANEIRA É:
+
+
+
+
+1) CLONE A TABLE DE DEV...
+
+
+
+2) NOMEAR ESSA TABLE COMO PROD, OU ALGO ASSIM...
+
+
+
+
+
+-----------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+MAS TEMOS A TERCEIRA MANEIRA, QUE É COM USO 
+
+
+
+DO SWAP...
+
+
+
+
+
+
+
+
+
+
+--> COM ISSO, VAMOS TROCAR A METADATA (pointers)
+
+
+ARMAZENADA NAS NOSSAS TABLES...
+
+
+
+
+
+
+
+
+
+SE NÓS SIMPLESMENTE TROCAMOS A METADATA DE 1 TABLE 
+
+
+COM A METADATA DA OUTRA,
+
+
+
+
+
+
+
+
+as tables vao apontar aos storage layers 
+
+
+contrários....
+
+
+
+
+
+
+
+
+--> quer dizer que a data vai mudar completamente...
+
+
+
+
+
+
+com isso, vamos:
+
+
+
+
+1) MANTER A DATA QUE ESTÁ DENTRO DA PRODUCTION TABLE,
+
+QUE AGORA VAI FICAR NA DEV_TABLE,
+
+
+
+
+2) FICAR COM A DATA DA DEV_TABLE,
+QUE SABEMOS QUE ESTÁ BOA/FUNCIONA,
+
+DENTRO 
+
+DA TABLE DE PRODUCTION..
+
+
+
+------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+PROFESSOR DEMONSTRA COM UM EXEMPLO:
+
+
+
+
+
+
+
+
+-- dev_table
+CREATE OR REPLACE TABLE EMP_DEV (
+    first_name string,
+    last_name string,
+    email string,
+    streetaddress string,
+    city string,
+    start_date date
+);
+
+
+
+
+
+-- copy all files from s3 storage location to emp_dev 
+COPY INTO EMP_DEV 
+FROM @my_s3_stage 
+FILE_FORMAT=(
+    TYPE=CSV
+    FIELD_OPTIONALLY_ENCLOSED_BY='"'
+)
+ON_ERROR='CONTINUE';
+
+
+
+
+
+
+
+
+
+-- create prod table 
+CREATE OR REPLACE emp_prod (
+    first_name string,
+    last_name string,
+    email string,
+    streetaddress string,
+    city string,
+    start_date date
+);
+
+
+
+
+
+-- copy all files from s3 storage location to emp_prod
+COPY INTO EMP_PROD
+FROM @my_s3_stage 
+FILE_FORMAT=(
+    TYPE=CSV
+    FIELD_OPTIONALLY_ENCLOSED_BY='"'
+)
+pattern='less_rows_file.csv'
+ON_ERROR='CONTINUE';
+
+
+
+
+
+
+
+
+
+
+--> OK...
+
+
+
+NESSE EXEMPLO,
+
+
+NA TABLE DE PRODUCTION 
+
+
+
+ESTAMOS COM MENOS DATA 
+(quer 
+dizer que 
+
+a table que está realmente production-ready é 
+
+A DEV TABLE...)
+
+
+
+
+
+
+--> para conseguirmos "TROCAR A DATA DAS TABLES" (na verdade,
+trocamos a metadata),
+
+
+
+
+DEVEMOS 
+
+RODAR ASSIM:
+
+
+
+
+
+
+
+ALTER TABLE EMP_PROD SWAP WITH EMP_DEV;
+
+
+
+SELECT * FROM emp_prod;
+
+
+
+SELECT * FROM emp_dev;
+
+
+
+
+
+
+
+
+
+--> CERTO, A METADATA DAS 2 TABLES FOI SWAPPADA 
+
+COM SUCESSO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ERA ISSO QUE O PROFESSOR QUERIA NOS MOSTRAR...
+

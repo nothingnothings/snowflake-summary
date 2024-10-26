@@ -1,0 +1,1044 @@
+
+
+
+
+
+
+
+OK.... AGORA VAMOS DISCUTIR....
+
+
+
+
+
+
+
+
+
+
+
+AGORA TENTAREMOS COMPREENDER A NECESSIDADE 
+
+DO CONCEITO DE 
+
+
+"EXTERNAL TABLES"
+
+
+NO SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> anteriormente,
+
+tínhamos:
+
+
+
+
+
+
+1) S3 FILES, ARMAZENADAS NO AWS S3...
+
+
+
+
+
+
+
+2) TÍNHAMOS 
+
+O APP SNOWFLAKE,
+
+EM QUE 
+
+CRIAMOS 1 VIEW,
+
+EM CIMA 
+
+DESSA DATA ARMAZENADA NO AWS S3...
+
+
+
+
+(
+    CREATE OR REPLACE VIEW example_view 
+    AS 
+    SELECT * FROM @<your_s3_stage>
+)
+
+
+
+
+
+
+--> AÍ RODÁVAMOS/RODAMOS A VIEW ASSIM:
+
+
+
+SELECT * FROM example_view;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+COM ISSO, O SNOWFLAKE REEXECUTA A LÓGICA 
+
+DE SELECT,
+
+
+
+E AÍ 
+ESCANEIA 
+
+TODAS AS FILES DO S3 
+
+PARA RETORNAR 
+
+
+O RESULTADO, DESSA VIEW,
+
+AO SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+
+
+ERA ISSO QUE ESTAVA ACONTECENDO/QUE ACONTECE...
+
+
+
+
+
+
+
+
+
+
+
+
+QUER DIZER QUE 
+
+
+
+CRIAMOS 1 VIEW 
+
+
+
+
+
+DIRETAMENTE em cima das files s3,
+
+através do 
+
+
+snowflake...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK, MAS IMAGINE QUE 
+
+TEMOS 1TB/5TB 
+
+DE FILES 
+
+
+
+NO S3... --> E AGORA IMAGINE QUE 
+
+
+
+
+ESSA 
+
+
+QUERY REALMENTE 
+
+SEJA 
+
+"SELECT *",
+
+
+
+NESSA VIEW...
+
+
+
+
+
+
+
+
+
+
+
+--> O QUE ACONTECERÁ, ENTAO,
+
+É QUE __ O SELECT * VAI TENTAR 
+
+ESCANEAR 
+
+
+__tODAS _aS FILES __ DO S3,
+E AÍ VAI TENTAR RETORNAR 
+
+O RESULTADO AO SNOWFLAKE.... O QUE NAO É CORRETO...
+
+
+
+
+
+
+
+
+
+
+
+--> NA VERDADE, ATÉ MESMO SE VC 
+ADICIONAR 
+
+ALGUNS FILTERS, ALGUMAS JOIN CONDITIONS,
+
+
+
+E SE VC TENTAR RODAR ESSA QUERY,
+
+
+
+NOVAMENTE 
+
+
+TODAS AS FILES 
+
+
+
+DO S3 DEVERAO SER ESCANEADAS,
+
+PARA RETORNAR 1 RESULT AO SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+
+
+--> E ISSO É MT RUIM,
+
+
+PQ __ tODAS AS FILES__ DEVERAO SER ESCANEADAS,
+
+TODA HORA,
+
+
+SEMPRE QUE 
+VC 
+
+
+QUISER TRIGGAR ESSA QUERY EM CIMA DAS FILES QUE 
+
+ESTAO ARMAZENADAS 
+
+NO AWS S3...
+
+
+
+
+
+
+
+
+
+--> MAS O QUE ESTÁ ____ aCTUALLY__ MISSING,
+
+AQUI,
+
+NESSA OPERACAO,
+
+
+É 
+A 
+
+"METADATA"....
+
+
+
+
+
+
+
+
+--> PQ NO SNOWFLAKE,
+
+SE TIVÉSSEMOS ARMAZENADO A _ METADATA__ INFO 
+
+DAS FILES 
+
+QUE ESTAO 
+
+ARMAZENADAS NO SNOWFLAKE,
+
+
+PODERÍAMOS "lEVERAGE"
+
+
+
+
+ESSA METADATA INFORMATION PARA 
+
+
+_qUERIAR _ AS FILES ARMAZENADAS 
+
+
+NO AWS S3 
+
+__ MAIS EFICIENTEMENTE...
+
+
+
+
+
+
+
+--> QUER DIZER QUE QUANDO CRIAMOS A VIEW/RODAMOS 
+
+1 SELECT DIRETAMENTE 
+
+
+NAS FILES 
+
+
+
+EXISTENTES NO AWS S3, A PARTIR DO SNOWFLAKE,
+
+
+
+
+VAMOS 
+
+FICAR
+ 
+
+ ____SEM__ A METADATA, sem metadata....
+
+
+
+
+
+
+
+
+
+
+
+
+--> E É JUSTAMENTE ESSE ""GAP"" (falta de metadata)
+
+
+
+QUE É PREENCHIDO PELA EXISTENCIA/CONCEITO 
+
+DE EXTERNAL TABLES DO SNOWFLAKE,
+
+
+
+
+TUDO PARA QUERIAR ESSAS FILES QUE 
+
+
+SAO ARMAZENADOS 
+
+
+NO S3...
+
+
+
+
+
+
+
+
+
+
+
+QUER DIZER QUE
+
+O QUE ESSE TABLE CONCEPT VAI FAZER,
+
+NO SNOWFLAKE,
+
+É ACTUALLY 
+
+
+___LISTAR__ TODAS AS FILES__ QUE 
+
+
+
+ESTAO ARMAZENADAS NO S3,
+
+E AÍ 
+
+
+VAI __ "RECORD"
+
+QUAIS FILES FORAM "NEWLY ADDED"
+
+OU "REMOVED" OU "UPDATED"
+
+
+
+NA HISTORY...
+
+
+
+
+
+
+
+
+
+
+
+RESUMINDO, EXTERNAL TABLES:
+
+
+
+1) LIST THE FILES IN S3 
+
+
+
+2) SHOW WHICH FILE IS NEWLY ADDED,
+AND WHICH FILE IS REMOVED OR UPDATED.
+
+
+
+
+
+
+
+
+
+
+
+--> ESSE TIPO DE INFO SERÁ ARMAZENADA 
+
+NO SNOWFLAKE...
+
+
+
+
+
+
+
+
+-> QUER DIZER QUE QUANDO RODARMOS 
+
+
+
+A QUERY DA EXTERNAL TABLE,
+
+
+
+
+O SNOWFLAKE VAI "LOOK FOR THE METADATA INFO",
+
+
+e, com base nessa metadata info,
+
+
+
+ele vai 
+
+GO AHEAD e QUERIAR 
+
+AS FILES QUE 
+
+ESTAO ARMAZENADAS 
+
+
+
+
+NO AWS S3 (
+
+
+
+    com isso, o snowflake vai LEVERAGE 
+
+    A METADATA E QUERIAR AS FILES QUE 
+
+    ESTAO ARMAZENADAS NA DATABASE...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+----> OK... AGORA DEVEMOS IR NO SNOWSIGHT E CHECAR 
+
+
+A METADATA, A METADATA QUE FOI ARMAZENADA 
+
+
+PARA NOSSA ATIVIDADE ANTERIOR...
+
+
+
+
+(metadata criada/armazenada a partir da external table 
+de 
+
+"emp_ext_table")
+
+
+
+
+
+
+--------------- GET METADATA INFORMATION --------------
+
+
+
+
+
+
+
+SELECT
+*
+FROM table(information_schema.external_table_files(TABLE_NAME => 'emp_ext_table'));
+
+
+
+OUTPUT:
+
+
+
+
+
+
+
+
+FILE_NAME	                    REGISTERED_ON	            FILE_SIZE	    LAST_MODIFIED	            ETAG	                            MD5
+
+CSV/csv_0_0_0.csv.gz	2023-08-17 07:02:48.940 -0700	871	2023-08-16 13:21:39.000 -0700	b2357f103dc93005b1c67150457c5bdf	b2357f103dc93005b1c67150457c5bdf
+CSV/employees01.csv	2023-08-17 07:02:48.940 -0700	370	2023-08-16 10:34:09.000 -0700	ee3c86ae89eabb22667d6fd7684fec17	ee3c86ae89eabb22667d6fd7684fec17
+CSV/employees02.csv	2023-08-17 07:02:48.940 -0700	364	2023-08-16 10:34:09.000 -0700	20447871857babe7b4a12363f5f754da	20447871857babe7b4a12363f5f754da
+CSV/employees03.csv	2023-08-17 07:02:48.940 -0700	407	2023-08-16 10:34:10.000 -0700	65d89581bbd5b07cf78bf847205d7cbd	65d89581bbd5b07cf78bf847205d7cbd
+CSV/employees04.csv	2023-08-17 07:02:48.940 -0700	375	2023-08-16 10:34:11.000 -0700	53fe4c128aa9567e7deb28abce5f8d97	53fe4c128aa9567e7deb28abce5f8d97
+CSV/employees05.csv	2023-08-17 07:02:48.940 -0700	404	2023-08-16 10:34:12.000 -0700	87d47add6452f8ab2949f6b29d6b285a	87d47add6452f8ab2949f6b29d6b285a
+CSV/employees_error_file0.csv	2023-08-17 07:02:48.940 -0700	395	2023-08-16 11:52:09.000 -0700	7a903734873243ac9c1a6369e53d002c	7a903734873243ac9c1a6369e53d002c
+CSV/employees_error_file1.csv	2023-08-17 07:02:48.940 -0700	402	2023-08-16 11:52:09.000 -0700	2ccce90a608b43a5e72d57c9d693ac84	2ccce90a608b43a5e72d57c9d693ac84
+
+
+
+
+
+
+
+
+
+SELECT 
+*
+FROM table(information_schema.external_table_file_registration_history(TABLE_NAME=>'emp_ext_table'));
+
+
+
+
+OUTPUT:
+
+
+
+
+
+
+
+
+
+
+JOB_CREATED_TIME	                FILE_NAME	        OPERATION_STATUS	MESSAGE	                FILE_SIZE	LAST_MODIFIED
+
+2023-08-17 07:02:48.480 -0700	CSV/csv_0_0_0.csv.gz	REGISTERED_NEW	File registered successfully.	871	2023-08-16 13:21:39.000 -0700
+2023-08-17 07:02:48.480 -0700	CSV/employees01.csv	REGISTERED_NEW	File registered successfully.	370	2023-08-16 10:34:09.000 -0700
+2023-08-17 07:02:48.480 -0700	CSV/employees02.csv	REGISTERED_NEW	File registered successfully.	364	2023-08-16 10:34:09.000 -0700
+2023-08-17 07:02:48.480 -0700	CSV/employees03.csv	REGISTERED_NEW	File registered successfully.	407	2023-08-16 10:34:10.000 -0700
+2023-08-17 07:02:48.480 -0700	CSV/employees04.csv	REGISTERED_NEW	File registered successfully.	375	2023-08-16 10:34:11.000 -0700
+2023-08-17 07:02:48.480 -0700	CSV/employees05.csv	REGISTERED_NEW	File registered successfully.	404	2023-08-16 10:34:12.000 -0700
+2023-08-17 07:02:48.480 -0700	CSV/employees_error_file0.csv	REGISTERED_NEW	File registered successfully.	395	2023-08-16 11:52:09.000 -0700
+2023-08-17 07:02:48.480 -0700	CSV/employees_error_file1.csv	REGISTERED_NEW	File registered successfully.	402	2023-08-16 11:52:09.000 -0700
+
+
+
+
+
+
+
+
+
+
+
+OK.....
+
+
+
+
+
+ISSO NOS DÁ METADATA SOBRE AS FILES QUE FORAM CARREGADAS...
+
+
+
+
+
+
+
+
+--> TEMOS 1 LISTA DAS FILES ARMAZENADAS NO S3...
+
+
+
+
+
+
+
+
+--> TEMOS TAMBÉM A DATA EM QUE 
+
+CADA 1 DAS FILES FOI REGISTERED,
+
+O FILE_SIZE,
+
+
+E SE A FILE FOI MODIFICADA...
+
+
+
+
+
+
+-> TAMBÉM TEMOS "ETAG" e "MD5"...
+
+
+
+
+
+
+
+
+
+
+--> COM ESSES 2 HASH VALUES,
+
+O TRABALHO DO SNOWFLAKE É FACILITADO,
+
+
+FICA MAIS FÁCIL PARA ELE ESCANEAR 
+
+
+AS FILES NO S3...
+
+
+
+
+
+
+
+
+
+
+
+---> QUER DIZER QUE ESSA METADATA INFORMATION 
+
+É 
+
+LEVERAGED...
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE VIEWS E SELECTS DIRETOS 
+SAO TOTALMENTE SUBÓPTIMOS...
+
+
+
+
+
+
+
+
+
+
+EXEMPLO DE QUERY SUBÓPTIMA:
+
+
+
+
+
+
+
+
+-- suboptimal query (scans entire s3 storage, instead of focusing on files that were really changed)
+SELECT
+metadata$filename,
+metadata$file_row_number,
+$1,
+$2,
+$3,
+$4,
+$5,
+$6
+FROM @DEMO_DB.PUBLIC.%EMP_BASIC_LOCAL 
+(FILE_FORMAT => DEMO_DB.FILE_FORMATS.MY_CSV_FORMAT)
+
+MINUS 
+SELECT * FROM DEMO_DB.PUBLIC.EMP_BASIC_LOCAL;
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE 
+
+ESSA QUERY VISTA ACIMA É TOTALMENTE SUBÓPTIMA,
+PQ 
+
+ELA 
+
+REALIZA SCANS COMPLETOS DO S3 CADA VEZ QUE É EXECUTADA,
+
+
+EM VEZ 
+
+DE COMPARAR HASHES 
+
+
+POR MUDANÇAS,
+
+COMO ACONTECE 
+
+
+
+COM O USO DE EXTERNAL TABLES (que armazenam os hashes 
+e a history de loads)...
+
+
+
+
+
+
+
+
+
+
+
+--> na segunda query, temos isto:
+
+
+
+
+
+
+SELECT 
+*
+FROM table(information_schema.external_table_file_registration_history(TABLE_NAME=>'emp_ext_table'));
+
+
+
+
+OUTPUT:
+
+
+
+
+
+
+
+
+
+
+JOB_CREATED_TIME	                FILE_NAME	        OPERATION_STATUS	MESSAGE	                FILE_SIZE	LAST_MODIFIED
+
+2023-08-17 07:02:48.480 -0700	CSV/csv_0_0_0.csv.gz	REGISTERED_NEW	File registered successfully.	871	2023-08-16 13:21:39.000 -0700
+2023-08-17 07:02:48.480 -0700	CSV/employees01.csv	REGISTERED_NEW	File registered successfully.	370	2023-08-16 10:34:09.000 -0700
+2023-08-17 07:02:48.480 -0700	CSV/employees02.csv	REGISTERED_NEW	File registered successfully.	364	2023-08-16 10:34:09.000 -0700
+2023-08-17 07:02:48.480 -0700	CSV/employees03.csv	REGISTERED_NEW	File registered successfully.	407	2023-08-16 10:34:10.000 -0700
+2023-08-17 07:02:48.480 -0700	CSV/employees04.csv	REGISTERED_NEW	File registered successfully.	375	2023-08-16 10:34:11.000 -0700
+2023-08-17 07:02:48.480 -0700	CSV/employees05.csv	REGISTERED_NEW	File registered successfully.	404	2023-08-16 10:34:12.000 -0700
+2023-08-17 07:02:48.480 -0700	CSV/employees_error_file0.csv	REGISTERED_NEW	File registered successfully.	395	2023-08-16 11:52:09.000 -0700
+2023-08-17 07:02:48.480 -0700	CSV/employees_error_file1.csv	REGISTERED_NEW	File registered successfully.	402	2023-08-16 11:52:09.000 -0700
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> isso nos mostra toda a info das files 
+
+no s3... 
+
+
+
+
+
+
+---> se alguma file for removida,
+ela é marcada como "unregistered"...
+
+
+
+
+
+
+e se alterarmos alguma file,
+
+
+ela será marcada como "updated"....
+
+
+
+
+
+
+
+
+
+
+
+
+--> DESSA FORMA,
+
+FAREMOS TRACKING DE CADA 1 DAS FILES ARMAZENADAS 
+
+NO S3,
+
+
+
+
+O QUE QUER DIZER QUE A METADA É LEVERAGED,
+
+PARA QUERIAR A DATA ARMAZENADA 
+
+NO S3...
+
+
+
+
+
+
+
+
+
+--> É POR ISSO QUE EXTERNAL 
+
+TABLES FAZEM MT SENTIDO..
+
+
+
+
+
+
+
+
+
+------> A MANEIRA ANTERIOR DE LOAD DA DATA 
+
+NAO ERA NADA EFICIENTE...
+
+
+
+
+ESTA MANEIRA DE AGORA TAMBÉM NAO É 100% EFICIENTE,
+
+
+
+MAS É _CERTAMENTE MAIS EFICIENTE DO QUE A MANEIRA ANTERIOR 
+
+DE "CREATE A VIEW" (ou select direto de data)...
+
+
+
+
+
+
+
+
+--> MAS A MELHOR MANEIRA 
+
+AINDA É 
+
+"LOAD ALL THE DATA INTO SNOWFLAKE"
+
+
+para entao 
+
+
+LEVERAGE TODAS AS OPTIMIZATIONS QUE O SNOWFLAKE 
+
+DÁ A NÓS...
+
+
+
+
+
+
+
+
+
+MAS, DE UMA BUSINESS PERSPECTIVE,
+
+
+SE SUA ORGANIZATION NAO QUER MOVER TODA A DATA 
+
+PARA DENTRO DO SNOWFLAKE,
+
+
+
+QUER USAR APENAS 
+
+
+O SNOWFLAKE COMO QUERY ENGINE,
+
+OU PARA ANALYTICAL PURPOSES,
+
+
+
+
+
+SUA EMPRESA PODE FACILMENTE CRIAR ESSAS EXTERNAL TABLES,
+
+E AÍ 
+
+"LEVERAGE" essa external table,
+
+
+e aí 
+
+QUERIAR A DATA QUE ESTÁ ARMAZENADA NO AWS S3 -------> com isso,
+
+
+
+
+A DATA NAO FICARÁ "LOCKED IN" no snowflake,
+
+
+
+E AINDA SERÁ CAPAZ DE LEAVE OUTSIDE do snowflake...
+
+
+
+
+
+
+
+
+
+dessa maneira,
+
+
+de uma business perspective,
+
+é uma big win para o snowflake,
+
+
+
+e também 
+
+
+
+
+é mt boa esse armazenamento da metadata..
+
+
+
+
+
+
+
+
+
+
+NAS PRÓXIMAS AULAS VEREMOS ALGUNS CENÁRIOS 
+
+EM QUE 
+
+ESSE CONCEITO DE EXTERNAL TABLE É 
+
+UTILIZADO...

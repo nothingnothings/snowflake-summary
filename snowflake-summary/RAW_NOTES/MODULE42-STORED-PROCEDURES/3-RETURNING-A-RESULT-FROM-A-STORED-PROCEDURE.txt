@@ -1,0 +1,1324 @@
+
+
+
+
+
+
+
+
+
+AGORA CONTINUAREMOS NOSSA DISCUSSION....
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA CONSEGUIRMOS 
+
+
+
+AQUELE "TABLE COLUMN FILL RATE",
+
+
+
+estamos expecting um output como este:
+
+
+
+
+
+
+
+
+/**************Level-2****************/
+
+
+-- Before calculating the fill rate let's fix our output structure.
+
+-- We are expecting output something like below,
+
+--COLUMN_NAME	FILL_RATE
+--    ABC	    0.98
+--    DEF	    0.81
+--    GHK	    0.27
+
+-- Now let's see how to mock this output.
+
+
+/*{
+  "key1": [
+    {
+      "ColumnName": "ABC",
+      "column_value": 0.98
+    },
+    {
+      "ColumnName": "DEF",
+      "column_value": 0.81
+    }
+    ]
+}*/
+
+
+
+
+
+
+
+
+
+
+
+--> CERTO... QUEREMOS QUE NOSSO OUTPUT FIQUE ASSIM:
+
+
+
+--COLUMN_NAME	FILL_RATE
+--    ABC	    0.98
+--    DEF	    0.81
+--    GHK	    0.27
+
+
+
+
+
+
+
+
+
+
+
+
+
+MAS O QUE PRECISAMOS ENTENDER,
+NO CASO,
+
+
+É QUE 
+
+
+
+STORED PROCEDURES 
+
+
+___NAO __ SAO CAPAZES DE RETORNAR 
+
+MÚLTIPLOS OUTPUTS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> STORED PROCEDURES 
+
+
+SAO SEMPRE CAPAZES DE RETORNAR ___APENAS__ 1 
+
+
+ÚNICO OUTPUT...
+
+
+
+
+
+
+
+
+
+
+
+--> por isso,
+
+
+
+DEVEMOS __ DECIDIR__ QUAL SERÁ A ESTRUTURA 
+
+DO NOSSO "RETURN OBJECT"
+
+
+___ ANTES__ MESMO __ DE CRIARMOS 
+
+
+A PROCEDURE...
+
+
+
+
+
+
+
+
+
+
+
+POR EXEMPLO, O RETURN OBJECT PODE TER ESTA ESTRUTURA:
+
+
+
+
+
+
+  "key1": [
+    {
+      "ColumnName": "ABC",
+      "column_value": 0.98
+    },
+    {
+      "ColumnName": "DEF",
+      "column_value": 0.81
+    }
+    ]
+
+
+
+
+
+
+
+
+essa é uma boa estrutura...
+
+
+
+
+
+
+
+
+--> A PROCEDURE DEVERÁ RETORNAR 1 OBJECT COM 
+
+ESSA ESTRUTURA... TUDO PARA QUE 
+
+
+
+CONSIGAMOS PARSEAR ESSA ESTRUTURA E OUTPUTTAR 
+
+ALGO COMO 1 TABLE..
+
+
+
+
+
+
+
+
+
+
+
+--> ESSA É A IDEIA...
+
+
+
+
+
+
+
+
+
+--> AGORA TEMOS 1 PEQUENO EXEMPLO,
+
+
+
+
+
+
+
+EM QUE INSERIMOS 1 JSON OBJECT EM 1 TABLE,
+
+E AÍ TENTAMOS O PARSEAR...
+
+
+
+
+
+
+
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE TRANSIENT TABLE JSON_TBL (FILL_RATE VARIANT);
+
+
+
+INSERT INTO JSON_TB1 
+SELECT PARSE_JSON(
+    {
+          "key1": [
+    {
+      "ColumnName": "ABC",
+      "column_value": 0.98
+    },
+    {
+      "ColumnName": "DEF",
+      "column_value": 0.81
+    }
+    ]
+    }
+);
+
+
+
+
+
+
+
+
+
+--> COM ISSO, ESTAMOS INSERINDO ESSE JSON OBJECT 
+
+NA NOSSA TABLE...
+
+
+
+
+
+
+
+
+ISSO FEITO,
+
+    o professor faz FLATTEN 
+
+    desse json object,
+
+
+
+com este comando:
+
+
+
+
+
+
+
+
+
+
+
+SELECT 
+f.value:ColumnName,
+f.value:column_value
+FROM JSON_TBL, TABLE(FLATTEN(fill_rate:key1)) AS f;
+
+
+
+
+
+
+
+
+
+É ISSO QUE VAI TRANSFORMAR 
+
+
+NOSSO JSON OBJECT, DENTRO DA COLUMN DE TYPE "VARIANT",
+
+
+
+
+EM 1 TABLE....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+É POR ISSO QUE QUEREMOS QUE O RETURNED OBJECT SEJA 1 JSON,
+PARA QUE 
+
+CONSIGAMOS USAR 
+
+ESSA FUNCTION DE "FLATTEN", para a converter em 1 table normal...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ESSA É A IDEIA...
+
+
+
+
+
+
+
+
+--> OK.... QUER DIZER QUE NOSSA PROCEDURE
+
+
+
+DEVE CRIAR 1 JSON OBJECT,
+
+ALGO COMO O OBJECT MOSTRADO ANTES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+A PROCEDURE EM SI SERÁ ESTA:
+
+
+
+
+
+
+
+CREATE OR REPLACE PROCEDURE COLUMN_FILL_RATE_OUTPUT_STRUCTURE (TABLE_NAME VARCHAR)
+    RETURNS VARIANT NOT NULL
+    LANGUAGE JAVASCRIPT 
+    AS 
+    $$ 
+
+
+    var array_of_rows = [];
+    var row_as_json = {};
+
+
+
+
+    var my_sql_command = "SELECT COUNT(*) AS ABC, COUNT(*) AS DEF FROM " + TABLE_NAME + ";"
+
+
+    var statement1 = snowflake.createStatement({sqlText: my_sql_command});
+    var result_set1 = statement1.execute();
+
+    result_set1.next();
+
+
+    var ColumnName = result_set1.getColumnName(1);
+    var column_value = result_set1.getColumnValue(1);
+
+
+    row_as_json = {
+        ColumnName: ColumnName,
+        column_value: column_value
+    }
+
+    array_of_rows.push(row_as_json);
+
+
+    ColumnName = result_set1.getColumnName(2);
+    column_value = result_set1.getColumnValue(2);
+
+    
+    row_as_json = {
+        ColumnName: ColumnName,
+        column_value: column_value
+    }
+
+    
+    array_of_rows.push(row_as_json);
+
+
+
+    var table_as_json = {
+        "key": array_of_rows
+    };
+
+
+    return table_as_json;
+
+    $$;
+
+
+
+
+CALL COLUMN_FILL_RATE_OUTPUT_STRUCTURE('DEMO_DB.PUBLIC.CUSTOMER');
+
+
+
+
+
+É CLARO QUE ESSE CÓDIGO JAVASCRIPT ESTÁ UMA PORCARIA,
+PQ O PUSH DE 
+
+OBJECTS NO ARRAY NAO É DINAMICO (nao está usando for of loop)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> o código funciona, mas é bem ruim...
+
+
+
+
+
+
+
+--> FICAMOS COM 1 OUTPUT ASSIM:
+
+
+
+
+
+COLUMN_FILL_RATE_OUTPUT_STRUCTURE
+
+{
+  "key": [
+    {
+      "ColumnName": "ABC",
+      "column_value": 150000
+    },
+    {
+      "ColumnName": "DEF",
+      "column_value": 150000
+    }
+  ]
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... MAS ISSO APENAS __cONTOU__ O NÚMERO DE 
+
+ROWS (tanto preenchidos como null) 
+
+
+DESSA TABLE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+COMO PODEMOS PEGAR 
+
+ESSE VALUE, ESSA PORCENTAGEM?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> antes de descobrirmos como fazer isso,
+
+
+o professor aponta:
+
+
+
+
+
+
+""QUANDO ESTAMOS CRIANDO ESSA PROCEDURE,
+
+
+NENHUM ERROR ESTÁ SENDO THROWN""... ----> ISSO QUER DIZER QUE 
+
+
+
+__ APENAS__ QUANDO _ RODARMOS A PROCEDURE
+
+ELA VAI SER ACTUALLY COMPILED (
+
+    e o erro só vai aparecer no momento da execucao, essencialmente...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+--> O PROFESSOR TENTA USAR UMA FUNCTION DE
+
+
+
+"floor(8/10)", uma function que CLARAMENTE NAO EXISTE,
+
+
+
+
+
+DENTRO DO CÓDIGO JAVASCRIPT, DENTRO DO SQL,
+
+
+
+
+
+
+
+MAS ISSO NAO 
+
+DÁ THROW DE ERROR ALGUM QUANDO ESCREVEMOS 
+
+ESSA FUNCTION/METHOD E CRIAMOS ESSA PROCEDURE,
+
+
+E SIM 
+
+
+
+APENAS DÁ THROW DE ERROR QUANDO ACTUALLY 
+
+EXECUTAMOS A PROCEDURE QUE  CONTÉM 
+
+ESSE ERRO DE ESCRITA... 
+
+
+
+(
+
+pq o código da procedure só é COMPILADO
+ 
+  E EXAMINADO 
+
+  NO MOMENTO DE SUA EXECUCAO,
+
+  E NAO 
+
+  
+  DURANTE SUA CRIACAO...
+
+)
+
+
+
+
+
+
+
+
+
+
+
+O ERRO FOI  DE "floor" IS NOT DEFINED ...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--. O QUE ISSO SIGNIFICA,
+
+
+
+NO CASO,
+
+
+
+É 
+
+QUE __ FORA OS METHODS QUE O PROFESSOR 
+
+MOSTROU ANTES (
+    
+    os methods dentro do statement object,
+
+    dentro do result object,
+    execute object....
+
+
+),
+
+
+
+
+
+
+
+VC NAO PODE USAR NENHUMA OUTRA FUNCTION/METHOD 
+
+
+DENTRO 
+
+
+DESSA ESCRITA JAVASCRIPT...
+
+
+
+
+
+
+
+
+
+
+
+
+ATÉ MESMO COISAS COMO 'Math.random()"
+
+SAO BARRADAS...
+
+
+
+
+
+O OBJETO "Math" INTEIRO É BARRADO...
+
+
+
+
+
+
+
+
+
+
+--> NAO PODEMOS IMPORTAR NENHUM DESSES METHODS/OBJECTS,
+
+PARA INÍCIO DE CONVERSA...
+
+
+
+
+
+
+
+
+
+-> SÓ PODEMOS USAR OS METHODS QUE EXISTEM  
+
+DENTRO DAQUELES OBJECTS 
+
+SNOWFLAKE....
+
+
+
+
+
+
+
+
+
+--> ok, mas COMO PODEMOS USAR "MATH.FLOOR()"
+
+
+DENTRO DO CÓDIGO JAVASCRIPT, NO SNOWFLAKE?
+
+
+
+
+
+
+
+
+
+
+
+
+-> O ÚNICO JEITO DE CONSERTAR 
+
+
+ISSO É USANDO 
+
+
+APENAS CÓDIGO SQL,
+
+
+SEM CÓDIGO JAVASCRIPT...
+
+
+
+
+
+
+
+
+
+TIPO ASSIM:
+
+
+
+
+
+"SELECT FLOOR(9/10) AS ABC"
+
+
+
+
+
+
+
+
+EX:
+
+
+
+
+
+
+
+create or replace procedure column_fill_rate_output_sturcture(TABLE_NAME varchar)
+  returns VARIANT NOT NULL
+  language javascript
+  as     
+  $$  
+  
+    var array_of_rows = [];
+    row_as_json = {};
+    
+    var my_sql_command = "select floor(9/10) ABC,floor(8/10) DEF from "+ TABLE_NAME +";"
+    var statement1 = snowflake.createStatement( {sqlText: my_sql_command} );
+    var result_set1 = statement1.execute();
+    // result_set1.next()
+    
+    ColumnName =   result_set1.getColumnName(1);
+    column_value = result_set1.getColumnValue(1);
+    
+    row_as_json = { ColumnName : ColumnName ,column_value : column_value}
+          
+    array_of_rows.push(row_as_json)
+           
+    ColumnName =  result_set1.getColumnName(2);
+    column_value = result_set1.getColumnValue(2);
+    
+    row_as_json = { ColumnName : ColumnName ,column_value : column_value}
+          
+    array_of_rows.push(row_as_json)
+    
+    table_as_json = { "key1" : array_of_rows };
+ 
+  return table_as_json; 
+  $$
+  ;
+
+call column_fill_rate_output_sturcture('CUSTOMER')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS ISSO VAI DEIXAR COMO "0" esse value....
+
+
+
+
+
+
+
+
+
+
+
+--> podemos consertar isso, mas o ponto é que 
+
+
+""VC NAO PODE USAR QUAISQUER OUTROS METHODS,
+
+METHODS NATIVOS DO JAVASCRIPT, DENTRO 
+
+DAS PROCEDURES""...
+
+
+
+
+
+
+
+
+
+
+
+--> vc só pode usar os methods dos objects snowflake em si...
+
+
+
+
+
+
+
+
+
+
+
+
+OK... MAS O QUE INTERESSA É QUE AGORA TEMOS O 
+
+JSON NO FORMATO DESEJADO...
+
+
+
+
+
+
+
+
+
+--> AGORA BASTA CONVERTER ISSO PARA A ESTRUTURA TABULAR CORRETA,
+
+
+COM 
+
+AQUELE CÓDIGO QUE USA "FLATTEN":
+
+
+
+select 
+f.value:ColumnName,f.value:column_value
+from TABLE(RESULT_SCAN(LAST_QUERY_ID())) AS res, table(flatten(COLUMN_FILL_RATE_OUTPUT_STURCTURE:key1)) f
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AQUI, NO CASO,
+
+
+
+
+ESTAMOS PEGANDO O "RESULT DO RUN DA PROCEDURE",
+
+
+que vai ser capturado 
+
+por "TABLE(RESULT_SCAN(LAST_QUERY_ID()))"
+
+
+
+
+
+
+--> AQUI, TAMBÉM,
+
+ESTAMOS USANDO FLATTEN EM CIMA 
+
+
+DA COLUMN DE NAME "COLUMN_FILL_RATE_OUTPUT_STRUCTURE" (
+
+    pq, quando rodamos PROCEDURES,
+
+    o nome da COLUMN, única column retornada 
+    por elas,
+
+
+    TERÁ O MESMO NOME DA PROCEDURE...
+),
+
+
+
+COLUMN QUE POSSUI VALUES 
+
+JSON (com várias propriedades no interior)... dentro desse json,
+
+acessamos a única key existente, 
+
+que é justamente aquela 
+
+"key1"...
+
+
+
+
+
+por isso 
+
+
+COLUMN_FILL_RATE_OUTPUT_STRUCTURE:key1
+
+
+
+
+
+
+
+
+
+
+
+--> AÍ RODAMOS FLATTEN EM CIMA DISSO....
+
+
+
+
+
+
+
+
+ASSIM QUE ESSE OBJECT ESTÁ FLATTENADO,
+
+
+OBTEMOS O 
+
+
+"columnName" 
+
+
+
+e o 
+
+"column_value"
+
+
+POR MEIO 
+
+
+
+
+
+
+DA ESCRITA DE 
+
+"f.value:columnName" 
+
+e 
+
+"f.value:column_value"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK.... PQ, ANTERIORMENTE,
+ESTÁVAMOS 
+
+ARMAZENANDO NOSSA QUERY EM 1 JSON TABLE... 
+
+
+
+
+
+
+
+
+
+MAS AGORA ESTAMOS PEGANDO BASICAMENTE O RESULT 
+
+DAQUELE CALL, CALL DA PROCEDURE,
+
+
+
+QUE ENTAO ESTAMOS FORMATANDO,
+
+COM O USO DESSA FLATTEN FUNCTION...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... E SE RODAMOS ESSA QUERY NOVAMENTE,
+
+
+GANHAMOS UM ERROR,
+
+PQ 
+
+AÍ NOSSO "LAST_QUERY_ID()"
+
+terá se alterado (agora será outra coisa,
+
+pq nossa última query agora terá sido 
+
+esse select com flatten....)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ENTENDA: SE VC ESTÁ 
+
+RETORNANDO 1 VALUE DE 1 STORED PROCEDURE,
+
+
+ISSO SEMPRE SERÁ UM ÚNICO VALUE (singular... tipicamente 
+1 JSON, pq retornar apenas um varchar ou float nao 
+é tão útil)...
+
+
+
+
+
+
+
+
+
+
+----> como o value retornado por suas stored procedure tipicamente 
+
+será um JSON,
+
+
+VC PODE USAR 
+
+
+O METHOD DE "FLATTEN"
+
+PARA PARSEAR ESSE OUTPUT,
+
+
+
+COMO VISTO ANTES:
+
+
+
+
+
+select 
+f.value:ColumnName,f.value:column_value
+from TABLE(RESULT_SCAN(LAST_QUERY_ID())) AS res, table(flatten(COLUMN_FILL_RATE_OUTPUT_STURCTURE:key1)) f
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+AGORA CONSEGUIMOS PARTE DO NOSSO OBJETIVO:
+
+
+
+
+
+1) AGORA SOMOS CAPAZES DE COMPILAR NOSSOS RESULTS 
+
+EM 1 JSON OBJECT...
+
+
+
+
+
+
+2) E SOMOS CAPAZES DE RETORNAR ESSE JSON OBJECT...
+
+
+
+
+
+
+
+3) E SOMOS CAPAZES DE PARSEAR ESSE OBJECT... (com flatten)..
+
+
+
+
+
+
+
+
+
+
+
+
+RESUMO DAS LICOES APRENDIDAS:
+
+
+
+
+
+
+
+
+
+1) STORED PROCEDURE WILL RETURN __ONLY__ ONE RESULT 
+
+
+
+
+2) USING ARRAY OBJECT AND JSON OBJECT (JSON Objects will be the main thing we'll be returning from stored procedures)...
+
+
+
+3) YOU CAN'T USE REGULAR JAVASCRIPT METHODS INSIDE 
+OF STORED PROCEDURES (
+    only snowflake object's methods.
+)
+
+
+
+
+4) WE LEARNED HOW TO PARSE OUTPUT RETURNED 
+FROM STORED PROCEDURE....
+
+
+
+
+
+5) ENTENDEMOS QUE 
+
+"STORED PROCEDURES ARE COMPILED ONLY WHEN YOU EXECUTE THEM" (
+    quer dizer que, quando as criamos, se tivermos errors,
+
+    eles nao serao compilados durante sua CREATION...
+)

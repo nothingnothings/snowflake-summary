@@ -1,0 +1,996 @@
+
+
+
+
+
+
+
+
+
+
+
+NA AULA ANTERIOR,
+
+
+
+
+
+
+FIZEMOS ALGUMAS OBSERVACOES:
+
+
+
+
+
+
+
+1) QUANDO DATA É ALTERADA NA MAIN TABLE,
+
+
+A CHANGED DATA VAI SER "PULLED"
+
+NA DIRECAO DA MATERIALIZED VIEW TABLE....
+
+
+
+
+
+
+
+
+
+
+
+2) SE UNDERLYING DATA TIVER MUDADA,
+
+E SE VC RODAR 
+
+
+1 QUERY NA MATERIALIZED VIEW,
+
+
+
+
+EXISTIRÁ 1 REFRESH COST...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK, MAS PQ ESSAS OBSERVATIONS SAO IMPORTANTES?
+
+
+
+
+
+
+
+
+
+
+DEVEMOS CHECAR 1 CENÁRIO:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- Once data is changed in main table,
+-- changed data will be puled to materialized view table.
+
+
+
+-- if underlying data has changed,
+-- if you execute select query on materialized view, there will be a refreshing cost...
+
+
+
+
+-- why are these observations important?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> IMAGINE ESTE CENÁRIO..
+
+
+
+
+
+
+
+
+
+
+
+--> DIGAMOS QUE TEMOS 1 PATIENT TABLE,
+
+
+
+
+EM QUE 
+
+DEFINIMOS 1 MATERIALIZED VIEW QUE 
+
+
+REFERE 
+
+
+
+À "DEATH DATA"
+ 
+
+
+ DOS PATIENTS....
+
+
+
+
+
+
+ death-related data..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ ---> DIGAMOS QUE 
+
+ "DEATH_RELATED DATA"
+
+
+
+ É CARREGADA PARA DENTRO  
+
+
+
+
+ DA TABLE 
+
+
+
+ A CADA 2 DIAS...
+
+
+
+
+O RESTO DA DATA, COMO "DIAGNOSIS DATA", "oLD PATIENT DATA",
+
+"DISCHARGED DATA",
+
+TODA ELA É CARREGADA EM 1 DAILY BASIS...
+
+
+
+
+
+
+ TIPO ASSIM:
+
+
+
+
+
+
+
+    DISCHARGED DATA ->   
+
+    OLD PATIENT DATA -> 
+
+    DIAGNOSIS DATA ->      [PATIENT DATA] 
+
+    DEATH DATA -> 
+    (2d)
+
+
+
+
+
+
+
+
+
+--> OK... NESSE CENÁRIO,
+
+
+
+A VIEW, CRIADA PELA NOSSA EMPRESA,
+
+
+É ACESSADA DIARIAMENTE 
+
+(por conta da diagnosis data, 
+old patient data, discharged data)
+
+
+
+
+
+
+
+
+
+
+
+--> SE ESSE É O NOSSO CENÁRIO,
+
+
+CADA VEZ QUE DATA MUDAR 
+
+
+
+NA TABLE DE PATIENT,
+
+
+OU CADA VEZ QUE 
+
+A  EMPRESA ACESSAR 
+
+
+A VIEW,
+
+
+
+EXISTIRÁ 
+
+
+1 
+
+
+VIEW REFRESH COST ASSOCIADO 
+
+A ISSO....
+
+
+
+
+
+
+
+
+--> "VIEW WILL REFRESH EVERY TIME DATA 
+ENTERS INTO PATIENT TABLE"...
+
+
+
+
+
+
+
+
+
+
+
+
+--> DIGAMOS QUE A BUSINESS 
+
+FICA "OK"
+
+
+
+SE A DATA DA VIEW 
+
+É REFRESHADA A CADA 2 DIAS...
+
+
+
+
+
+--> PEGAMOS 
+
+
+DEATH-RELATED DATA DE TODOS OS PATIENTS 
+
+A CADA 2 DIAS,
+
+
+E AÍ 
+
+
+
+INSERIMOS NA TABLE, TUDO DE 1 SÓ VEZ...
+
+
+
+
+
+
+
+
+--> AÍ A MATERIALIZED VIEW É 
+REFRESHADA 
+
+APENAS A CADA 2 DIAS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+VC AINDA ACHA QUE É UMA BOA IDEIA 
+
+
+MANTER ESSA MATERIALIZED VIEW?
+
+
+
+
+
+
+SE VC CONSIDERAR 
+
+O REFRESH COST/MAINTENANCE COST 
+
+
+
+DESSA 
+
+MATERIALIZED VIEW,
+
+
+
+
+
+
+
+
+
+ESSA NAO É UMA BOA IDEIA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> NAO É UMA BOA IDEIA CRIAR 1 MVIEW 
+
+
+EM CIMA 
+
+DA TABLE DE PATIENT DATA 
+
+
+PQ 
+
+
+A UNDERLYING DATA NESSA MAIN TABLE 
+
+
+
+É MUDADA EM 1 DAILY BASIS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUAL SERIA A MELHOR MANEIRA?
+
+
+
+
+
+
+
+
+
+--> BEM, SE OLHARMOS O NOSSO DIAGRAMA 
+
+ANTERIOR,
+
+
+
+PODEMOS CONSTATAR (como o outro professor)
+
+
+
+QUE 
+
+
+É 
+
+POSSÍVEL 
+
+
+CRIAR 1 PROCESSO PARA "MOCKAR" 
+
+
+A FEATURE 
+
+
+DO MATERIALIZED VIEW 
+
+
+DO 
+
+SNOWFLAKE,
+
+
+MAS USANDO 
+
+
+
+
+OUTRAS FEATURES,
+
+
+COMO STREAMS E TASKS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ISSO É POSSÍVEL, SIM...
+
+
+
+
+
+
+
+
+
+
+
+
+--> PODEMOS FAZER ISSO PQ O QUE ACONTECE É:
+
+
+
+
+
+
+1) SEMPRE QUE OCORRE 1 CHANGE 
+
+NA MAIN TABLE,
+
+OS CHANGED RECORDS 
+
+
+
+SAO PUSHADOS PARA A MATERIALIZED VIEW TABLE...
+
+
+
+
+
+2) AÍ É TRIGGADO O REFRESHING SERVICE...
+
+
+(ESSE REFRESHING SERVICE PODE SER SUBSTITUÍDO 
+
+POR 1 TASK...)
+
+
+
+
+
+
+2.5) PODEMOS DEFINIR 1 TASK, COM SCHEDULE PRÓPRIO,
+
+QUE FARÁ ESSE REFRESH PARA NÓS,
+
+BASED ON OUR DEMAND,
+
+QUANDO A DATA 
+
+CHEGAR...
+
+
+
+
+
+
+
+
+
+
+
+O REQUISITO PARA NOSSO CENÁRIO É 
+
+
+""UMA VEZ QUE DATA MUDA NA PATIENT TABLE,
+
+A CHANGE DATA DEVE SER EMPURRADA 
+
+NA MATERIALIZED VIEW TABLE""...
+
+
+
+
+
+(
+    E CADA TABLE DATA DEVE 
+
+    SER AUTOMATICAMENTE REFRESHADA,
+
+    A CADA 2 DIAS,
+
+
+    ASSIM QUE A DEATH DATA CHEGA 
+    NESSA TABLE DE "pATIENT"....
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA SATISFAZER ESSES REQUISITOS,
+
+PODEMOS FACILMENTE USAR 
+
+SNOWFLAKE 
+
+STREAMS E TASKS, 
+essas features...
+
+
+
+
+
+
+
+
+
+
+
+--> O STREAM VAI RECONHECER AS CHANGES NA DATA,
+
+
+
+E PODEMOS USAR __ TASKS __ PARA 
+
+
+SCHEDULAR PUSHES DE DATA 
+
+PARA A 
+
+TABLE "MV" (que nao será uma mv, mas algo parecido) 
+
+
+A CADA 2 DIAS... 
+
+
+
+
+
+
+
+AÍ A "DEATH DATA" SERÁ EMPURRADA 
+
+PARA NOSSA VIEW, ISSO SE A DEATH DATA EXISTIR/
+TIVER SIDO CRIADA NESSE MEIO-TEMPO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+QUER DIZER QUE NOSSO PROCESS FLOW 
+
+VAI SE PARECER ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[SOURCE TABLE] ------>    [TASK TO RUN EVERY 2 DAYS] --> TARGET TABLE
+                STREAMS                I
+                                       I 
+                                       I 
+                                       I 
+                                       I 
+                            [EXECUTE MERGE ON TARGET 
+                                            TABLE ]
+
+
+
+
+
+
+
+
+
+
+
+
+1) CRIAMOS UMA SOURCE TABLE,
+
+A PATIENT TABLE...
+
+
+
+
+
+2) ANEXAMOS UMA STREAM EM CIMA DESSA TABLE...
+
+
+
+
+
+
+
+3) CRIAMOS UMA TASK... NESSA TASK,
+VAMOS USAR "SYSTEM$STREAM_HAS_DATA()" PARA 
+
+TRIGGAR O SQL STATEMENT... E FAREMOS COM QUE 
+ESSA TASK SEJA EXECUTADA/CHECADA A CADA 2 DIAS (cron job, ou time msm)...
+
+
+
+
+4) DENTRO DESSA TASK,
+USAREMOS 
+1 MERGE STATEMENT,
+
+
+USAREMOS ESSE STATEMENT PARA __eVITAR_ DUPLICATES 
+
+APARECENDO NA 
+
+
+NOSSA FAKE "MATERIALIZED VIEW TABLE"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> é claro que nosso processo 
+
+
+nao será o mesmo que o snowflake REALIZA 
+
+no backend...
+
+
+
+
+
+
+
+
+
+
+
+entretanto,
+
+considerando nosso requirement,
+
+ainda podemos usar 
+
+
+
+as features de 
+
+
+tasks e streams 
+
+
+
+para atingir 1 business need 
+
+bem parecida (
+
+death data materialized view FAKE...
+
+)
+
+
+
+
+
+
+
+
+
+
+--> JÁ TIVEMOS UM DEMO DETALHADO 
+
+SOBRE A FEATURE DE STREAM E TASK 
+
+
+DO SNOWFLAKE...
+
+
+
+
+
+
+
+
+--> OK... QUAL É A VANTAGEM 
+DESSE PROCESSO,
+
+
+
+EM RELACAO A MATERIALIZED VIEWS DE VERDADE....
+
+
+
+
+
+
+
+
+
+
+--> BEM, A VANTAGEM É QUE 
+
+
+
+_ TEMOS _MAIOR__ CONTROLE __ 
+
+SOBRE O DATA REFRESH (
+    podemos controlar QUANDO ELE É REALIZADO...
+
+
+
+    PODEMOS ECONOMIZAR, NAO TEREMOS 
+    O REFRESH COST DAS MV...
+)
+
+
+
+
+
+
+
+
+
+
+--> E, AINDA ASSIM,
+
+GANHAREMOS UM RESULTADO PRATICAMENTE 
+
+EQUIVALENTE....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+LESSONS LEARNED:
+
+
+
+
+
+
+
+
+
+1) DONT CREATE MATERIALIZED VIEW ON LARGE 
+TABLE 
+
+WHICH HAS FREQUENT DATA CHANGES...
+
+
+
+
+
+
+
+
+2) UNDERSTAND THERE WILL BE A 
+
+
+___cOST___ ASSOCIATED WHILE YOU ARE EDITING 
+
+THE MV (updates on table).
+
+HENCE, ANALYZE YOUR BUSINESS REQUIREMENT AND ONLY 
+THEN CREATE THE MV...
+
+
+
+
+
+
+
+https://www.phdata.io/blog/snowflake-views-vs-materialized-views/
+
+
+
+
+
+
+3) IF POSSIBLE, TRY TO LEVERAGE EXISTING 
+SNOWFLAKE FEATURES TO ACHIEVE THE SAME RESULTS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+LIMITATIONS OF MATERIALIZED VIEWS:
+
+
+
+
+
+The following limitations apply to creating materialized views:
+A materialized view can query only a single table.
+
+Joins, including self-joins, are not supported.
+
+A materialized view cannot query:
+
+A materialized view.
+
+A non-materialized view.
+
+A UDTF (user-defined table function).
+
+A materialized view cannot include:
+
+UDFs (this limitation applies to all types of user-defined functions, including external functions).
+
+Window functions.
+
+HAVING clauses.
+
+ORDER BY clause.
+
+LIMIT clause.
+
+GROUP BY keys that are not within the SELECT list. All GROUP BY keys in a materialized view must be part of the SELECT list.
+
+GROUP BY GROUPING SETS.
+
+GROUP BY ROLLUP.
+
+GROUP BY CUBE.
+
+Nesting of subqueries within a materialized view.
+
+Read more at,
+
+
+

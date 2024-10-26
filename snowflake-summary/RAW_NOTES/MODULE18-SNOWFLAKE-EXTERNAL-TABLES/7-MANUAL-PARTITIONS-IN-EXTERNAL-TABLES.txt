@@ -1,0 +1,1358 @@
+
+
+
+
+DEVEMOS CONTINUAR A DISCUSSAO SOBRE 
+
+PARTITIONS EM EXTERNAL TABLES...
+
+
+
+
+
+
+
+
+
+
+
+NESSA LECTURE,
+
+
+
+TENTAREMOS COMPREENDER 
+
+
+""COMO ADICIONAR 
+
+ESSAS PARTITIONS __MANUALMENTE__ 
+
+àS EXTERNAL TABLES""...
+
+
+
+
+
+
+
+
+--> anteriormente,
+
+adicionamos/settamos partitions assim:
+
+
+
+
+
+
+
+
+CREATE OR REPLACE EXTERNAL TABLE emp_ext_table
+(
+    DEPARTMENT VARCHAR AS SUBSTR(metadata$filename, 5, 11), -- código em questao
+    FIRST_NAME STRING AS (VALUE:c1::string),
+    LAST_NAME STRING(20) AS (value:c2::string),
+    EMAIL STRING AS (value:c3::string)
+    PARTITION BY (DEPARTMENT) -- código em questao
+    WITH LOCATION = @demo_db.public.s3_external_stage
+    FILE_FORMAT=(
+        TYPE=CSV
+    )
+);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ANTES DE TENTARMOS FAZER ISSO,
+
+
+DEVEMOS COMPREENDER 1 COISA RÁPIDA....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> A COISA É:
+
+
+
+
+
+
+NA ÚLTIMA LIÇÃO,
+
+VIMOS COMO PODEMOS USAR 
+
+"substr()"
+
+
+
+
+
+PARA CRIAR 
+
+
+PARTITIONS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> DIGAMOS QUE TEMOS 1 FILE,
+
+DE NOME 
+
+
+
+"employees03.csv"...
+
+
+
+
+
+
+
+
+
+
+-> SE EU UPLOADAR 1 NOVA FILE,
+
+COM NOME 
+
+
+"employees03_1.csv",
+
+
+
+
+
+
+
+
+AÍ, POR CONTA DESSA SUBSTRING,
+
+
+
+
+
+VISTA LOGO ACIMA,
+
+APENAS 
+
+O TRECHO DE 
+
+
+"employees03"
+
+
+SERÁ CONSIDERADO,
+
+
+E O RESTO, A PARTE DO "_1",
+
+
+SERÁ DESCARTADA ----->  QUER DIZER QUE 
+
+
+
+
+
+
+
+QUANDO PROCURARMOS 
+
+POR 
+
+
+
+
+
+SELECT * 
+FROM emp_ext_table
+WHERE DEPARTMENT='employees03';,
+
+
+
+
+
+
+
+
+ESSA FILE TAMBÉM SERÁ CONSIDERADA NO SEARCH,
+
+AINDA QUE 
+
+SEU 
+
+
+
+
+NOME SEJA "employees03_1",
+
+
+e nao "employees03"...
+
+
+
+
+
+
+
+
+
+
+
+-> OU SEJA,
+
+
+"employees03.csv"
+
+
+e 
+
+"empoyees03_1.csv"
+
+
+
+SERAO CONSIDERADOS COMO 1 PARTITION ÚNICA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+MAS QUAL É A UTILIDADE DISSO?
+
+
+
+
+
+
+
+
+
+
+
+
+BEM, PODEM EXISTIR CASOS EM QUE 
+
+A 
+
+DATA 
+
+JÁ ESTÁ PRESENTE 
+
+
+
+DE UM MODO "PARTITION" 
+
+lá 
+
+
+
+NA S3 LOCATION (por meio dos FILENAME PATHS, 
+
+ou por meio de folders)
+
+
+
+
+
+
+
+
+----> IMAGINE 
+
+
+1 CASO EM QUE TEMOS 3 FOLDERS:
+
+
+
+
+
+
+
+
+gold_customer 
+
+platinum_customer 
+
+valued_customer 
+
+
+
+
+
+
+
+
+
+
+--> TEMOS FOLDERS... --> COM ISSO, 
+
+JÁ TEMOS 
+
+ESSAS "PARTITIONS"... -->  MAS ESSE 
+
+
+TIPO DE 
+
+PARTITION (folders)
+
+
+
+
+___ NAO __ CONSEGUE__ SE ENCAIXAR 
+
+
+NAQUELE CRITERIO QUE USA O "SUBSTR()"...
+
+
+
+
+
+
+
+
+
+
+
+
+QUER DIZER QUE TEMOS QUE 
+
+
+IR EM FRENTE E ADICIONAR ESSAS PARTITIONS 
+
+
+__MANUALMENTE,
+LÁ NO S3...
+(criar esses folders, especificar 
+essas partitions lá no s3)..
+
+
+
+
+
+
+
+
+
+
+
+-> SE ISSO ACONTECE, TEMOS QUE ALTERAR 
+
+NOSSOS STORAGE INTEGRATION OBJECTS,
+
+
+PARA QUE CONSIDEREM ESSAS NOVAS PARTITIONS/FOLDERS:
+
+
+
+
+
+
+
+
+
+
+
+--------------- ADD PARTITION MANUALLY --------------
+
+
+
+
+
+
+
+
+
+
+ALTER STORAGE INTEGRATION S3_EXAMPLE_INTEGRATION
+SET STORAGE_ALLOWED_LOCATIONS=(
+    's3://snowflaketest/emp/',
+    's3://snowflaketest/emp_unload/',
+    's3://snowflaketest/zip_folder/',
+    's3://snowflaketest/emp_partitions/'
+);
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE STAGE DEMO_DB.PUBLIC.MY_S3_STAGE_PARTITION
+    STORAGE_INTEGRATION = S3_EXAMPLE_INTEGRATION
+    URL='s3://sno3flaketest/emp_partitions'
+    FILE_FORMAT=(
+        DEMO_DB.FILE_FORMATS.MY_CSV_FORMAT
+    );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    ----> DEPOIS DISSO TUDO,
+
+
+    O PROFESSOR CRIA 1 NOVA EXTERNAL TABLE:
+
+
+
+
+
+
+
+CREATE OR REPLACE DEMO_DB.PUBLIC.EMP_EXT_TABLE_PARTITIONS
+    (
+        CUSTOMER_TYPE STRING AS (parse_json(metadata$external_table_partition)::string),
+        FIRST_NAME STRING AS (value:c1::string),
+        LAST_NAME STRING(20) AS (value:c2::string)
+    )
+PARTITION BY (CUSTOMER_TYPE)
+PARTITION_TYPE = USER_SPECIFIED
+WITH LOCATION=@demo_db.public.MY_S3_STAGE_PARTITION
+FILE_FORMAT=(TYPE=CSV);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+------> QUER DIZER QUE 
+
+
+
+ESTAMOS CRIANDO 1 COLUMN 
+
+ESPECIAL,
+
+DE NOME "customer_type"...
+
+
+
+
+
+
+
+--> COMO VALUE DESSA COLUMN,
+
+
+ESTAMOS USANDO 
+
+
+A PROPRIEDADE ESPECIAL 
+
+
+'metadata$external_table_partition'...
+
+
+
+
+
+
+
+
+
+
+
+
+COM ISSO, COM ESSE COMANDO,
+
+O PROFESSOR ESTÁ ESPECIFICANDO AS PARTITIONS 
+
+MANUALMENTE...
+
+
+
+
+
+
+
+
+
+
+
+
+----> O PROFESSOR EXPLICA QUE 
+
+
+O USO DE 
+
+
+"metadata$external_table_partition"
+
+
+É OBRIGATÓRIO,
+NESSES CASOS,
+
+
+
+CASOS EM QUE VC ESTÁ ACTUALLY
+
+
+
+GOING AHEAD E ESPECIFICANDO 
+
+ESSA PARTITION EXPLICITAMENTE,
+
+POR CONTA PRÓPRIA...
+
+
+
+
+
+
+
+(
+
+    quer dizer que NAO ESTAMOS CRIANDO 1 SUBSTRING
+    E NAO 
+
+    ESTAMOS 
+    DEIXANDO A RESPONSABILIDADE DE CRIAR A PARTITION 
+    AO SNOWFLAKE EM SI,
+
+    E SIM ESTAMOS CRIANDO A PARTITION __POR CONTA PRÓPRIA,
+    COM NOSSAS PRÓPRIAS MÃOS...
+)
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE ESTAMOS TOMANDO A RESPONSABILIDADE
+
+DE ADICIONAR AQUELES FOLDERS COMO 
+
+
+___PARTITIONS__ PARA ESSA EXTERNAL TABLE...
+
+
+
+
+
+
+
+
+--> É POR ISSO QUE VC DEVE 
+
+ADICIONAR ESSA SPECIAL COLUMN,
+
+
+
+que usa essa property de metadata$external_table_partition,
+
+
+
+que é justamente 
+
+A PROPRIEDADE QUE VC DEVE USAR QUANDO 
+
+VC QUISER 
+
+ADICIONAR 
+
+SUAS PRÓPRIAS PARTITIONS, CUSTOMIZADAS... (manual 
+partitions)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ok, mas como fica o value dessa column?
+
+
+
+
+
+
+DIGAMOS QUE CONSIDERAMOS APENAS 2 COLUMNS,
+
+
+FIRST_NAME 
+E  LAST_NAME...
+
+
+
+
+
+
+
+
+
+
+
+ex:
+
+
+
+
+
+
+CREATE OR REPLACE DEMO_DB.PUBLIC.EMP_EXT_TABLE_PARTITIONS
+    (
+        CUSTOMER_TYPE STRING AS (parse_json(metadata$external_table_partition)::string),
+        FIRST_NAME STRING AS (value:c1::string),
+        LAST_NAME STRING(20) AS (value:c2::string)
+    )
+PARTITION BY (CUSTOMER_TYPE)
+PARTITION_TYPE = USER_SPECIFIED
+WITH LOCATION=@demo_db.public.MY_S3_STAGE_PARTITION
+FILE_FORMAT=(TYPE=CSV);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> em "PARTITION BY",
+
+
+
+colocamos esse customer_type,
+
+
+essa column com value customizado...
+
+
+
+
+
+
+
+
+
+
+
+--> em "PARTITION_TYPE",
+
+
+deixamos "USER_SPECIFIED",
+
+pq estamos 
+
+
+ESPECIFICANDO 1 PARTITION TYPE NÓS MESMOS...
+
+
+
+
+
+
+
+
+
+
+rodamos select * from EMP_EXT_TABLE_PARTITIONS,
+
+
+
+PARA 
+
+
+VER 
+
+
+A ESTRUTURA 
+
+DESSA TABLE...
+
+
+
+
+
+
+
+
+
+MAS QUANDO RODAMOS ISSO,
+
+
+
+NAO VEMOS NADA NA DATA...
+
+
+
+
+
+
+
+
+
+MAS PQ?
+
+
+
+
+
+
+
+É PQ AINDA NAO ATUALIZAMOS A METADATA 
+
+
+DESSA TABLE..
+
+
+
+
+
+
+
+
+PARA ATUALIZAR A METADATA,
+
+
+
+
+PODERÍAMOS PENSAR QUE RODARÍAMOS 
+
+
+
+ALTER EXTERNAL TABLE EMP_EXT_TABLE_PARTITIONS REFRESH,
+
+
+mas 
+
+
+
+
+NA VERDADE DEVEMOS RODAR OUTRO COMANDO...
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE O METADATA TABLE OBJECT TEM QUE SER 
+
+REFRESHED...
+
+
+
+
+
+
+
+
+
+-> PRECISAMOS ADICIONAR ESSA PARTITION 
+
+
+NA NOSSA EXTERNAL TABLE,
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+ALTER EXTERNAL TABLE emp_ext_table ADD PARTITION (CUSTOMER_TYPE='gold_customer') LOCATION 'gold_customer/';
+
+
+
+
+
+
+
+
+
+OU SEJA,
+
+ESTAMOS __APONTANDO__ ESSA PARTITION, DE NOSSA TABLE,
+
+
+AO FOLDER 
+
+"gold_customer",
+
+
+lá no aws s3....
+
+
+
+
+
+
+
+
+
+
+
+
+AGORA SE QUERIARMOS ESSA TABLE,
+
+
+
+FICAMOS COM ESTE OUTPUT:
+
+
+
+
+
+
+
+
+
+VALUE   CUSTOMER_TYPE   FIRST_NAME      Last_name
+
+{...}   Gold_customer   Athena          Featherstone
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... QUER DIZER QUE TODOS OS RECORDS 
+
+DESSE FOLDER SERAO RETRIEVADOS...
+
+
+
+
+
+
+
+
+
+
+
+
+--> E NAO VEMOS NADA DE "platinum_customer"
+
+
+ou 
+
+"valued_customer"... --> ISSO JUSTAMENTE 
+
+
+PQ __ NAO ADICIONAMOS 
+
+
+NENHUMA DESSAS PARTITIONS,
+
+MANUALMENTE,
+
+àQUELA EXTERNAL TABLE EM PARTICULAR...
+
+
+
+
+
+
+
+
+--> PODEMOS ADICIONAR AS OUTRAS PARTITIONS,
+
+
+BASTA RODAR ASSIM:
+
+
+
+
+
+
+
+ALTER EXTERNAL TABLE emp_ext_table ADD PARTITION (CUSTOMER_TYPE='platinum_customer') LOCATION 'platinum_customer/';
+
+
+ALTER EXTERNAL TABLE emp_ext_table ADD PARTITION (CUSTOMER_TYPE='valued_customer') LOCATION 'valued_customer/';
+
+
+
+
+------------------------
+
+
+
+
+
+
+
+
+
+
+OK... 
+
+
+
+
+AGORA EM CUSTOMER_TYPE PODEMOS 
+
+VER 
+
+3 TIPOS DE 
+
+
+CUSTOMER (valued, platinum e gold)...
+
+
+
+
+
+
+
+
+
+
+--> AGORA SE QUEREMOS USAR ESSAS PARTITIONS 
+
+NO NOSSO WHERE FILTER,
+
+
+ESCREVEMOS ASSIM:
+
+
+
+
+
+
+
+
+
+SELECT * FROM emp_ext_table WHERE customer_type='Gold_customer';
+
+
+
+
+
+
+
+
+
+
+SELECT * FROM emp_ext_table WHERE customer_type='valued_customer';
+
+
+
+
+
+
+
+
+
+SELECT * FROM emp_ext_table WHERE customer_type='platinum_customer';
+
+
+
+
+
+-------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+OK... MAS O QUE VC DEVE ENTENDER, QUANDO VC ESTIVER ADICIONANDO 
+
+ESSAS PARTITIONS MANUALMENTE,
+
+
+COM ESTE COMANDO:
+
+
+
+ALTER EXTERNAL TABLE emp_ext_table ADD PARTITION (CUSTOMER_TYPE='platinum_customer') LOCATION 'platinum_customer/';
+,
+
+
+
+
+
+
+
+É QUE 
+
+
+
+
+1) __VC É OBRIGAOD 
+
+A USAR 
+
+
+AQUELE VALUE ESPECIAL metadata,
+
+
+de 
+
+
+"metadata$external_table_partition";
+
+
+
+
+
+
+2) USAR O "PARTITION BY", e passar o nome dessa column com value especial...
+
+
+
+
+3) UASR 'PARTITION_TYPE=USER_SPECIFIED"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+SE VOCE NAO SEGUIR 
+
+
+ESSE FORMATO ESPECÍFICO,
+
+VC FICARÁ COM ERRORS DE SINTAXES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+----_> OK... O CONTEXTO EM QUE USAMOS 
+
+
+ESSAS USER-SPECIFIED PARTITIONS 
+
+
+
+
+
+
+É __ SOMENTE __ NOS CASES EM QUE 
+
+NAO PODEMOS USAR __ 
+
+ESSAS "SUBSTRING FUNCTIONS"
+
+
+PARA CRIAR AS PARTITIONS MANUALMENTE (
+
+    ou se vc 
+
+    tem 
+
+    1 hive table,
+
+    que já 
+
+
+    criou vários folders 
+
+
+    de uma maneira bem particionada.... --> AÍ VC É OBRIGADO 
+    A REALMENTE 
+
+    CRIAR ESSA EXTERNAL TABLE 
+
+    E ADICIONAR ESSAS PARTITIONS MANUALMENTE...
+)
+
+
+
+
+
+
+
+
+
+
+
+ANTES DE FECHARMOS ESSA LECTURE,
+
+TEMOS 
+
+
+MAIS 1 DETALHE A SER VISTO...
+
+
+
+
+
+
+
+
+
+
+
+
+O DETALHE É:
+
+
+
+
+
+
+*** QUANDO 
+
+TEMOS PARTIITONS ADICIONADAS MANUALMENTE (com ADD PARTITION),
+
+
+
+O COMANDO 
+
+DE 
+
+
+""ALTER EXTERNAL TABLE <table_name> REFRESH"
+
+
+
+
+FICA INDISPONÍVEL/NAO FUNCIONA...
+
+
+
+
+
+
+
+
+
+
+*** ESSE COMANDO SÓ FUNCIONA PARA EXTERNAL TABLES 
+QUE  SAO PARTITIONED DINAMICAMENTE, USANDO SUBSTR()....
+
+
+
+
+
+
+
+
+
+
+CERTO... e isso é uma porcaria... --> 
+
+
+
+
+
+"EXTERNAL_TABLE_REFRESH NOT SUPPORTED FOR EXTERNAL TABLES 
+WITH USER-SPECIFIED PARTITIONS"
+
+
+
+
+
+
+MAS PQ ISSO NAO FUNCIONA?
+
+
+
+
+
+
+BEM, É ÓBVIO... É PQ, AQUI,
+
+VC ESTÁ ESPECIFICANDO 
+
+
+AS PARTITIONS POR NOSSA CONTA,
+
+
+
+
+MANUALMENTE.... --> NESSE CASO,
+
+
+
+VOCE NAO PRECISA QUE 
+
+
+
+ESSE REFRESH SEJA FEITO,
+
+PQ QUEM 
+
+ESTÁ FAZENDO O ADD E REMOVE DAS 
+
+PARTITIONS É VC MESMO, e nao o snowflake...
+
+
+
+
+
+
+
+
+
+DEVEMOS TER CUIDADO COM A SINTAXE DE CREATE 
+
+
+DE PARTITIIONS MANUALMENTE,
+
+
+SEMPRE QUE CRIAMOS EXTERNAL TABLES....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+RESUMO:
+
+
+metadata$filename --> USADO PARA PARTITIONS DINAMICAS/COM SUBSTR(), usando o path do s3....
+
+
+
+
+
+metadata$external_table_partition -> USADO PARA PARTITIONS CRIADAS MANUALMENTE, FOLDERS, etc... (para quando partitions dinamicas/built-in do snowflake NAO SAO O SUFICIENTE)

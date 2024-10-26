@@ -1,0 +1,595 @@
+
+
+
+
+
+
+
+
+
+
+
+como exemplo de como recuperar 
+
+
+esses records que acabam erroring-out,
+
+
+temos este código:
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- COPY COMMAND
+COPY INTO DEMO_DB.PUBLIC.EMP_EXT_STAGE_TABLE
+FROM @DEMO_DB.PUBLIC.S3_EXTERNAL_STAGE
+ON_ERROR='CONTINUE'-- continue copying even if errors occur...
+
+
+-- errored-out --> queryId: 01ae5a2a-0001-464c-0000-00046d2a2479
+
+
+    CREATE OR REPLACE TABLE save_copy_errors AS SELECT * FROM TABLE(VALIDATE(DEMO_DB.PUBLIC.EMP_EXT_STAGE_TABLE, JOB_ID=>'01ae5a2a-0001-464c-0000-00046d2a2479'));
+
+
+
+
+SELECT * FROM SAVE_COPY_ERRORS;
+
+
+
+
+
+CREATE OR REPLACE TABLE FORMATTED_COPY_ERRORS AS
+SELECT 
+SPLIT_PART(rejected_record, ',', 1 ) as first_name,
+SPLIT_PART(rejected_record, ',', 2 ) as last_name,
+SPLIT_PART(rejected_record, ',', 3 ) as email,
+SPLIT_PART(rejected_record, ',', 4 ) as streetaddress,
+SPLIT_PART(rejected_record, ',', 5 ) as city,
+SPLIT_PART(rejected_record, ',', 6 ) as start_date
+FROM save_copy_errors;
+
+
+
+SELECT * FROM DEMO_DB.PUBLIC.FORMATTED_COPY_ERRORS;
+
+
+
+
+
+
+
+
+
+--------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> AGORA TENTAREMOS ENTENDER 
+
+A OPTION DE "ON_ERROR='CONTINUE'"
+
+
+
+
+NO COMANDO DE COPY....
+
+
+
+
+
+
+
+
+
+
+--> QUAL É A UTILIDADE DESSA OPTION...
+
+
+
+
+
+
+
+
+
+
+
+
+1) PODEMOS FACILMENTE FAZER REJECT 
+DE RECORDS,
+
+SEM __ FAZER "FAIL" 
+
+DO COPY COMMAND EM SI....
+
+
+
+
+
+
+
+2) QUANDO VC ESTÁ CONSTRUINDO 
+
+"DATA PIPELINES",
+
+O USO DESSA OPTION É __ ESSENCIAL....
+
+
+(pq se esse passo falha, 
+
+nao vai quebrar a execution inteira)
+
+
+
+
+
+
+
+
+3) QUEREMOS APENAS QUE 
+
+O COPY COMMAND FAÇA REJECT DOS RECORDS,
+
+RECORDS QUE NAO ENCAIXEM NO SCHEMA...
+
+
+
+
+
+
+
+
+
+
+4) VOCE PODE COLETAR OS REJECTED RECORDS 
+
+EM 1 TABLE SEPARADA... -->  PQ O COPY COMMAND 
+
+VAI 
+
+
+"KEEP TRACK" DOS REJECTED RECORDS --> E ESSES RECORDS 
+
+PODEM 
+SER 
+
+RETRIEVADOS MAIS TARDE,
+
+
+DEPOIS QUE 
+
+ELE
+
+TERMINAR DE COPIAR 
+
+PARA DENTRO DA TABLE....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+O PROFESSOR TEM ESTE CÓDIGO EXEMPLO:
+
+
+
+
+
+
+
+
+
+-- LOAD DATA INTO TABLE, IGNORING REJECTED RECORDS. --
+
+
+
+
+COPY INTO emp
+FROM @demo_db.external_stages.my_s3_stage
+FILE_FORMAT=(TYPE=CSV 
+field_optionally_enclosed_by='"')
+ON_ERROR='CONTINUE';
+
+
+
+
+
+
+
+
+
+--- CHECK FOR REJECTED RECORDS -- 
+
+
+SELECT * FROM TABLE(validate(emp, job_id=>'<errored_query_id>'))..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+VEREMOS QUE ALGUMAS DAS FILES TERAO FICADO 
+
+
+"PARTIALLY_LOADED"....
+
+
+
+
+
+
+
+
+FICAMOS COM 
+
+
+REJECTED RECORDS, 
+
+
+MAS MESMO ASSIM 
+O COMANDO DE COPY NAO FEZ "FAIL" EM SI...
+
+
+
+
+
+
+
+
+
+
+
+ELE TERMINOU SEM FAILING O SEU COPY,
+
+
+
+
+A ÚNICA DIFERENCA É QUE 
+
+
+
+ELE APENAS REJEITOU OS RECORDS QUE 
+
+
+
+TIVERAM PROBLEMA (o resto 
+
+dos records foi carregado com sucesso)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+-----> OK... ESSES SAO OS 2 POINTS QUE TEMOS QUE 
+CONSIDERAR...
+
+
+
+
+
+
+
+
+
+
+
+
+--> DEPOIS DISSO, TEMOS QUE COLLECT 
+OS 
+
+
+REJECTED RECORDS,
+
+
+
+
+O QUE PODEMOS FAZER POR MEIO DESTE CÓDIGO:
+
+
+
+SELECT * FROM TABLE(validate(emp, job_id=>'<errored_query_id>'))..
+
+
+
+
+
+
+
+
+
+
+--> OK.... COM ISSO PODEMOS VER CLARAMENTE OS RECORDS QUE 
+
+FORAM REJEITADOS 
+
+
+POR CONTA DESSE COMANDO DE "COPY"..
+
+
+
+
+
+
+
+
+
+
+    NA COLUMN DE "rejected_record"
+
+    TEMOS O ACTUAL RECORD QUE DEU PROBLEMA..
+
+
+
+
+
+
+
+
+
+
+e podemos salvar 
+
+
+
+
+esses rejected records em 1 table separada,
+
+
+
+
+
+
+COM CÓDIGOS TIPO ESTES:
+
+
+
+
+
+
+
+
+
+-- errored-out --> queryId: 01ae5a2a-0001-464c-0000-00046d2a2479
+
+
+    CREATE OR REPLACE TABLE save_copy_errors AS SELECT * FROM TABLE(VALIDATE(DEMO_DB.PUBLIC.EMP_EXT_STAGE_TABLE, JOB_ID=>'01ae5a2a-0001-464c-0000-00046d2a2479'));
+
+
+
+
+SELECT * FROM SAVE_COPY_ERRORS;
+
+
+
+
+
+CREATE OR REPLACE TABLE FORMATTED_COPY_ERRORS AS
+SELECT 
+SPLIT_PART(rejected_record, ',', 1 ) as first_name,
+SPLIT_PART(rejected_record, ',', 2 ) as last_name,
+SPLIT_PART(rejected_record, ',', 3 ) as email,
+SPLIT_PART(rejected_record, ',', 4 ) as streetaddress,
+SPLIT_PART(rejected_record, ',', 5 ) as city,
+SPLIT_PART(rejected_record, ',', 6 ) as start_date
+FROM save_copy_errors;
+
+
+
+SELECT * FROM DEMO_DB.PUBLIC.FORMATTED_COPY_ERRORS;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE QUANDO VC CONSTRÓI 
+
+DATA PIPELINES,
+
+
+
+VC SEMPRE DEVE INCLUIR ESSE COMMAND DE 
+
+
+"ON_ERROR=CONTINUE",
+
+
+
+PQ 
+
+
+SEUS COMANDOS DE COPY PODEM 
+
+TER ERROS,
+
+E AÍ ELES SERAO COLETADOS....  --> e mais tarde 
+
+poderao ser retrievados, usando essa fucntion...
+
+
+
+
+
+
+
+
+
+
+
+
+--> E DEPOIS QUE VC PEGA ESSES RECORDS,
+
+VC DEVE OS SALVAR EM 1 TABLE SEPARADA..
+
+
+
+
+
+
+
+
+
+
+
+
+--> COMO ENCONTRAMOS O "job_id"?
+
+
+
+
+
+
+--> PRECISAMOS DA QUERY HISTORY...
+
+
+
+
+
+
+
+---> PRECISAMOS PROGRAMATICAMENTE 
+
+IR EM FRENTE E QUERIAR 
+
+A TABLE DE "copy_history",
+
+
+
+EM QUE DEVEMOS 
+
+RETRIEVAR O queryId,
+
+
+COM BASE NO TIPO DE COPY COMMAND 
+
+
+
+QUE VC EXECUTOU... --> ISSO VAI TE DAR ESSE QUERY ID,
+
+
+
+
+
+
+
+
+QUE DEVERÁ SER FEEDADO PARA DENTRO 
+
+DESSA FUNCTION DE VALIDATE (
+
+    para criar 1 separarte table 
+
+    para seus records rejeitados..
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... QUER DIZER QUE É ASSIM QUE NOSSO PIPELINE DEVE SER PROGRAMADO..
+
+
+(com o 'ON_ERROR='CONTINUE'")...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK.. COMPREENDEMOS COMO COLECIONAR OS REJECTED RECORDS...

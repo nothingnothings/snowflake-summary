@@ -1,0 +1,400 @@
+
+
+
+
+
+
+
+
+
+AGORA FALAREMOS SOBRE DATA SHARING NO SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+MAS CONSIDERE ESTE CENÁRIO:
+
+
+
+
+
+
+
+
+TEMOS 2 CONTAS,
+
+
+
+
+
+CONTA A 
+
+
+
+CONTA B...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> DIGAMOS QUE A CONTA B QUER ACESSAR 
+
+A DATA 
+
+
+CONTIDA NA CONTA A....
+
+
+
+
+
+
+
+
+
+
+
+
+-> SERIA FINE A CONTA "A" 
+
+ENVIAR DATA 
+
+
+
+à CONTA "B"?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> SE ENVIÁSSEMOS ESSA DATA 
+
+
+DA CONTA "A" PARA A CONTA "B",
+
+
+
+
+
+
+SERIA COBRADO O CUSTO 
+
+
+
+DE ENVIO, E O STORAGE 
+
+
+
+DA CONTA B, TAMBÉM...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ESSA É A PRIMEIRA MANEIRA/APPROACH...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS HÁ OUTRA MANEIRA...
+
+
+
+
+
+
+
+
+
+
+
+
+--> DISCUTINDO A ARQUIETURA,
+
+VIMOS QUE OS 
+
+LAYERS 
+
+DE 
+
+"STORAGE" "COMPUTE" E "CLOUD SERVICES"
+
+
+
+SAO SEPARADOS...
+
+
+
+
+
+
+
+
+
+-> A PERGUNTA É:
+
+
+PODEMOS LEVERAGE ESSA SEPARACAO PARA ACESSAR 
+
+
+A DATA  COM MÚLTIPLAS CONTAS, COMPARTILHANDO DATA?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> A MANEIRA FÁCIL QUE PODEMOS USAR PARA 
+
+ACESSAR DATA AO LONGO DE CONTAS 
+
+SNOWFLAKE 
+
+
+É 
+
+
+""EM VEZ DE COMPARTILHAR  A STORAGE,
+
+
+PODEMOS _FACILMENTE_ COMPARTILHAR _ 
+
+A CLOUD SERVICES METADATA AO LONGO DAS CONTAS""...
+
+
+
+
+
+
+
+
+
+
+
+
+--> NESSE CASO, EM VEZ DE ENVIAR DATA DO LAYER "DATA STORAGE"
+
+
+
+DA CONTA "A" PARA A CONTA "B",
+
+
+
+
+
+
+
+O QUE PODEMOS FAZER 
+
+
+
+
+É NOS APROVEITARMOS DO CLOUD SERVICES LAYER -->  SABEMOS QUE 
+
+
+A METADATA DAS TABLES LÁ NO DATA STORAGE LAYER 
+
+VAO FICAR 
+
+ARMAZENADAS 
+
+
+
+NO CLOUD SERVICES LAYER DA CONTA A ---------> O QUE PODEMOS 
+FAZER, NO CASO,
+
+
+
+É CONFERIR ACESSO, À CONTA "B",
+
+
+PARA ACESSAR A METADATA DESSAS TABLES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> NESSE CASO, ENTREGAMOS PERMISSAO AO LAYER 
+CLOUD SERVICES DA CONTA B,
+PARA QUE 
+
+
+CONSIGA ACESSAR A METADATA 
+
+
+SOBRE AS TABLES DA CONTA "A" -----> COM ISSO,
+
+
+A CONTA "B" 
+
+
+__CONSEGUE__ ACTUALLY ACESSAR A DATA QUE ESTÁ 
+
+ARMAZENADA 
+
+
+NA CONTA "A",
+
+
+
+
+MAS __ AO MESMO _ QUE UTILIZARÁ 
+
+
+
+SEU PRÓPRIO COMPUTE (virtual warehouses) 
+
+
+PARA_ _ ACESSAR ESSA DATA DO SNOWFLAKE ACCOUNT A (
+
+
+
+    ou seja,
+
+    a conta B 
+
+    nao tem de usar storage,
+
+    mas tem de usar 
+
+    COMPUTE/VW para 
+
+
+    conseguir acessar a data 
+
+
+    armazenada na conta A...
+)
+
+
+
+
+
+
+
+
+
+
+--> COM ISSO, NAO PRECISAMOS MOVER, FISICAMENTE,
+
+A DATA 
+
+DA CONTA "A" PARA A CONTA "B"...
+
+
+
+
+
+
+
+
+
+
+
+
+-> EM VEZ DISSO, A DATA AINDA PODE FICAR ARMAZENADA 
+
+SOMENTE NA CONTA A,
+
+
+E MESMO ASSIM A CONTA "B" 
+
+VAI TER 
+ACESSO 
+
+À DATA 
+
+
+CONTIDA NA CONTA B,
+
+POR MEIO DE SEU PRÓPRIO COMPUTE...
+
+
+
+
+
+
+
+
+
+
+
+--> NAS PRÓXIMAS AULAS VEREMOS COMO PODEMOS 
+
+COMPARTILHAR 
+
+DATA AO LONGO DE CONTAS 
+
+
+SNOWFLAKE (tanto na CLI como no WEB CONSOLE/WORKSHEETS)....
+
+
+
+
+
+

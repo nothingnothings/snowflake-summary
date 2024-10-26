@@ -1,0 +1,690 @@
+
+
+
+
+
+
+
+
+
+
+AGORA TEMOS ALGUMAS QUESTIONS:
+
+
+
+
+
+
+
+
+
+
+
+1) WHAT IF I ABORT QUERY WHILE EXECUTING? WILL IT ROLLBACK PARTIALLY UPDATED 
+DATA?
+
+
+
+
+
+
+NO, it will revert completely, to a state before the operation....
+
+
+
+
+
+
+
+
+
+
+
+
+PROFESSOR DEMONSTRA ASSIM:
+
+
+
+
+
+
+
+UPDATE DEMO_DB.PUBLIC.CUSTOMER_NOCLUSTER
+SET C_MKTSEGMENT='FURNI'
+WHERE C_MKTSEGMENT='FURNITURE';
+
+
+
+
+
+
+
+
+
+
+
+--> PROFESSOR RODA ISSO, DEPOIS CANCELA O PROCESSO 
+DE UPDATE NO MEIO, E DEPOIS RODA 1 SELECT PARA VER 
+
+
+SE O NÚMERO DE ROWS COM ESSE VALUE REALMENTE FOI ALTERADO....
+
+
+
+
+
+
+
+
+
+
+--> VEREMOS QUE ISSO NAO TERÁ ACONTECIDO...
+
+
+
+
+A DATA NAO FOI ALTERADA,
+
+
+pq o statement nao TERMINOU DE SER EXECUTADO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+O PROFESSOR TAMBÉM QUERIA NOS MOSTRAR """COMO O ROLLBACK FUNCIONA,
+
+NO SNOWFLAKE""...
+
+
+
+
+
+
+
+
+
+
+
+NO SNOWFLAKE,
+PARA CADA STATEMENT,
+
+
+
+TIPO ESTE:
+
+
+
+
+
+
+
+
+
+
+UPDATE SAMPLE_DATABASE.PUBLIC.CUSTOMER_NOCLUSTER
+SET C_MKTSEGMENT='FURNI'
+WHERE C_MKTSEGMENT='FURNITURE';,
+
+
+
+
+
+
+
+
+
+
+PARA CADA STATEMENT,
+
+CADA STATEMENT SERÁ "COMMITADO"...
+
+
+
+
+
+--> SE VC NAO QUISER QUE 
+
+O STATEMENT 
+
+
+SEJA AUTOMATICAMENTE COMMITADO, NO SNOWFLAKE,
+
+
+VC PRECISA 
+
+
+INCLUIR 
+
+
+
+ESSE STATEMENT EM 1 TRANSACTION...
+
+
+
+
+
+
+
+
+
+
+
+
+TIPO ASSIM:
+
+
+
+
+
+
+BEGIN name t4; -- Starts your transaction
+
+
+
+UPDATE SAMPLE_DATABASE.PUBLIC.CUSTOMER_NOCLUSTER
+SET C_MKTSEGMENT='FURNI'
+WHERE C_MKTSEGMENT='FURNITURE';
+
+
+
+
+SELECT current_transaction();  -- gives you a NUMBER -- copy that number 
+
+
+SELECT to_timestamp_ltz(transaction_number, 3) AS transaction_timestamp;
+
+
+
+
+rollback; -- isso vai rollbackar todas as changes  feitas durante essa transaction.
+
+
+
+
+commit; -- vai aplicar todas as changes feitas durante a transaction.
+
+
+--------------------------------------------
+
+
+
+
+
+
+
+
+ok, exatamente como em uma database sql comum...
+
+
+
+
+
+
+---------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+PRÓXIMA PERGUNTA:
+
+
+
+
+
+
+2) HOW TO KILL BLOCKED TRANSACTIONS...?
+
+(Transactions que ficam na FILA)...
+
+
+
+
+
+
+
+
+
+
+
+
+O PROFESSOR EXECUTA A TRANSACTION DE UPDATE MAIS UMA VEZ:
+
+
+
+
+
+
+
+
+UPDATE SAMPLE_DATABASE.PUBLIC.CUSTOMER_NOCLUSTER
+SET C_MKTSEGMENT='FURNI'
+WHERE C_MKTSEGMENT='FURNITURE';
+
+
+
+
+
+
+
+
+aí ele executa uma segunda transaction, para a colocar na fila (como "BLOCKED TRANSACTION"):
+
+
+
+
+
+
+UPDATE SAMPLE_DATABASE.PUBLIC.CUSTOMER_NOCLUSTER
+SET C_MKTSEGMENT='FUR'
+WHERE C_MKTSEGMENT='FURNITURE';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-----------> esse segundo statement vai ficar BLOQUEADO...
+
+
+
+
+
+
+
+
+
+
+--> PODEMOS RODAR 
+
+
+
+"SHOW LOCKS",
+
+PARA 
+
+VER 
+
+
+
+O STATUS DE TODAS NOSSAS QUERIES...
+
+
+
+
+
+
+
+
+
+-> FICAMOS COM 2 ROWS,
+
+
+
+
+resource --> SAMPLE_DATABASE.PUBLIC.CUSTOMER_NOCLUSTER
+
+
+transaction --> número da transaction/operation (usado para CANCELAR TRANSACTIONS, por exemplo)...
+
+
+
+status --> HOLDING/WAITING...
+
+
+query_id --> usado para ABORTAR QUERIES, por exemplo...
+
+
+
+
+
+
+
+""HOLDING"" --> SIGNIFICA QUE ESTÁ SEGURANDO O OBJECT, está aplicando 
+                algo nessa table... (update/insert)....
+
+
+
+""WAITING"" --> está ESPERANDO PELO FINISH DE UM OUTRO OBJECT QUE ESTÁ 
+                "HOLDING" ESSA TABLE....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    --> PARA CANCELAR 1 TRANSACTION,
+
+
+    COMO ESSA QUE ESTÁ "WAITING",
+
+
+
+
+PODEMOS USAR ESTE STATEMENT:
+
+
+
+
+
+
+
+
+
+
+SELECT SYSTEM$ABORT_TRANSACTION(<your_transaction_id>)
+
+
+
+
+TAMBÉM TEMOS ESTE:
+
+
+SELECT SYSTEM$CANCEL_QUERY(<your_query_id>)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS SE TENTAMOS RODAR ISTO:
+
+
+
+SELECT SYSTEM$ABORT_TRANSACTION(<your_transaction_id>)
+
+
+
+
+
+
+
+ganhamos um __ ERROR___....
+
+
+
+
+
+
+
+
+--> "COULD NOT ABORT TXN"...
+
+
+
+
+
+
+
+
+--> SE VC GANHAR ESSE ERROR, VC DEVE CANCELAR A QUERY EM SI,
+
+
+COM ESTE COMANDO:
+
+
+
+
+
+SELECT SYSTEM$CANCEL_QUERY(<your_query_id>)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ISSO VAI CANCELAR A QUERY EM SI....
+
+
+
+
+
+
+
+
+
+
+SE VC FOR O ADMIN, VC TAMBÉM TEM ESTE COMANDO:
+
+
+
+
+
+-- Show open transactions with SESSION ID AND USER:
+SHOW transactions IN account;
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- Kill all queries for the session:
+SELECT SYSTEM$CANCEL_ALL_QUERIES(<your_session_id>);
+
+
+
+
+
+
+
+
+
+-- Abort session itself 
+
+
+
+SELECT SYSTEM$ABORT_SESSION(<your_session_id>)
+
+
+
+
+
+
+
+
+----------------------------
+
+
+
+
+
+
+
+
+POR FIM, TEMOS ESTA PERGUNTA:
+
+
+
+
+
+
+WHAT HAPPENS IF I EXECUTE UPDATE STATEMENT ON DIFFERENT 
+
+COLUMNS,
+AS TWO SEPARATE TRANSACTION?
+
+
+
+
+
+
+
+
+
+
+
+--> nesse caso,
+
+
+
+A SEGUNDA TRANSACTION VAI FICAR NO BLOCKED STATE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUANTO TEMPO QUERIES PODEM FICAR "QUERIED UP"?
+
+
+
+
+
+--> DEVEMOS RODAR "SHOW PARAMETERS"....
+
+
+
+
+
+--> com esse comando,
+
+
+TEMOS 1 ROW QUE É "LOCK_TIMEOUT"....
+
+
+
+
+
+
+
+ESSE PARAMETER NOS DIZ QUANTO TEMPO AS QUERIES 
+
+
+DEVEM ESPERAR...
+
+
+
+
+POR DEFAULT, AS QUERIES VAO ESPERAR 
+
+43000 SEGUNDOS.. (1 hora e 10 minutos)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+LOCK_TIMEOUT --> definicao:
+
+
+
+
+"NUMBER OF SECONDS TO WAIT WHILE TRYING TO LOCK A resource,
+BEFORE TIMING OUT AND ABORTING THE STATEMENT. A VALUE 
+OF 0 TURNS OFF LOCK WAITING... I.E THE STATEMENT 
+MUST ACQUIRE THE LOCK IMMEDIATELY OR ABORT.
+IF MULTIPLE RESOURCES NEED TO LOCKED BY THE STATEMENT,
+THE TIMEOUT APPLIES SEPARATELY TO EACH 
+LOCK ATTEMPT"...
+
+
+

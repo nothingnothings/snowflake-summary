@@ -1,0 +1,762 @@
+
+
+
+
+
+OK, MAS IMAGINE O SEGUINTE CENÁRIO:
+
+
+
+
+
+
+
+
+"" E SE NÓS TIVERMOS 
+
+APLICADO 1 TAG TABLE-LEVEL,
+
+
+E ENTAO TIVÉSSEMOS QUE APLICAR ALGUMAS 
+MASKING POLICIES _ ESPECÍFICAS, 
+
+ESPECÍFICAS PARA A TAG QUE FOI APLICADA 
+
+DE FORMA TABLE-LEVEL?""
+
+
+
+
+
+
+
+--------------------------------
+
+
+
+
+
+
+
+
+
+
+
+PARA MOSTRAR ESSE CENÁRIO,
+O PROFESSOR FAZ UNSET 
+
+
+DAS MASKING POLICIES ASSIGNADAS NA TAG DE "COMMENTS",
+
+
+
+
+
+
+COM ESTE CÓDIGO:
+
+
+
+
+
+
+
+
+
+
+ALTER TAG TAG.GOVERNANCE.COMMENTS
+UNSET MASKING POLICY COMMENTS_MASK,
+      MASKING POLICY DATE_MASK;
+
+
+
+
+
+
+
+
+
+--> FAZEMOS UNSET DISSO,
+
+
+TUDO COM O "ACCOUNTADMIN",
+
+É CLARO...
+
+
+
+
+
+
+
+
+
+
+
+
+--> REMOVIDAS ESSAS MASKING POLICIES 
+
+
+
+DESSAS TAGS em si (o professor 
+
+nao remove a tag dessas columns/tables, e sim 
+
+apenas as masking policies 
+
+que estavam vinculadas a essas tags )
+
+
+
+
+
+
+
+
+
+CERTO...
+
+
+
+
+
+
+
+
+
+
+ISSO FEITO,
+
+
+
+VEREMOS QUE 
+
+
+
+NOSSOS SELECTS NAO ESTARAO MAIS CENSURADOS...
+
+
+
+
+
+
+
+
+ISSO FEITO,
+
+
+O PROFESSOR 
+
+
+ADICIONA 1 TAG  "TABLE-LEVEL",
+
+
+
+
+POR MEIO DESTE CÓDIGO:
+
+
+
+
+
+
+
+
+
+-- Apply tag at table level:
+ALTER TABLE REVENUE.TRANSPORT.AIRLINE 
+SET TAG TAG.GOVERNANCE.TRANSPORT='Indian airline';
+
+
+
+
+
+
+
+
+
+
+
+QUER DIZER QUE AGORA A TABLE DE "airline"
+
+
+
+TEM ESSA TAG DE 
+
+"TRANSPORT",
+
+COM 1 VALUE DE 'Indian airline'...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ISSO FEITO,
+
+
+O PROFESSOR 
+
+
+ADICIONA/ASSIGNA AS MASKING POLICIES 
+
+"COMMENTS_MASK" E "DATE_MASK"
+
+
+NESSA TAG AÍ,
+
+
+TAG DE "transport",
+
+QUE 
+
+
+AGORA É UMA TAG QUE FOI APLICADA 
+
+
+
+"AT A TABLE-LEVEL"...
+
+
+
+
+
+
+
+
+
+
+
+
+TIPO ASSIM:
+
+
+
+
+
+-- Apply tag at table level:
+ALTER TABLE REVENUE.TRANSPORT.AIRLINE 
+SET TAG TAG.GOVERNANCE.TRANSPORT='Indian airline';
+
+
+
+ALTER TAG TAG.GOVERNANCE.TRANSPORT
+    SET MASKING POLICY COMMENTS_MASK,
+        MASKING POLICY DATE_MASK;
+
+
+
+
+
+
+
+
+
+
+
+
+
+CERTO... AGORA ESSAS 2 POLICIES 
+
+
+
+FORAM APLICADAS NESSA TAG, QUE FOI APLICADA 
+
+
+EM 
+
+UM 'TABLE-LEVEL"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... .AGORA TENTAMOS QUERIAR 
+
+A TABLE DE 
+
+
+
+
+"airline", tipo assim:
+
+
+
+
+
+
+
+
+SELECT * FROM REVENUE.TRANSPORT.AIRLINE;
+
+
+
+
+
+
+
+
+
+
+
+
+SE TENTAMOS RODAR ESSA QUERY AÍ,
+
+VEREMOS 
+
+QUE _____________TODAS___ AS COLUMNS 
+
+
+
+
+
+DA TABLE 
+
+
+FICARAM "***MASKED***",
+
+
+
+
+
+
+
+OU SEJA,
+
+
+TIVERAM 1 MASK APLICADA...
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS PQ ISSO ACONTECEU?
+
+
+
+
+
+
+
+
+
+
+
+--> ACONTECEU PQ:
+
+
+
+
+
+
+1) APLICAMOS NOSSA TAG EM 1 "TABLE-LEVEL"...
+
+
+
+
+
+2) TODAS AS COLUMNS DE NOSSA TABLE POSSUIAM 
+
+DATA TYPE DE "VARCHAR"... --> o snowflake percebeu 
+
+que 
+
+a mask de "comments_mask" tinha o type de VARCHAR,
+
+AÍ 
+
+APLICOU ISSO A TODAS AS COLUMNS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PODEMOS CONSTATAR ISSO 
+
+
+
+
+SE CHECARMOS A TABLE DE "AIRLINE" --> VEREMOS QUE 
+
+
+TODOS OS DATA TYPES SAO DE VARCHAR...
+
+
+
+
+
+
+
+
+
+
+-- MAS ALGUMAS COLUMNS NAO FORAM MASKADAS,
+
+CLARO,
+
+COMO "SCALE" (que é um number)..
+
+
+
+
+
+e value (também um number)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+---------> QUER DIZER QUE QUANDO APLICAMOS 1 TAG
+
+
+
+EM 1 TABLE-LEVEL, table inteira,
+
+
+
+
+
+DEVEMOS CUIDAR MT,
+
+
+PQ 
+
+
+
+A MASKING POLICY 
+
+
+
+VAI SER APLICADA A TODAS OS COLUMNS QUE 
+
+MATCHEAREM 
+
+O 
+
+DATA TYPE DEFINIDO 
+
+NA SUA MASKING POLICY, DEFINIDA DENTRO DA TAG..
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE EXISTE 1 MUNDO DE DIFERENÇA 
+
+ENTRE 
+
+DEFINIR 1 TAG NO "TABLE-LEVEL"
+
+
+E "COLUMN-LEVEL"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- SET AT TABLE-LEVEL:
+
+
+ALTER TABLE REVENUE.TRANSPORT.AIRLINE 
+SET TAG TAG.GOVERNANCE.TRANSPORT='Indian airline';
+
+
+
+
+
+
+
+
+
+
+-- SET AT COLUMN-LEVEL:
+
+ALTER TABLE revenue.media.telecalls 
+MODIFY COLUMN "Country" 
+SET TAG tag.governance.keys='Country key';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK, E O QUE ACONTECE SE TENTAMOS 
+
+APLICAR A MASKING POLICY 
+
+EM 1 DATABASE-LEVEL?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- Attempt to apply masking policy, via tag, at DB level:
+
+ALTER TAG DEMO_DB.PUBLIC.DB_DATA_SENSITIVITY
+    SET MASKING POLICY COMMENTS_MASK,
+        MASKING POLICY DATE_MASK;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--------> SE TENTAMOS FAZER ISSO, GANHAMOS UM ERROR
+
+
+
+""DB_DATA_SENSITIVITY IS ASSOCIATED WITH A 'Database' OPERATION 
+IS NOT ALLOWED""...
+
+
+
+
+
+QUER DIZER QUE ISSO NAO É POSSÍVEL,
+
+NAO É PERMITIDO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--------> SIMILARMENTE,
+
+
+
+PODEMOS TENTAR 
+
+APLICAR MASKING POLICIES EM 
+
+1 TAG QUE FOI APLICADA EM 1 SCHEMA-LEVEL:
+
+
+
+
+
+
+
+
+
+
+ALTER TAG TAG.GOVERNANCE_SCHEMA_TAG 
+    SET MASKING POLICY COMMENTS_MASK,
+        MASKING POLICY DATE_MASK;
+
+
+
+
+
+
+
+
+
+
+
+SE TENTAMOS FAZER ISSO, NOVAMENTE OBTEMOS 1 ERROR...
+
+
+
+
+
+QUER DIZER QUE ISSO NAO É POSSÍVEL...
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE SÓ PODEMOS APLICAR MASKING POLICIES 
+
+A 
+
+TAGS QUE 
+
+
+
+FORAM APLICADAS EM:
+
+1) TABLE-LEVEL 
+
+
+
+2) COLUMN-LEVEL...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+APENAS ESSES 2 SCENARIOS SAO POSSÍVEIS...
+
+
+
+
+
+
+
+
+
+
+
+--> OK... AGORA OS 3 STATEMENTS 
+
+
+FAZEM BEM MAIS SENTIDO:
+
+
+
+
+
+
+
+
+
+
+
+1) "A TAG-BASED MASKING POLICY COMBINES 
+    THE OBJECT TAGGING AND MASKING POLICY FEATURES 
+    TO ALLOW A __MASKING POLICY TO BE SET__ ON A TAG __ 
+    USING AN ´´´ALTER TAG´´´ COMMAND"...
+
+
+
+
+
+
+2) "WHEN THE DATA TYPE IN THE MASKING POLICY 
+SIGNATURE AND THE DATA TYPE __OF THE COLUMN ___ MATCH,
+THE TAGGED COLUMN IS _ AUTOMATICALLY PROTECTED BY THE
+CONDITIONS IN THE MASKING POLICY"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+3) THE __ TAG___ CAN SUPPORT__ ONE MASKING POLICY 
+
+FOR _ EACH __ DATA TYPE THAT SNOWFLAKE SUPPORTS...
+
+

@@ -1,0 +1,252 @@
+
+
+
+
+
+
+
+
+
+
+
+NESSA LECTURE,
+
+PEGAREMOS 1 DATE 
+
+
+E TENTAREMOS 
+
+
+
+fazer a análise...
+
+
+
+
+
+
+
+
+
+
+
+---> PEGAMOS UMA DATE EM QUE O COST FICOU HIGH...
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+--> FILTRAMOS POR ESSA DATE ESPECÍFICA...
+
+
+
+
+
+
+NESSE DIA, APENAS 1.28 foi active percentage,
+
+o resto foi idle percentage...
+
+
+
+
+
+
+
+
+
+
+
+O SERVER FOI RODADO POR 7 HORAS, MAS USAMOS APENAS 17 MINUTES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NOS GB SCANNED, TEMOS RESULTADOS 
+
+BEM INTERESSANTES:
+
+
+
+
+
+GB SCANNED --> 23 GB 
+
+
+
+
+GB WRITTEN (to snowflake) ---> 0 
+
+
+
+
+
+GB WRITTEN TO RESULT (result set, select) --> 0...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... QUER DIZER QUE 
+
+
+23GB 
+
+FORAM ESCANEADOS, MAS TEMOS 0 NESSAS 
+
+2 COISAS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> GB WRITTEN TO RESULT, 0 --> ISSO QUER DIZER QUE NENHUM SELECT/ANÁLISE 
+
+FOI RODADO NESSA WARHEOUSE,
+
+
+NADA FOI ESCRITO NO CONSOLE DO SNOWFLAKE...  ------>  ISSO QUER DIZER QUE 
+
+
+ESCANEAMOS 23GB de data em algum momento,
+
+mas eventualmente 
+
+CANCELAMOS ESSA OPERACAO,
+E AÍ 
+
+
+A DEIXAMOS COMO "IDLE"..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> TUDO ISSO PODEMOS DESCOBRIR POR MEIO DO FILTER POR 
+
+ESSA DATE ESPECÍFICA....
+
+
+
+
+
+
+
+
+
+
+
+
+---> MESMO NAO FAZENDO NADA NESSE DIA,
+
+
+USAMOS 29 DOLARES...
+
+
+
+
+
+
+
+----> PARA RESOLVER ESSE PROBLEMA DE CUSTO INDEVIDO,
+
+PODEMOS MELHORAR NOSSA ANÁLISE AINDA MAIS,
+
+
+POR MEIO 
+
+DO GO AND LOOK  INTO 
+
+__qUEM USOU __ ESSA WAREHOUSE
+
+
+
+E QUE QUERY ESSA PESSOA USOU... --> QUAL ROLE USOU, TAMBÉM..
+
+
+
+
+
+
+--> PODEMOS PERGUNTAR COISAS A ESSA PESSOA...
+
+
+
+
+
+
+
+
+
+
+
+
+--> NA PRÓXIMA AULA,
+
+VEREMOS 
+
+
+1 DATE EM QUE 
+
+A WAREHOUSE 
+
+FOI VERY ACTIVE,
+
+
+VER COMO OS RESULTS FICAM...
+
+
+
+
+

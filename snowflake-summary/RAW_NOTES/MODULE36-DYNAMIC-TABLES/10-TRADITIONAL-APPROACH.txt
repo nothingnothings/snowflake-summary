@@ -1,0 +1,946 @@
+
+
+
+
+
+--> NO CENÁRIO TRADICIONAL,
+
+
+TEREMOS:
+
+
+
+
+
+
+1) 2 STAGING TABLES...
+
+
+
+
+
+
+
+
+
+2) 1 TABLE EM QUE FICARÁ A "JOINED DATA",
+
+ENTRE AS 2 STAGING TABLES.. (será a INTERMEDIATE TABLE)...
+
+
+
+
+
+
+
+3) A FINAL TABLE, que será uma TABLE COMUM,
+
+que vai abrigar essa 
+
+data toda....
+
+
+
+
+
+
+
+
+
+
+----------------------------
+
+
+
+
+
+
+
+
+
+
+
+OK.. PARA ISSO,
+
+CRIAMOS 2 SAMPLE STAGE TABLES,
+
+
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+-------- CREATE STAGE TABLE AND FINAL TABLE --------
+
+
+
+
+
+
+-- STAGING TABLE 1
+CREATE OR REPLACE TRANSIENT TABLE DEMO_DB.PUBLIC.CUSTOMER_STG
+AS 
+SELECT * FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.CUSTOMER;
+
+
+
+-- STAGING TABLE 2
+CREATE OR REPLACE TRANSIENT TABLE DEMO_DB.PUBLIC.ORDERS_STG
+AS 
+SELECT * FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.ORDERS;
+
+
+
+
+
+CREATE OR REPLACE TABLE DEMO_DB.PUBLIC.
+FINAL_CUST_DATA (
+C_CUSTKEY VARCHAR,
+C_NAME VARCHAR,
+C_ADDRESS VARCHAR,
+O_ORDERSTATUS VARCHAR,
+O_ORDERPRIORITY VARCHAR
+);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... ESSA É A STEP ONE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SEGUNDA STEP --> VAMOS JOINAR 
+
+
+ESSAS 2 "stage tables",
+
+
+
+com base EM 1 key COMUM 
+
+ENTRE ELAS (join key)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+TEREMOS 1 TABLE EM QUE BASICAMENTE 
+
+
+TEREMOS APLICADO 
+
+A BUSINESS LOGIC,
+
+POR MEIO DO JOIN 
+
+DOS STAGE TABLES 
+
+
+E CONSIDERANDO 
+
+APENAS 
+
+
+AS COLUMNS NECESSÁRIAS 
+
+DAS 2 STAGE TABLES...
+
+
+
+
+
+
+-- > ESSA TABLE INTERMEDIÁRIA 
+
+
+
+SERÁ "INTERMEDIATE_CUST_DATA"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+EX:
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE TRANSIENT TABLE 
+DEMO_DB.PUBLIC.INTERMEDIATE_CUST_DATA
+AS 
+SELECT
+A.C_CUSTKEY,
+A.C_NAME,
+A.C_ADDRESS,
+B.O_ORDERSTATUS,
+B.O_ORDERPRIORITY 
+FROM DEMO_DB.PUBLIC.CUSTOMER_STG AS A 
+INNER JOIN DEMO_DB.PUBLIC.ORDERS_STG AS B 
+ON A.C_CUSTKEY = B.C_CUSTKEY;
+
+
+
+
+
+
+
+
+
+
+
+
+A IDEIA BÁSICA É QUE ESTAMOS FETCHEANDO 
+
+DATA DE ESSAS 2 STAGING TABLES,
+
+
+E AÍ 
+
+
+ESTAMOS 
+
+
+CRIANDO E APLICANDO ESSA NOSSA 
+
+"BUSINESS QUERY" (
+
+    esse select com joins aí
+),
+
+
+
+E AÍ 
+ESTAMOS CRIANDO 1 INTERMEDIATE 
+
+
+TABLE A PARTIR DISSO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> NÓS COLOCAMOS ESSA INTERMEDIATE TABLE COMO 
+
+"CREATE OR REPLACE",
+
+
+PQ CADA 
+
+VEZ QUE 
+
+
+A DATA POUSAR EM 1 DAS STAGING TABLES,
+
+
+
+
+
+TEREMOS DE RE-RODAR 
+
+ESSA BUSINESS QUERY,
+
+(para formar essa intermediate table),
+
+
+
+QUE VAI IR FORMANDO ESSA 
+
+"INCREMENTAL DATA"....
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE PODEMOS CONSIDERAR QUE 
+
+
+
+ESSA ""STAGING TABLE 3""
+
+
+É SEMPRE "TRUNCATE AND LOAD",
+
+
+
+
+pq essa intermediate table 
+
+sempre vai 
+
+
+
+SER CRIADA E RECRIADA....
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> APÓS ESSE "TRUNCATE E LOAD" 
+
+NA TABLE DE 
+
+INTERMEDIATE_CUST_DATA (com o create or replace,
+isso é o truncate and load),
+
+
+
+__ INSERIREMOS 
+
+
+ESSA  DATA,
+
+JÁ FORMATADA,
+
+NA NOSSA FINAL TABLE,
+
+
+POR MEIO 
+
+DE 
+
+
+UM 
+
+
+
+___MERGE__...
+
+
+
+
+
+
+
+
+--> AÍ TEMOS A QUERY DE MERGE...
+
+
+
+
+
+
+
+
+É ESTA:
+
+
+
+
+
+
+
+
+
+------------- MERGE TABLE TO FINAL TABLE --------
+
+
+
+
+
+
+
+
+MERGE INTO DEMO_DB.PUBLIC.FINAL_CUST_DATA
+USING
+DEMO_DB.PUBLIC.INTERMEDIATE_CUST_DATA AS STG
+ON STG.C_CUSTKEY = TGT.C_CUSTKEY
+WHEN MATCHED THEN UPDATE SET
+TGT.C_NAME = STG.C_NAME
+TGT.C_ADDRESS = STG.C_ADDRESS
+TGT.O_ORDERSTATUS = STG.O_ORDERSTATUS
+TGT.O_ORDERPRIORITY = STG.O_ORDERPRIORITY
+WHEN NOT MATCHED THEN INSERT (C_CUSTKEY, C_NAME,
+C_ADDRESS, O_ORDERSTATUS, O_ORDERPRIORITY)
+VALUES (STG.C_CUSTKEY,
+STG.C_ADDRESS,
+STG.O_ORDERSTATUS,
+STG.O_ORDERPRIORITY);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> UM MERGE USANDO A INTERMEDIATE TABLE...
+
+
+
+
+
+E USANDO ESSA CUSTOMER KEY...
+
+
+
+
+
+
+
+
+--> SEMPRE QUE EXISTE 1 MATCH COM ESSA CUSTOMER_KEY,
+
+
+VAMOS UPDATAR TODAS AS COLUMNS... 
+
+
+
+
+
+--> QUANDO ESSA CUSTOMER_KEY
+
+NAO É MATCHEADA,
+
+
+INSERIMOS OS RECORDS DE FORMA RAW MESMO 
+
+(sem conflito)...
+
+
+
+
+
+
+--> CERTO...
+
+
+
+
+
+
+--> É CLARO QUE, COM MERGE,
+
+PODEMOS 
+
+
+FAZER OUTROS TIPOS DE OPERATION,
+
+COMO DELETE,
+
+
+DEFINIR OUTRAS CONDITIONS...
+
+
+
+
+
+
+
+
+--> MAS AQUI ESTAMOS CONSIDERANDO APENAS 
+
+"UPDATE" E INSERT..
+
+
+
+
+
+
+
+
+
+
+
+--> OS FINAL RECORDS VAO SER MERGEADOS 
+PARA DENTRO 
+
+DA TABLE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> É ASSIM QUE LIDAMOS COM ESSE CENÁRIO,
+
+DE FORMA NORMAL...
+
+
+
+
+
+
+
+
+
+--> CRIAMOS AS 2 STAGING TABLES,
+
+
+E AÍ 
+
+CRIAMOS 
+
+A INTERMEDIATE TABLE (tipo o final staging table)
+
+
+
+
+--> E AÍ 
+
+
+CRIAMOS A TABLE FINAL,
+
+TARGET TABLE...
+
+
+
+
+
+
+
+
+--> OK... --> AÍ 1.500.000
+
+RECORDS SAO 
+
+
+INSERIDOS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> O PONTO, AQUI,
+
+
+É QUE 
+
+ESSA É A MANEIRA 
+
+
+
+PELA QUAL RESOLVEMOS ESSE CENÁRIO,
+
+
+DA FORMA TRADICIONAL...
+
+
+
+
+
+
+
+RESUMINDO:
+
+
+
+
+
+
+
+
+1) CRIAMOS AS 2 STAGING TABLES...
+
+
+AS 2 STAGING TABLES SAO "TRUNCATE AND LOAD" (fresh data)...
+
+
+
+
+
+
+
+2) APLICAMOS A BUSINESS LOGIC NA 
+
+"FINAL STAGING TABLE",
+
+QUE TAMBÉM É TRUNCATE AND LOAD...
+
+
+
+
+
+
+3) A DATA DA FINAL STAGING TABLE (intermediate table)
+
+
+É MERGEADA COM A FINAL TABLE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ok... é assim que vai acontecer...
+.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> É CLARO QUE 
+
+PRECISAMOS 
+
+
+ANEXAR COISAS NESSAS TABLES...
+
+
+
+
+
+
+
+
+esse é o último passo...
+
+
+
+
+
+
+
+
+
+
+
+
+--> PRECISAMOS FAZER "SCHEDULE" DESSE PROCESSO..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PRECISAMOS FAZER ESSA "BUSINESS QUERY"
+
+E ESSE "MERGING"
+
+
+
+ACONTECER 
+
+
+EM 1 REGULAR BASIS...
+
+(scheduled basis)
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA ISSO, DEVEMOS CRIAR 1 TASK...
+
+
+
+
+
+
+
+
+
+
+
+
+--> DEVEMOS CRIAR 1 TASK,
+
+
+E AÍ 
+
+
+SCHEDULAMOS ESSAS 2 QUERIES,
+PARA QUE 
+RODEM 
+
+EM 
+
+
+1 CERTO INTERVALO DE TEMPO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> É CLARO QUE ESSE APPROACH TEM 
+
+VANTAGENS E DESVANTAGENS...
+
+
+
+
+
+
+
+
+
+
+
+
+DETALHES:
+
+
+
+
+
+
+1) YOU SHOULD TAKE CARE OF SCHEDULING THE 
+WORKFLOW (
+
+    vc tem que fazer isso,
+    vc deve especificar quando o batch 
+    process 
+
+    deve acontecer, a cada período de tempo...
+)
+
+
+
+A TASK TEM QUE RODAR EM 1 TEMPO ESPECÍFICO,
+
+PARA REFRESHAR A DATA NA FINAL TABLE...
+
+
+
+
+
+
+
+
+
+2) TEMOS MAIS CONTROLE (vantagem)...
+
+
+
+
+PQ PODEMOS _ ESCOLHER SE QUEREMOS INSERT RECORD,
+
+DELETE RECORD,
+ETC.. QUALQUER OPERATION QUE QUEREMOS RODAR 
+
+
+NOS RECORDS, E COM MAIOR FLEXIBILIDADE...
+
+
+
+
+
+
+
+
+
+3) COM ESSE APPROACH,
+
+"SCD TYPE 1"
+
+
+E 
+
+"SCD TYPE 2"
+
+
+PODEM SER FACILMENTE 
+
+
+ACHIEVED... (
+
+    se queremos MANTER A VERSAO ANTERIOR 
+
+
+    DO RECORD NA FINAL TABLE, PODEMOS FAZER ISSO...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... ESSES ERAM OS DETALHES/VANTAGENS E DESVANTAGENS 
+
+
+
+DO "NORMAL APPROACH">..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NA PRÓXIMA AULA 
+
+VEREMOS A MESMA COISA,
+
+MAS COM DYNAMIC TABLES...
+
+
+
+VEREMOS A VANTAGEM DELAS...

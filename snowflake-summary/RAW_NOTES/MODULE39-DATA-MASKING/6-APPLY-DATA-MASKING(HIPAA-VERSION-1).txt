@@ -1,0 +1,881 @@
+
+
+
+
+
+
+
+
+
+
+nessa lecture, discutiremos rapidamente
+
+
+
+sobre patient_data 
+
+
+
+E DATA_MASKING RULES QUE DEVEM SER APLICADAS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+PATIENT_NAME   DOB    DIAGNOSIS      ADR_LINE_1    ADR_LINE_2     CITY
+
+
+
+
+
+
+
+ZIP             STATE           POS         SERVICE 
+
+
+
+
+
+START_dATE                  SERVICE_END_DATE                PROVIDER_NAME 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PROVIDER_NAME (qual hospital/doutor/plano de saúde)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> OK.. .AGORA DEVEMOS DISCUTIR 
+
+ALGUMAS DAS REGRAS...
+
+
+
+
+
+
+
+
+
+
+
+
+HIPAA VERSION 1 --> TODOS 
+
+
+
+ESSES DIAGNOSIS 
+
+FIELDS DEVEM 
+
+
+FICAR COMO "NULL"...
+
+
+
+
+
+
+
+
+
+
+
+
+--> SE 1 CONTRACTOR OU ANALYST 
+
+
+OLHAR ESSA DATA,
+
+ELE DEVE VER "NULL"
+
+
+PARA TODOS ESSES DIAGNOSIS VALUES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> CERTO.... MAS O HIPAA 
+
+ESTIPULA 
+
+
+QUE DOENÇAS RARAS DEVEM APARECER (
+    doenças com DIAGNOSIS CODE 
+
+    COM "S55" NO INÍCIO...
+)
+
+
+
+
+
+
+--> OS 3 PRIMEIROS DÍGITOS DEVEM APARECER,
+
+NO CASO 
+
+DE DOENÇAS RARAS...
+
+
+
+
+
+
+
+
+
+
+--> PARA O ROLE DE ANALYST,
+
+DEVEMOS DEIXAR 
+
+
+OS "SENSITIVE DIAGNOSIS CODES" COMO 00....
+
+
+
+
+
+
+
+
+--> SE 1 ANALYST OU CONTRACTOR 
+
+
+
+QUERIAR ESSA DATA,
+
+DEVEM VER NULL PARA TODOS OS VALUES QUE 
+
+NAO SAO 
+
+
+RARE DISEASES 
+
+
+
+OU SENSITIVE DATA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS TEMOS OUTRAS COLUMNS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--. PARA OS STATES -------> 
+
+
+
+
+
+
+
+TEMOS STATES EM QUE TEMOS MENOR POPULACAO ---> 
+
+
+
+
+EM STATES EM QUE TEMOS 
+
+
+MENOR POPULATION,
+
+
+DEVEMOS DEIXAR O VALUE DA COLUMN DE "STATE"
+
+
+COMO "XX"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> O "pos" (place_of_service) 
+
+
+DEVE SER 
+
+
+DEFINIDO COMO 
+
+
+
+
+"00"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> para os ZIP valeus,
+
+
+
+
+DEVEMOS COMENTAR TODOS ELES PARA "000"...
+
+
+
+
+
+
+-------------------------
+
+
+
+
+
+
+
+
+
+no snowflake, criamos esses data masking rules:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- CREATE MASKING POLICY RULE ---
+
+
+
+
+
+
+CREATE OR REPLACE MASKING POLICY DIAGNOSIS_CODE_MASK
+AS 
+(VAL VARCHAR) RETURNS STRING -> 
+    CASE WHEN CURRENT_ROLE() IN ('ANALYST') THEN 
+        CASE WHEN VAL IN ('G9382','O312','O3120','O3120X1','7681','39791') THEN NULL
+            ELSE 
+                CASE WHEN VAL IN ('S55091D', 'S82421H', 'S37828D', 'J239', 'R019') then substring(val,1,3)
+                    ELSE
+                        CASE when val in ('Y09', 'Y09', 'V3101', 'V3101', '79913', 'Y389X1A', 'E9688') then '00'
+                            ELSE VAL
+                        END
+                END
+        END
+    ELSE 
+        VAL
+    END;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... ISSO CONSIDERA OS CASES 
+
+
+
+
+DE "RARE DISEASES"...
+
+
+
+
+
+
+
+
+TEMOS 1 MASKING_POLICY DE STATE, TAMBÉM:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+create or replace masking policy state_code_mask as (val varchar) returns string ->
+  case when current_role() in ('ANALYST','CONTRACTOR') then 
+        case when val in ('AA', 'DU', 'GV', 'MH', 'NP', 'OT', 'TT') then  NULL
+         else
+         val
+             end       
+    else
+      val
+  end;
+
+
+
+
+
+
+
+
+
+
+  TEMOS 1 MASKING POLICY PARA O ZIP CODE, TAMBÉM:
+
+
+
+
+  create or replace masking policy zip_code_mask as (val number) returns number ->
+  case when current_role() in ('ANALYST','CONTRACTOR') then 
+        case when val in ('967', '431', '965', '963', '966', '945') then  NULL
+         else
+         val
+             end       
+    else
+      val
+  end;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  PARA APLICAR ESSE DATA MASKING NAS NOSSAS TABLES,
+
+  RODAMOS ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+  ----- ALTER MASKING POLICY ----- 
+
+  ALTER TABLE IF EXISTS PATIENT MODIFY COLUMN DIAGNOSIS SET MASKING POLICY DIAGNOSIS_CODE_MASK;
+
+  ALTER TABLE IF EXISTS PATIENT MODIFY COLUMN STATE SET MASKING POLICY STATE_CODE_MASK;
+
+  ALTER TABLE IF EXISTS PATIENT MODIFY COLUMN ZIP SET MASKING POLICY ZIP_CODE_MASK;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK, AGORA RODAMOS SELECTS,
+
+PARA VER COMO A DATA 
+
+SE PARECE PARA CADA 1 DOS USERS, DENTRO DE CADA ROLE..
+
+
+
+
+
+
+
+
+
+
+
+
+
+TEMOS QUE REALIZAR ALGUMAS CHANGES NAS NOSSAS DATA MASKS,
+
+
+PQ HÁ COISAS ERRADAS:
+
+
+
+
+CREATE OR REPLACE MASKING POLICY DIAGNOSIS_CODE_MASK
+AS 
+(VAL VARCHAR) RETURNS STRING -> 
+    CASE WHEN CURRENT_ROLE() IN ('ANALYST') THEN 
+        CASE WHEN VAL IN ('G9382','O312','O3120','O3120X1','7681','39791') THEN NULL
+            ELSE 
+                CASE WHEN VAL IN ('S55091D', 'S82421H', 'S37828D', 'J239', 'R019') then substring(val,1,3)
+                    ELSE
+                        CASE when val in ('Y09', 'Y09', 'V3101', 'V3101', '79913', 'Y389X1A', 'E9688') then '00'
+                            ELSE VAL
+                        END
+                END
+        END
+    ELSE 
+        VAL
+    
+
+    END;
+
+
+
+
+
+
+
+
+
+
+
+
+
+MAS ISSO VAI NOS DAR 1 ERRO...
+
+
+
+
+
+
+
+NAO VAI NOS DEIXAR RECRIAR ESSA MASKING_POLICY... 
+
+
+
+
+
+
+
+
+
+
+MAS PQ?
+
+
+
+
+
+
+
+É PQ 
+
+
+PRECISAMOS FAZER "UNSET" DE ESSA MASKING POLICY,
+
+LÁ NAS COLUMNS AFETADAS 
+
+POR ELA...
+
+
+
+
+
+
+
+
+--> PARA ISSO,
+
+ESCREVEMOS ASSIM:
+
+
+
+
+
+
+
+
+
+
+ALTER TABLE IF EXISTS PATIENT MODIFY COLUMN DIAGNOSIS
+UNSET MASKING POLICY;
+
+
+
+
+ALTER TABLE IF EXISTS PATIENT MODIFY COLUMN ZIP
+UNSET MASKING POLICY;
+
+
+
+ALTER TABLE IF EXISTS PATIENT MODIFY COLUMN STATE
+UNSET MASKING POLICY;
+
+
+
+
+
+
+
+
+
+DEPOIS RODAMOS 
+
+
+
+
+
+
+O CÓDIGO PARA RECRIAR A POLICY....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+EX:
+
+
+
+
+
+
+
+
+CREATE OR REPLACE MASKING POLICY DIAGNOSIS_CODE_MASK
+AS 
+(VAL VARCHAR) RETURNS STRING -> 
+    CASE WHEN CURRENT_ROLE() IN ('ANALYST') THEN 
+        CASE WHEN VAL IN ('G9382','O312','O3120','O3120X1','7681','39791') THEN NULL
+            ELSE 
+                CASE WHEN VAL IN ('S55091D', 'S82421H', 'S37828D', 'J239', 'R019') then substring(val,1,3)
+                    ELSE
+                        CASE when val in ('Y09', 'Y09', 'V3101', 'V3101', '79913', 'Y389X1A', 'E9688') then '00'
+                            ELSE VAL
+                        END
+                END
+        END
+    ELSE 
+        VAL
+    
+
+    END;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DEPOIS RESETTAMOS 
+
+
+ESSAS MASKING POLICIES 
+
+NAS COLUMNS,
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+  ALTER TABLE IF EXISTS PATIENT MODIFY COLUMN DIAGNOSIS SET MASKING POLICY DIAGNOSIS_CODE_MASK;
+
+  ALTER TABLE IF EXISTS PATIENT MODIFY COLUMN STATE SET MASKING POLICY STATE_CODE_MASK;
+
+  ALTER TABLE IF EXISTS PATIENT MODIFY COLUMN ZIP SET MASKING POLICY ZIP_CODE_MASK;
+
+
+
+
+
+
+
+-----------------------
+
+
+
+
+
+
+
+
+
+
+
+
+A ALTERNATIVA, É CLARO,
+
+
+
+
+
+
+É __ ALTERAR APENAS O Body da masking policy,
+
+COM ESTA SINTAXE:
+
+
+
+
+
+
+ALTER MASKING POLICY DIAGNOSIS_CODE_MASK
+SET BODY -> 
+    CASE WHEN CURRENT_ROLE() IN ('ANALYST', 'CONTRACTOR') THEN 
+        CASE WHEN VAL IN ('G9382','O312','O3120','O3120X1','7681','39791') THEN NULL
+            ELSE 
+                CASE WHEN VAL IN ('S55091D', 'S82421H', 'S37828D', 'J239', 'R019') then substring(val,1,3)
+                    ELSE
+                        CASE when val in ('Y09', 'Y09', 'V3101', 'V3101', '79913', 'Y389X1A', 'E9688') then '00'
+                            ELSE VAL
+                        END
+                END
+        END
+    ELSE 
+        VAL
+    
+
+    END;
+
+
+
+
+
+
+
+
+
+
+
+
+
+O BOM DISSO É QUE NAO PRECISAMOS 
+
+RESETTAR TUDO,
+
+
+PODEMOS MUDAR EM APENAS 1 ÚNICO LUGAR,
+
+
+E AÍ 
+
+ESSAS CHANGES SAO REFLETIDAS EM TODAS AS COLUMNS 
+
+EM QUE 
+
+APLICAMOS 
+
+ESSA POLICY...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> A OUTRA MANEIRA É RODANDO UNSET... mas essa maneira 
+
+pode ser nada segura...
+
+
+
+
+
+
+
+
+
+
+
+
+mas real use-cases nao serao tao simples...
+
+
+
+
+hipaa rules podem ficar bem complexas..
+
+
+
+
+
+
+
+VIMOS QUE O IDEAL É RODAR O COMANDO DE ALTER, 
+na parte do body da masking policy...
+
+
+
+
+
+
+
+
+
+
+
+
+--. NA PRÓXIMA AULA VEREMOS 1 CENÁRIO MAIS COMPLEXO,
+
+PARA TER ESSE DATA MASKING...
+

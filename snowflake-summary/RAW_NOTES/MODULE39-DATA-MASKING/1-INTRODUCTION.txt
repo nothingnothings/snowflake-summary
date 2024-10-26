@@ -1,0 +1,403 @@
+
+
+
+
+
+
+POR QUE PRECISAMOS DE DATA MASKING?
+
+
+
+
+
+
+
+
+
+
+
+
+--> DIGAMOS QUE TEMOS 1 TABLE DE EMPLOYEE,
+
+
+
+COM 
+
+
+
+
+INFORMACOES COMO 
+
+ESTAS:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NAME        ADDRESS         EMP_iD      ZIP_CODE      SALARY 
+
+
+
+RAJESH      ASDASD          12313        1212           40.0000
+
+
+
+
+
+
+
+
+
+
+
+
+--> PODEMOS 
+
+
+MASCARAR ESSES VALUES,
+
+COM DATA MASKING...
+
+
+
+
+
+
+
+--> PODEMOS 
+
+
+
+MASCARAR PARTE DESSES VALUES... (em vez de "****")..
+
+
+
+
+TIPO ASSIM:
+
+
+
+
+
+
+NAME        ADDRESS         EMP_iD      ZIP_CODE      SALARY 
+
+RAJESH      ASDASD          12313        1212**           *****
+
+
+
+
+
+
+
+
+
+
+
+A SINTAXE DE MASK É ALGO ASSIM:
+
+
+
+
+CREATE OR REPLACE MASKING POLICY PHONE_POLICY
+    AS (VAL VARCHAR) RETURNS VARCHAR ->
+        CASE
+            WHEN CURRENT_ROLE() IN ('ANALYST_FULL', 'ACCOUNTADMIN') THEN VAL
+            ELSE '##-###-##'
+            END;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AÍ CONSEGUIMOS MASCARAR, DE ACORDO COM OS ROLES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+HIPA RULES --> QUANDO VC ESTÁ ARMAZENANDO 
+
+DATA NA SUA DATABASE,
+
+
+OU QUANDO ESTÁ EXPONDO ESSA DATA AO OUTSIDE WORLD (
+    HIPA-COMPLIANT....
+)
+
+
+
+
+
+
+
+
+CASO CONTRÁRIO, FICAREMOS COM 
+
+
+MULTAS...
+
+
+
+
+
+
+QUAIS SAO AS "HIPAA RULES"?
+
+
+
+
+
+
+
+
+
+
+
+--> digamos que temos esta table:
+
+
+
+
+
+
+
+patient_name        ADDRESS                 Diagnosis       place_of_service_cd     ZIPCODE             DOB 
+
+RAJ                 some street, mumbai     CANCER          41                          123131        123131
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> COM ESSA INFO,
+
+TEMOS VÁRIAS INFOS, COMO A DOENCA COM QUE 
+ELE FOI DIAGNOSTICADO...
+
+
+
+
+-> tAMBÉM O ZIPCODE 
+
+
+
+
+E DATE OF BIRTH...
+
+
+
+
+
+
+
+
+
+
+
+
+--> HIPAA RULES...
+
+
+
+
+
+
+
+
+
+
+
+--> FAZEMOS MASKING PARA QUE,
+
+MESMO QUE ESSES RECORDS 
+
+SEJAM EXPOSTOS AO MUNDO EXTERNO,
+
+ISSO NAO CAUSE DANOS (pq a data será mascarada)...
+
+
+
+
+
+
+
+
+
+
+
+
+-> há mt hipaa rules dadas por 
+
+
+hipaa consultants --> 
+
+
+
+
+A COMPANHIA TEM QUE APLICAR 
+ESSAS 
+
+
+HIPAA RULES 
+
+
+NA DATA,
+
+PARA QUE FIQUE 
+
+
+
+HIPAA-COMPLIANT...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NESSE CASO,
+
+VC PODE VER QUE 
+
+
+A ADDRESS INFORMATION DEVE SER COMPLETAMENTE MASCARADA,
+
+
+
+OU DEFINIDA COMO NULL...
+
+
+
+
+
+
+--> o zip code deve ser MASKADO,
+
+TAMBÉM (apenas os 2 últimos dígitos devem ser mascarados)
+
+
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+patient_name        ADDRESS                 Diagnosis       place_of_service_cd     ZIPCODE             DOB 
+
+RAJ                 *****                    *****          41                          123131        123131
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> TAMBÉM HÁ OUTRAS REGRAS, como 
+
+
+
+
+"vc nao deve expor nenhuma info sobre 
+
+pacientes com mais de 80-90 anos"...
+
+
+
+
+
+
+
+
+--> PARA FAZER SUA DATA FICAR HIPAA COMPLIANT,
+
+NESSES CENÁRIOS,
+
+
+
+O DATA MASKING 
+
+
+FICA MT HANDY...
+
+
+

@@ -1,0 +1,777 @@
+
+
+
+
+
+
+
+
+
+
+
+
+NESSA LECTURE,
+
+VEREMOS COMO PODEMOS 
+
+
+USAR A CLONE FEATURE 
+
+
+
+AO MÁXIMO, NO SNOWFLAKE...
+
+
+
+
+
+
+-----> TEMOS 1 DIAGRAMA, QUE NOS MOSTRA 1 PROCESSO ETL,
+
+
+EM 1 HIGH-LEVEL...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DIAGRAMA:
+
+
+
+
+
+
+
+
+
+
+
+[              ETL           LOAD       ]           [          ANALYTICS          ]
+
+
+                                                                                    |-------> TABLEAU 
+                                                                                    |
+SOURCE 1   --                                                  [ DASHBOARD VIEWS ] ---------> POWER BI  
+            |                                                       |               |
+            |                                                       |               |-------> TIBC SPOTFIRE
+            |                                                       |
+SOURCE 2   --------> STAGE DB -----> PROD DB -------------> PROD DB CLONE
+            |                                                       |
+            |                                                       |
+            |                                                       |
+            |                                                       |
+SOURCE 3 ---                                                    YOUR COMMON USERS   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+BEM, MAS COMO PODEMOS USAR 
+
+
+ESSA FEATURE,
+
+DE CLONING,
+
+PARA NOSSA VANTAGEM?
+
+
+
+
+
+
+
+
+
+
+--> NESSE ETL PROCESS MOSTRADO ACIMA,
+
+
+O QUE ACONTECE É:
+
+
+
+
+
+
+
+1) FETCHEAMOS DATA DE DIFERENTES SOURCES 
+
+
+
+2) ESSA DATA É CARREGADA NA STAGING AREA...
+
+
+
+3) NA STAGING AREA,
+
+REALIZAMOS ALGUMAS TRANSFORMATIONS EM CIMA DA DATA 
+
+
+4) por fim, essa data é carregada em 1 
+
+data warehouse, em "PROD DB"...
+
+
+
+
+
+5) em prod db, teremos as tables "DIMENSION" e "FACT", que 
+comporão a data warehouse....
+
+
+
+
+6) assim que a data estiver na data warehouse,
+
+essa data vai ser EXPOSTA AOS USERS...
+
+
+
+
+
+
+
+
+
+
+E O DIAGRAMA, VISTO ACIMA:
+
+
+
+
+
+
+
+
+
+[              ETL           LOAD       ]           [          ANALYTICS          ]
+
+
+                                                                                    |-------> TABLEAU 
+                                                                                    |
+SOURCE 1   --                                                  [ DASHBOARD VIEWS ] ---------> POWER BI  
+            |                                                       |               |
+            |                                                       |               |-------> TIBC SPOTFIRE
+            |                                                       |
+SOURCE 2   --------> STAGE DB -----> PROD DB -------------> PROD DB CLONE
+            |                                                       |
+            |                                                       |
+            |                                                       |
+            |                                                       USER VIEWS 
+SOURCE 3 ---                                                        |
+                                                                    |
+                                                                 YOUR COMMON USERS   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> O DIAGRAMA NOS MOSTRA COMO ISSO É FEITO 
+
+
+
+EM 1 DATABASE SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS EM DATABASES CONVENCIONAIS,
+
+O PROCESSO É DIFERENTE:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[              ETL           LOAD       ]           [          ANALYTICS          ]
+
+
+                                                                                    |-------> TABLEAU 
+                                                                                    |
+SOURCE 1   --                                                  [ DASHBOARD VIEWS ] ---------> POWER BI  
+            |                                                       |               |
+            |                                                       |               |-------> TIBC SPOTFIRE
+            |                                                       |
+SOURCE 2   --------> STAGE DB -----> PROD DB/WAREHOUSE ---------> PROD DATAMARTS (SALES)
+            |                                |                       |
+            |                                |                       |
+            |                                |                       |
+            |                                |                       |
+SOURCE 3 ---                                 |                  USERS VIEWS  
+                                             |                       |
+                                             |                       |
+                                             |                 YOUR COMMON USERS  
+                                             |
+                                    PROD DATAMARTS (HR)  ------- DASHBOARD VIEWS ----- TABLEAU, POWER BI, TIBC SPOTFIRE
+                                             |
+                                             |
+                                             |
+                                             |
+                                          USER VIEWS 
+                                             |
+                                             |
+                                             |
+                                         YOUR COMMON USERS
+                                        
+
+
+
+
+
+
+
+
+
+--> EM 1 DATABASE CONVENCIONAL,
+
+
+
+NOSSA DATA SERÁ CARREGADA 
+
+
+EM 1 "PRODUCTION DATA WAREHOUSE",
+
+
+
+E AÍ 
+
+
+
+TEREMOS DE CRIAR 
+
+
+"DATAMARTS" SEPARADOS,
+
+PARA 
+
+
+"SALES", "HR",
+
+
+
+E PARA OUTROS DEPARTMENTS EM 1 ORGANIZATION...
+
+
+
+
+
+
+
+--> AÍ EXPOREMOS ESSES DATAMARTS A USERS, E PARA ANALYTICS 
+
+PURPOSE...
+
+
+
+
+
+
+
+
+
+CONTINUANDO...
+
+
+
+
+
+
+8) A DATA VAI CONTINUAR FLUINDO NESSE FLOW...
+
+
+
+
+
+
+
+
+
+9) MAS O PROBLEMA É QUE, QUANDO A DATA ESTÁ ACTUALLY FLOWING,
+
+OS USERS NAO PODERAO ACTUALLY 
+
+
+__aCESSAR _ A DATA, NEM RODAR ANALYSIS NA DATA... ----> ISSO PQ 
+
+
+
+SERÁ CRIADA "CONTENTION" NAS DATABASES DE SEU SISTEMA...
+
+
+
+
+
+
+
+
+
+10) O QUE ACONTECE, EM CONVENTIONAL DATABASES, COMUNS,
+
+É QUE OS "ETL LOADS" VAO OCORRER DURANTE OS PERÍODOS 
+
+EM QUE 
+
+OS USERS NAO ESTAO ATIVAMENTE USANDO AS DATABASES... (durante 
+a NOITE, quando ninguém está usando)
+
+
+
+
+
+11) DEPOIS DO DATA LOAD ACONTECER, DURANTE UM PERÍODO DE BAIXA,
+
+A DATA É EXPOSTA AOS USERS E ÀS ANALYTICS TEAMS...
+
+
+
+
+12) O PROBLEMA, AQUI,
+
+
+É QUE -_ QUANDO A DATA É CARREGADA,
+
+ESTAMOS "MAINTAINING"  __ MÚLTIPLAS 
+
+CÓPIAS 
+
+
+
+DA MESMA DATA (
+    em "DATAMART" de SALES e "DATAMART" de HR...
+)
+
+
+
+
+
+
+13) ASSIM QUE A DATA É CARREGADA NA DATA WAREHOUSE,
+
+
+ESTAMOS MANTENDO CÓPIAS DESSA DATA NOS 2 DATAMARTS,
+
+
+TUDO PARA "AVOID THE CONTENTION",
+
+
+
+ISSO PQ __ O DATA VOLUME DA DATABASE SERÁ MT GRANDE,
+
+
+
+E SE TODOS (analytics + users)
+
+
+TENTAREM 
+
+
+ACESSAR A DATABASE AO MESMO TEMPO,
+
+
+A PERFORMANCE CERTAMENTE DECAIRÁ...
+
+
+
+
+
+
+14) PARA CONSEGUIRMOS AUMENTAR A PERFORMANCE,
+
+
+SEGREGAMOS DIFERENTES DATAMARTS... (1 para users, 1 para analysts)...
+
+
+
+
+
+
+
+15) essa criacao de 2 datamarts, distintos,
+
+certamente aumentará a eficiência...
+
+
+
+
+
+16) ENTRETANTO, AINDA ENFRENTAREMOS PROBLEMAS... 
+
+
+
+
+
+
+17) PROBLEMA: QUANDO O DATA LOAD ACTUALLY ACONTECE (ETL LOAD),
+
+users nao serao capazes de acessar esses datamarts/databases...
+
+
+--> eles poderao acessar, na verdade, mas isso causará uma 
+
+CONTENTION NA DATABASE...
+
+
+
+
+
+
+
+
+18) SOLUÇÃO: SE VC USAR 
+
+A FEATURE DE CLONE DO SNOWFLAKE,
+
+
+VC PODE 
+
+ACABAR COM ESSE PROBLEMA DE "CONTENTION" ..
+
+
+
+
+
+
+19) EXPLICAÇÃO: ASSIM QUE FIZEMOS LOAD 
+
+DE TUDO, DE TODA A DATA 
+
+NA PRODUCTION DATABASE (prod db),
+
+
+
+PODEMOS SIMPLESMENTE CRIAR 1 __ CLONE___ 
+
+
+DA PRODUCTION DATABASE,
+
+E ENTAO 
+
+ENTREGAR 
+
+ESSE CLONE 
+
+
+
+
+
+ÀS ANALYTICS TEAMS E AOS USERS...
+
+
+
+
+
+
+
+20) AÍ, SE, NO FUTURO, DESEJARMOS RODAR 
+ETL LOAD 
+
+EM CIMA DE NOSSA PROD_DB, PODEMOS 
+
+FAZER ISSO (a alteracao da prod_db, testes em cima disso, 
+ver se realmente tudo funciona) 
+
+
+SEM PARAR O FUNCIONAMENTO (contention) 
+
+
+DE NOSSA DATABASE,
+
+PQ 
+PODEMOS 
+
+SIMPLESMENTE CRIAR 1 CLONE DE NOSSA PROD_DB, ANTES DE REALIZAR 
+
+ESSE ETL_LOAD,
+
+
+E AÍ 
+
+
+ENTREGAR ESSE CLONE ÀS ANALYTICS TEAMS E AOS USERS (
+    que poderao continuar usando nosso app, normalmente...
+),
+
+CLONE QUE SERÁ REALMENTE ___INDEPENDENTE__ DA TABLE 
+
+QUE ESTARÁ EM MEIO AO PROCESSO DE "ETL LOAD"...
+
+
+
+
+21) COM ISSO, OS USERS TERAO UMA CÓPIA QUASE EXATA DA MESMA 
+
+DATABASE,
+
+QUE EXISTIRÁ SEM TER 1 ACTUAL COPY DA DATA (e sim apenas da metadata)
+no seu 
+
+sistema snowflake...
+
+
+
+
+
+
+22) ESSA É UMA DAS GRANDES VANTAGENS DO ETL LOAD...
+
+
+
+
+
+
+
+
+
+
+
+
+
+23) assim que a PROD_DB terminar o processo de ETL LOAD,
+
+podemos simplesmente 
+
+FAZER UM OUTRO CLONE 
+
+DESSE DB,
+
+E AÍ 
+
+
+
+ENTREGAR ESSE CLONE, NOVAMENTE, AOS USERS E ANALYTICS TEAMS...
+
+
+
+
+
+
+
+
+
+
+
+24) ALÉM DISSO, EM CIMA 
+DESSA CLONE DATABASE,
+
+
+PODEMOS CRIAR VIEWS,
+
+
+e entregar acesso apenas a essas views,
+
+PARA QUE 
+
+APENAS AS COLUMNS NECESSÁRIAS SEJAM EXPOSTAS 
+
+
+AOS USERS/ANALYTICS TEAMS...
+
+
+
+
+
+
+
+
+25) isso tudo é mt bom,
+
+pq se users querem rodar queries,
+
+
+eles podem fazer isso INDEPENDENTEMENTE,
+
+
+SEM 
+
+DEPENDER DA PRODUCTION DATABASE DE VERDADE....
+
+
+
+(a contention será REDUCED, e o ease of access será LEVERAGED)...
+
+
+
+
+
+
+
+
+
+
+POR FIM, O PROFESSOR MOSTRA ESSES 2 PONTOS:
+
+
+
+
+
+
+
+
+
+
+26) SE VC QUER __CONSERTAR__ AS PRODUCTION TABLES,
+
+
+
+UM JEITO DE CONSERTAR ESSA TABLE, MT INTELIGENTE, É:
+
+
+
+26.1) PRIMEIRAMENTE, CRIAR 1 CLONE DESSA TABLE DE PROD, QUE ESTÁ COM O PROBLEMA...
+
+26.2) DEPOIS, VOCE PEGA ESSA TABLE CLONE __ E CONSERTA O ERRO (pq essa
+table, atualmente, estará igual À table de prod)
+
+26.3) POR FIM, PARA APLICAR O FIX NA TABLE DE PROD ATUAL, VOCE PODE 
+SIMPLESMENTE RODAR UM "SWAP" entre a table de prod e essa table "patch-prod"...
+
+26.4) COM ISSO, SUA TABLE "patch-prod" ficará com a data 
+da table de prod buggada (que estará protegida, ainda assim),
+
+ao mesmo tempo que sua table de prod estará com a data de "patch-prod",
+
+que será a data de sua table de prod original com o patch/fix já aplicado.
+
+
+
+
+
+
+COM ISSO,
+
+
+
+NAO FAZEMOS MESS DE QUALQUER DATA,
+
+E NAO 
+
+CRIAMOS NENHUM PROBLEMA...
+
+
+
+
+
+
+
+
+---> DESSA FORMA, PODEMOS USAR "CLONE" PARA CONSERTAR 
+
+FACILMENTE QUAISQUER ERRORS, EM PRODUCTION...
+
+
+
+
+
+
+
+
+
+27) SE UM USER QUER TER __ aCESSO COMPLETO 
+A UMA PRODUCTION TABLE, 
+
+
+VC PODE CLONAR__ A PRODUCTION TABLE E ENTAO 
+
+PROVIDENCIAR ACESSO FULL AO CLONE (
+
+
+    pq podem existir cases em que o user 
+
+    quer ver a FULL PRODUCTION TABLE,
+    e nem sempre 
+
+    é correct dar full access a 1 production table 
+
+    a 1 unknown user,
+    1 pessoa 
+
+    que 
+
+    está unaware do system... pq ele pode mess up the system...
+) -----> COM ISSO, ESSE USER PODE FAZER O QUE ELE QUISER 
+
+COM O CLONE,
+
+PQ 
+
+A TABLE ORIGINAL AINDA FICARÁ SAFE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+É ASSIM QUE PODEMOS USAR A FEATURE DA CLONE TABLE (e schema, e database),
+
+
+
+NOS NOSSOS PROCESSOS DIÁRIOS...

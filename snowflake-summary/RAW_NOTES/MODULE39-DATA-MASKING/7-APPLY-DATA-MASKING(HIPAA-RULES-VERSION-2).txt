@@ -1,0 +1,222 @@
+
+
+NESSA LECTURE, FALAREMOS 
+
+
+SOBRE ALGUMAS DAS MODIFIED RULES,
+
+
+DAS RULES DO HIPAA...
+
+
+
+
+
+
+
+
+
+--> OK... SABEMOS QUE A COLUMN DE 
+"DIAGNOSIS"
+
+VAI FALAR DOS DISEASE CODES....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> NOVA RULE:
+
+
+DEVEMOS FAZER REDACT DOS SERVICE-DAYS 
+
+DESSA PESSOA (START_dATE e SERVICE_END_DATE)
+
+
+EM VEZ DE 
+
+
+FAZER REDACT DO DEATH CODE...
+
+
+
+
+
+
+
+
+
+--> VAMOS MUDAR A DATE,
+
+NO CASO..
+
+
+
+
+
+
+
+
+
+
+--> VAMOS ADICIONAR OU SUBTRAIR 
+
+
+14 DIAS AO START DATE,
+
+
+E MESMA COISA PARA O END_DATE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> EM "pos",
+
+
+
+place_of_service,
+
+
+
+
+SAO OS PARA HOME, HOMELESS SHELTER,
+
+PRISON 
+
+OU CARE FACILITY....
+
+
+
+
+
+
+
+
+
+
+
+--> PARA ESSES SERVICES,
+
+NAO DEVEMOS FAZER O REDACT DESSES VALUES EM SI,
+
+
+
+
+E SIM 
+
+DEVEMOS APENAS REDACT 
+
+
+
+O ADDRESS DESSE ROW...
+
+
+
+
+
+(ADR_LINE_1 e ADR_LINE_2)....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE VAMOS APLICAR MASKS 
+
+
+CONSIDERANDO O VALUE DE OUTRA COLUMN QUE 
+
+NAO A COLUMN QUE VAMOS MASCARAR...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AGORA, A RULE QUE É APLICADA 
+
+
+NA COLUMN É ACTUALLY DEPENDENTE 
+
+
+DO VALUE __DE OUTRA _ COLUMN....
+
+
+
+
+
+
+
+
+
+
+
+--> VEREMOS COMO FAZER ISSO...
+
+
+
+
+

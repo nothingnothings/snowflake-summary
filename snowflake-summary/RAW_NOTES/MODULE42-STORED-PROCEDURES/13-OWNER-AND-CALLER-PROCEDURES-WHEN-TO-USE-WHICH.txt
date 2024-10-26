@@ -1,0 +1,698 @@
+
+
+
+
+
+
+STORED PROCEDURES...
+ 
+
+
+
+
+
+
+
+
+ PQ PRECISAMOS DE 2 PROCEDURE TYPES?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+QUAL É A UTILIDADE?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> CONSIDERE 1 SCENARIO EM QUE TEMOS
+
+
+
+
+
+
+UM ROLE 
+
+
+DE 
+
+"REPORT" (report role)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> NESSE SCENARIO, TAMBÉM TEMOS UMA DATABASE,
+
+
+DATABASE QUE 
+
+FAZ 
+
+STORE 
+
+
+
+
+DE SUMMARY METRICS 
+
+
+
+PARA 1 TABLEAU DASHBOARD....
+
+
+
+-----------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+TEREMOS, NA VERDADE, 2 ROLES:
+
+
+
+
+
+
+
+
+1) ACCOUNTADMIN --> VAI TER TODAS AS 
+
+TABLES DENTRO DE "INFORMATION_SCHEMA"...
+
+
+
+
+
+
+
+
+2) REPORT --> VAI USAR 1 WAREHOUSE 
+
+
+de nome "reporting" -->  O REPORT ROLE DEVE 
+
+TER PERMISSAO 
+
+PARA 
+
+
+___QUERIAR AS TABLES DENTRO DE "INFORMATION_SCHEMA",
+
+
+
+PELO MENOS ENQUANTO 
+
+
+
+ESTIVEREM DEVELOPING.... --> precisam DESSA 
+
+PERMISSAO 
+
+PARA __ PRODUZIR __ 1 TABLE 
+
+
+DE NOME "REPORT SUMMARY"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ASSIM QUE 
+
+
+
+
+ESSA TABLE DE "REPORT SUMMARY" FOR CRIADA,
+
+
+
+
+O ROLE DE "REPORT" DEVERÁ TER ACESSO 
+
+"READ-ONLY"
+
+
+a ela....
+
+
+
+
+
+
+
+
+
+
+--> ESSA TABLE,
+
+REPORT SUMMARY,
+
+
+
+será usada para 
+
+
+GERAR O TABLEAU REPORT...
+
+
+
+
+
+
+
+
+
+
+
+
+--> UMA COISA QUE VC DEVE TER EM MENTE, AQUI:
+
+
+
+
+
+
+1) AO REPORT ROLE 
+
+É DADA A PERMISSAO PARA 
+
+
+__QUERIAR __ AS TABLES DO ACCOUNT ADMIN,
+
+
+tudo sem ter de conferir NENHUMA PERMISSAO 
+
+
+EXPLÍCITA PARA SI (report role)...
+
+
+
+
+
+
+
+
+
+
+
+2) A OWNERSHIP 
+
+
+DA _ TABLE "REPORT SUMMARY" 
+
+
+VAI CONTINUAR 
+
+COM O ACCOUNTADMIN role,
+
+
+
+
+MAS __ READ-ONLY ACCESS 
+
+
+
+SERÁ DADO AO "REPORT ROLE"...
+
+
+
+
+
+
+3) NESSE CASO, 
+
+apesar 
+
+
+da action/comandos 
+
+
+do report role CRIAREM A TABLE DE "REPORT SUMMARY",
+
+
+
+
+ELE _ NAO _ PODE UPDATAR,  DELETAR, OU 
+
+FAZER QUALQUER MODIFICACAO, 
+
+
+
+
+NESSA REPORT SUMMARY TABLE...
+
+
+
+
+
+
+
+
+
+
+4) PARA CUMPRIR ESSE REQUISITO,
+
+PODEMOS USAR OWNER PROCEDURES... ISSO PQ 
+
+
+__ AS OWNER PROCEDURES 
+
+""MAKES IT POSSIBLE TO PROVIDE RESTRICTED
+
+ACCESS TO UTILIZE RESOURCES UNDER ANOTHER ROLE""...
+
+
+
+
+
+
+
+
+
+5) O USO DE OWNER STORED PROCEDURES 
+
+
+É QUASE COMO O INVITE DE 
+
+GUESTS NA SUA CASA -------> ELES PODEM FALAR,
+
+COMER,
+
+USAR SUA TV E PEGAR SUAS COISAS SE VC DEIXAR...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AGORA VEREMOS ALGUNS DOS USE-CASES 
+
+
+DE OWNER PROCEDURES:
+
+
+
+
+
+
+
+
+PODEMOS:
+
+
+
+
+
+
+1) WRITE AND USE STORED PROCEDURES TO GET __NUMBER__ OF 
+PERMANENT TABLES__ AND TRANSIENT TABLES IN A DATABASE...
+
+
+
+
+
+
+2) USAR OWNER PROCEDURES PARA 
+
+CONSEGUIR TABLES COM "MORE FAIL SAFE STORAGE""...
+
+
+
+
+
+
+3) USAR OWNED PROCEDURES PARA 
+
+
+"LISTAR O NÚMERO DE UNUSED TABLES"...
+
+
+
+
+
+
+
+
+
+
+
+
+-> OS USE-CASES SAO INÚMEROS... --> QUALQUER 
+
+
+TIPO DE ATIVIDADE REPETITIVA.... --> PARA ESSE TIPO 
+
+DE TAREFA,
+
+
+PODEMOS FACILMENTE 
+
+
+
+FAZER O WRITE DE 1 PROCEDURE,
+
+
+E PODEMOS DAR PERMISSION DE ACESSO A ESSA PROCEDURE 
+
+A QUALQUER OUTRO ROLE...
+
+
+
+
+
+(
+
+
+    isso tudo faz sentido...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> COM ISSO,
+
+ENTENDEMOS UM POUCO A NECESSIDADE DE STORED PROCEDURES 
+
+NO SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK, MAS E QUANTO A CALLER PROCEDURES?
+
+
+
+
+
+
+
+
+
+
+
+CALLER PROCEDURES:
+
+
+
+
+
+
+
+
+
+
+1) É COMO UM ___ PET__ NA SUA CASA...
+
+
+
+
+
+
+
+2) CALLER PROCEDURES __ PODEM _USAR 
+
+RESOURCES __ QUE ESTAO DISPONÍVEIS AO 
+
+ROLE QUE OS CHAMA... 
+
+(under its current calling role)...
+
+
+
+
+
+3) COMO 1 PET,
+
+AS CALLER PROCEDURES 
+
+
+PODEM APENAS PERMANECER DENTRO DE NOSSA CASA...
+
+
+
+NAO PODEM ENTRAR NA CASA DO VIZINHO,
+
+
+POR EXEMPLO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+QUAIS SAO ALGUNS USE-CASES DE CALLER PROCEDURES?
+
+
+
+
+
+
+
+
+SAO ELES:
+
+
+
+
+
+
+
+
+
+
+1) GET COLUMN FILL RATE IN A TABLE....
+
+
+    (já vimos como fazer isso)...
+
+
+
+
+2) REMOVE DUPLICATE RECORDS FROM THE TABLE (
+    simple activity...
+)
+
+
+
+
+
+
+
+3) remove duplicate records from the table with 
+a RECURSIVE ACTIVITY (
+
+    podemos criar 1 generic procedure,
+
+
+    por caller_name,
+
+    E AÍ 
+
+    USAR ESSA PROCEDURE PARA REMOVER 
+
+    DUPLICATES DA TABLE..
+)
+
+
+
+
+4) PROCEDURES IMPLEMENTING BUSINESS LOGIC
+
+(complex business logic --> vc nao deve usar 
+
+owner procedures,
+
+e sim 
+
+CALLER PROCEDURES, QUE SERVEM MELHOR PARA ESSE USE-CASE)
+
+
+
+
+(
+
+    SAO MELHORES PARA BUSINESS LOGIC 
+
+    PQ CALLER PROCEDURES 
+
+    VAO 
+
+    "mOVE FROM ENVIRONMENT TO ENVIRONMENT",
+
+
+    e aí elas deverao ser capazes de acessar APENAS OS RESOURCES 
+    
+    DISPONÍVEIS A CADA 
+
+    ENVIRONMENT... ------> ex: "FROM DEVELOPMENT" TO "UAT", "FROM UAT TO PRODUCTION"...
+)
+
+
+
+
+
+
+
+
+
+
+
+FROM DEV TO UAT (USER ACCEPTANCE TEST)
+
+
+
+
+
+
+
+
+
+
+5) PROCEDURES TO AUDIT DATA LOADED INTO 
+
+A TABLE (
+
+
+    podemos escrever um monte de procedures 
+
+    PARA AUDIT DATA... audit data === ver quantos 
+
+    records foram carregados, quantos records foram updated,
+
+    quanto tempo a query demorou para carregar,
+    quanto 
+    nos custou,
+
+    etc...
+) ---------------> TUDO ISSO PODE SER FEITO COM 1 CALLER 
+
+PROCEDURE...
+
+
+
+
+
+
+
+
+ok... acabamos com este módulo...

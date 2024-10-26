@@ -1,0 +1,198 @@
+
+
+
+
+
+
+
+
+
+
+
+QUAIS SAO AS RESTRICTIONS DA READER ACCOUNT?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+BEM... O PROFESSOR CRIA 1 DATABASE DE NOME "SALES",
+
+DENTRO DA READER ACCOUNT...
+
+
+
+
+
+
+
+
+ele cria 1 table...
+
+
+
+
+
+
+
+
+--> tipo assim:
+
+
+
+
+
+
+
+
+CREATE OR REPLACE DATABASE SALES;
+
+
+
+CREATE OR REPLACE TABLE CUSTOMER_TEST LIKE READER_SALES.PUBLIC.CUSTOMER;
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- AÍ O PROFESSOR TENTA INSERIR DATA, USANDO 
+
+ESSA READER ACCOUNT....
+
+
+
+
+
+
+
+
+--> MAS AO TENTAR FAZER ISSO, ELE RECEBE UM ERROR --> ISSO PQ 
+
+
+
+DML OPERATIONS (delete, update, insert) 
+
+
+
+NAO SAO PERMITIDAS 
+
+DENTRO 
+
+DE READER ACCOUNTS....
+
+
+
+
+
+
+
+--> ALÉM DISSO,
+
+COM READER ACCOUNTS,
+
+VC NAO PODE FAZER LOAD DE QUAISQUER 
+
+STAGING AREAS (
+
+    tanto external, do s3, azure, gcp,
+
+
+    como internas (snowflake internal staging area)...
+)...
+
+
+
+
+
+
+
+
+
+TUDO ISSO PQ É UMA "READER" ACCOUNT...
+
+
+
+
+
+
+
+
+
+
+--> o clone também nao é permitido,
+
+
+
+pq 
+
+
+
+é um shared object...
+
+
+
+
+
+
+
+-> e o clone de databases/objects shared 
+
+
+NAO É PERMITIDO...
+
+
+
+
+
+
+
+
+
+
+
+
+VOCE PODE TAMBÉM TENTAR CRIAR TABLES VAZIAS,
+MAS 
+
+VC TAMBÉM NAO PODERÁ 
+
+
+INSERIR DATA DENTRO DESSA TABLE (
+
+    DML OPERATIONS NAO SAO PERMITIDAS...
+)
+
+
+
+
+
+
+
+
+
+--> VOCE PODE CRIAR TODOS OS  OBJECTS,
+
+
+
+MAS __ AS OPERATIONS EM SI NAO SAO PERMITIDAS...
+
+
+
+
+

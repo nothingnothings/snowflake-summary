@@ -1,0 +1,620 @@
+
+
+
+
+
+
+
+
+
+
+AGORA VEREMOS ALGUNS OUTROS PROBLEMAS 
+
+
+
+ACERCA DA FEATURE DE "SNOWPIPE"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> VIMOS QUE:
+
+
+
+
+
+1) YOU HAVE TO VALIDATE SNOWPIPE OBJECT 
+
+IN ERROR SCENARIOS (
+    o snowflake nao faz throw de qualquer 
+
+    notification em error scenarios envolvendo pipes...
+
+)
+
+
+
+
+
+2) VOCE NAO CONSEGUE CAPTURAR REJECTED RECORDS 
+
+
+___QUANDO VC __ ESTÁ EXECUTANDO COPY COMMANDS 
+
+ATRAVÉS DO SNOWPIPE... 
+(isso é bem ruim)....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+MAS TEMOS MAIS ALGUNS PROBLEMAS...
+
+
+
+
+
+
+
+
+OS PROBLEMAS SAO:
+
+
+
+
+
+
+
+
+
+1) VOCE NAO PODE ALTERAR O COMANDO DE "cOPY"
+
+
+
+DE DENTRO DO OBJECT DE "PIPE"...
+
+
+
+
+
+
+
+
+
+QUER DIZER QUE ___ SE DESEJAMOS__ ALTERAR 
+
+O COMMAND DENTRO DO PIPE,
+
+
+É NECESSŚARIO __ RECRIAR__ O PIPE INTEIRO,
+
+
+tipo assim:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--- SCENARIO 2:  "YOU cant update copy command inside snowpipe. You can only RECREATE PIPE" 
+
+CREATE OR REPLACE PIPE DEMO_DB.PUBLIC.SNOWPIPE
+AUTO_INGEST=TRUE 
+AS 
+COPY INTO DEMO_DB.PUBLIC.EMP_SNOWPIPE
+FROM @DEMO_DB.PUBLIC.SNOW_STAGE
+FILE_FORMAT=(
+    TYPE=CSV,
+    FIELD_OPTIONALLY_ENCLOSED_BY='"'
+);
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ok... isso eu já vi...
+
+
+
+
+
+--> NAO É POSSÍVEL RODAR "ALTER PIPE" em cima de um pipe...
+
+a única alternativa é 
+
+
+RECRIAR ESSE PIPE OBJECT....
+
+
+
+
+
+
+
+
+
+
+--> OK... MAS ISSO TRAZ OUTRO PROBLEMA:
+
+
+
+
+
+2) O RECREATE DO PIPE OBJECT __ NAO VAI_ REFRESHAR 
+
+A METADATA DO PIPE OBJECT...
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE...
+
+
+
+SE RECRIAMOS 1 PIPE OBJECT,
+
+
+A EXPECTATIVA COMUM SERIA "OK, A METADATA INFORMATION ANTIGA 
+DEVERIA/DEVE SER APAGADA"...
+
+
+
+
+
+
+
+
+--> MAS SE RECRIAMOS ESSE PIPE OBJECT,
+
+
+A METADATA ANTIGA CONTINUA NO LUGAR...
+
+
+
+
+
+PODEMOS VER ISSO COM 
+
+
+
+
+"""
+
+ALTER PIPE SNOWPIPE_DEMO REFRESH;
+
+
+""""
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ok... mas digamos que 
+
+
+QUEREMOS "RE-LOAD" A MESMA FILE,
+
+MAIS UMA VEZ,
+
+
+a essa table,
+
+
+DEPOIS DE REALIZAR CHANGES NO COPY COMMAND,
+
+
+
+
+ESSE NOSSO PIPE NAO VAI PERMITIR 
+
+
+ESSE "RE-LOAD",
+
+
+
+JUSTAMENTE PQ A FILE AINDA ESTARÁ MARCADA (markeD)
+
+
+
+COMO "SENT"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE SE VC JÁ FEZ O TRUNCATE DESSA 
+TABLE,
+
+E SE DEPOIS VC QUISER QUE ESSA FILE SEJA LOADED 
+
+
+DE NOVO NA TABLE, NAO SERÁ POSSÍVEL,
+
+
+
+
+PQ A FILE AINDA ESTARÁ MARKED COMO "SENT"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+ok... esse é um problema, com certeza...
+
+
+
+
+
+
+
+
+
+
+mas agora devemos ver outro problema...
+
+
+
+
+
+
+3) SEMPRE É MELHOR CRIAR 1 ÚNICO 
+
+PIPE OBJECT PARA 1 GIVEN S3 BUCKET....
+
+
+
+
+
+
+
+
+
+MAS PQ ISSO?
+
+
+
+
+É PQ, MESMO SE CRIARMOS MÚLTIPLOS PIPE OBJECTS,
+
+
+
+O NOTIFICATION CHANNEL SEMPRE CONTINUARÁ 
+
+O MESMO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> digamos que criamos 1 outro object,
+
+assim:
+
+
+
+
+
+
+
+
+CREATE OR REPLACE PIPE DEMO_DB.PUBLIC.SNOWPIPE_OBJECT_2 
+AUTO_INGEST=TRUE
+AS 
+COPY INTO DEMO_DB.PUBLIC.EMP_SNOWPIPE
+FROM @DEMO_DB.PUBLIC.SNOW_STAGE
+FILE_FORMAT=(
+    TYPE=CSV,
+    FIELD_OPTIONALLY_ENCLOSED_BY='"'
+);
+
+
+
+
+
+
+
+
+--> OK... DIGAMOS QUE CRIAMOS ESSE OBJECT...
+
+
+
+
+
+DEPOIS DISSO, SE RODAMOS 
+
+"SHOW PIPES"....
+
+
+
+
+
+
+
+--> TEMOS ESTE OUTPUT:
+
+
+
+
+
+
+
+
+SNOWPIPE
+SNOWPIPE 2 
+
+
+
+
+
+
+
+notification_channel --> PARA OS 2 PIPES,
+
+O NOTIFICATION_CHANNEL __ SERÁ O MESMO___...
+
+
+
+
+
+
+
+
+
+--> O QUE TEMOS QUE OBSERVAR, AQUI, PORTANTO,
+
+
+É:
+
+
+
+A) NÓS CONFIGURAMOS ESSE "NOTIFICATION_CHANNEL"
+
+
+EM 1 NÍVEL DE BUCKET,
+
+MAS __ NAO __ EM 1 NÍVEL DE "FOLDER"/FOLDERS...
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA VISUALIZAR ISSO,
+
+
+
+
+BASTA IR ATÉ A PÁGINA DO BUCKET,
+
+ENTAO EM "PROPRIEDADES",
+
+
+E AÍ EM 
+
+"EVENT NOTIFICATIONS" --> PQ PODEMOS CONFIGURAR APENAS 
+
+
+1 
+
+SNOWPIPE POR BUCKET....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... MAS DIGAMOS QUE AGORA TEMOS 2 
+
+DIFERENTES SNOWPIPE OBJECTS,
+
+
+APONTANDO A 2 DIFERENTES FOLDERS 
+
+DENTRO 
+
+DE 1 MESMO BUCKET...
+
+
+
+
+
+O QUE ACONTECE, ENTAO?
+
+
+
+
+
+--> BEM, SE EU UPLOADO 
+
+
+1 FILE DE 1 FOLDER 
+
+DO 
+
+S3 PARA OUTRO FOLDER DO S3, EM 1 MESMO BUCKET,
+
+
+
+ISSO TAMBÉM VAI TRIGGAR 
+
+O SNOWPIPE....
+
+
+
+
+
+--> tecnicamente,
+
+o primeiro 
+
+
+
+
+PIPE ESTÁ COM UM PATH DE 
+
+"s3://hartfordstar/snowpipe"... APESAR DISSO,
+
+
+SEMPRE QUE 
+
+EU ADICIONAR 1 FILE A QUALQUER FOLDER DESSE BUCKET,
+
+
+
+ISSO JÁ VAI AUTOMATICAMENTE 
+
+TRIGGAR 
+
+
+O OBJECT DO "SNOWPIPE", E TRIGGAR O COPY COMMAND...
+
+
+
+
+
+
+
+
+
+--> É POR ISSO QUE É SEMPRE UMA BETTER PRACTICE 
+
+TER APENAS 1 ÚNICO 
+
+PIPE PARA 1 BUCKET AWS S3...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+LESSONS LEARNED:
+
+
+
+
+
+
+1) YOU CANT ALTER THE COPY COMMAND IN SNOWPIPE OBJECT...
+
+
+
+
+
+
+2) YOU MUST NOT CREATE MULTIPLE PIPE 
+
+OBJECTS ON SAME BUCKET...
+
+

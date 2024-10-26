@@ -1,0 +1,222 @@
+
+
+
+
+
+
+PODEMOS CLICAR EM "CHART"...
+
+
+
+
+
+
+
+
+
+
+
+--> PODEMOS TER VISUALIZATIONS COM ELE....
+
+
+
+
+
+
+
+--> TEMOS OS QUERY DETAILS...
+
+
+
+
+
+
+
+--> TE DÁ UM PCO DE HIGH LEVEL DE CADA INFO 
+
+
+NO SEU QUERY RESULT...
+
+
+
+
+
+-> DATE OF JOINING -> NOS DÁ UM HISTOGRAMA, AUTOMATICAMENTE,
+
+
+MOSTRANDO OS ROWS DE ACORDO COM 
+
+AS DATES...
+
+
+
+
+
+
+
+
+
+--> QUANDO A DATA É DE DATA TYPE DATE,
+
+
+ELE AUTOMATICAMENTE COLOCA A DATA EM BUCKETS,
+
+DE ACORDO COM DATE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> search bar --> isso nos ajuda a procurar os results...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK...
+
+
+
+
+
+
+
+
+AGORA TEMOS MAIS 1 DETALHE,
+
+VERSION CONTROL... COMO ISSO É HANDLADO?
+
+
+
+
+
+
+
+
+
+
+
+
+--> EM CIMA, NA DIREITA,
+
+
+TEMOS VERSION CONTROL DE NOSSA WORKSHEET...
+
+
+
+
+
+
+
+
+---> podemos pegar versions diferentes de nossa worksheet...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PQ EVENTUALMENTE VC ESCREVERÁ UM MONTE DE QUERIES...
+
+
+
+
+
+
+--> SE VC QUER VOLTAR ATÉ 1 TEMPO ESPECÍFICO,
+
+
+PARA VER COMO ESTAVA A WORKSHEET,
+
+VC PODE USAR ESSA FEATURE,
+
+
+PARA RECUPERAR 
+
+
+SUAS QUERIES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+------> vc pode ver quem criou cada schema, etc...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> podemos ver 
+
+
+
+as functions, procedures, stages e views para 
+cada 1 de nossos schemas..
+
+
+
+
+
+
+
+
+--> também podemos ver os privileges..
+
+
+
+
+
+
+
+
+

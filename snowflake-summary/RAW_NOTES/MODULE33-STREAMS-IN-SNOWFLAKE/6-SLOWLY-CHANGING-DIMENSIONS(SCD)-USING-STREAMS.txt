@@ -1,0 +1,706 @@
+
+
+
+
+
+
+
+
+
+
+ok...
+
+
+AGORA TENTAREMOS ENTENDER COMO "CDC' FUNCIONA NO SNOWFLAKE (
+
+    CHANGE DATA CAPTURE...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+--> TENTAREMOS IMPLEMENTAR 1 "CDC TYPE"...
+
+
+
+
+
+
+
+
+
+--> no caso, tentaremos FAZER __MAINTAIN__ 
+
+DA VERSION DOS RECORDS,
+
+
+version dos records assim que eles sao alteardos no source...
+
+
+
+
+
+
+
+
+---> MANTEREMOS AS VERSIONS DESSA DATA NA TARGET TABLE...
+
+
+
+--> IMAGINE QUE
+"""I AM IN ONE ADDRESS"",
+
+
+
+E AÍ EU "MOVE TO ANOTHER ADDRESS""...
+
+
+
+
+
+NO NOSSO CASO, O ÚLTIMO ADDRESS AINDA SEŔA MANTIDO 
+
+NA DATABASE, MAS MARCADO COMO UMA "VERSION ANTIGA"...
+
+
+
+
+
+
+
+
+
+
+
+VEREMOS COMO FAZER ISSO, LEVERAGING AS CAPACIDADES 
+
+DE STREAM NO SNOWFLAKE...
+
+
+
+
+
+--> PARA ISSO, O PROFESSOR ESCREVE ASSIM:
+
+
+
+
+
+
+--> TAMBÉM PODEMOS MISTURAR 
+
+ESSA STREAM COM 1 TASK, PARA AUTOMATICAMENTE 
+CAPTURAR CHANGES NOS RECORDS DE NOSSA DATABASE,
+
+CHANGES QUE SERAO REFLETIDAS NA TARGET TABLE...
+
+
+
+
+
+
+-- create source table
+CREATE OR REPLACE TABLE SOURCE_TABLE (
+    ID INT,
+    NAME STRING
+);
+
+
+
+-- create stream
+CREATE OR REPLACE STREAM DELTA_S ON TABLE SOURCE_TABLE;
+
+
+
+
+
+-- INSERT 3 ROWS INTO THE SOURCE TABLE:
+INSERT INTO SOURCE_TABLE values (0, 'charlie brown');
+INSERT INTO SOURCE_TABLE values (1, 'lucy');
+INSERT INTO SOURCE_TABLE values (2, 'linus');
+
+
+
+
+
+-- INSERT 3 MORE ROWS, BUT WITH DIFFERENT VALUES:
+INSERT INTO SOURCE_TABLE values (3, 'charlie brown');
+INSERT INTO SOURCE_TABLE values (4, 'lucy lucy');
+INSERT INTO SOURCE_TABLE values (5, 'linus linus');
+
+
+
+
+
+
+
+
+
+-- UPDATE SOURCE TABLE 
+UPDATE SOURCE_TABLE
+SET NAME='ahc'
+WHERE id=0;
+
+
+
+
+
+-- DELETE FROM SOURCE TABLE:
+DELETE FROM SOURCE_TABLE WHERE id=0;
+
+
+
+
+
+
+-- Create consumer/target table 
+CREATE OR REPLACE TABLE TARGET_TABLE (
+    ID INT,
+    NAME STRING,
+    STREAM_TYPE STRING DEFAULT NULL,
+    REC_VERSION NUMBER DEFAULT 0,
+    REC_DATE TIMESTAMP_LTZ
+);
+
+
+
+-- Create/update task:
+
+CREATE TASK tgt_merge
+    WAREHOUSE=COMPUTE_WH
+    SCHEDULE='1 MINUTE'
+    WHEN SYSTEM$STREAM_HAS_DATA('DELTA_S')
+AS 
+INSERT INTO TARGET_TABLE 
+SELECT * FROM DELTA_S
+
+
+
+
+
+
+
+
+
+---------------------------------
+
+
+
+
+
+
+ESSA SINTAXE DA TASK É A IDEIA BÁSICA DE COMO 
+
+DEVE SER ESCRITA...
+
+
+
+
+MAS O PROFESSOR ESPECIFICOU BEM MAIS:
+
+
+
+
+
+-- Create/update task:
+
+CREATE TASK tgt_merge
+    WAREHOUSE=COMPUTE_WH
+    SCHEDULE='1 MINUTE'
+    WHEN SYSTEM$STREAM_HAS_DATA('DELTA_S')
+AS 
+MERGE INTO TARGET_TABLE AS T
+USING DELTA_S AS S 
+ON T.ID=S.ID AND (metadata$action='DELETE')
+WHEN MATCHED AND METADATA$ISUPDATE='FALSE' THEN 
+UPDATE SET REC_VERSION=9999, STREAM_TYPE='DELETE'
+WHEN MATCHED AND METADATA$ISUPDATE='TRUE' THEN
+UPDATE SET REC_VERSION=REC_VERSION - 1
+WHEN NOT MATCHED THEN INSERT (id, name, stream_type, rec_version, rec_date)
+VALUES (
+    s.id, s.name, metadata$action, 0, CURRENT_TIMESTAMP()
+);
+
+
+
+
+
+
+
+
+
+-- Start task 
+ALTER TASK TGT_MERGE RESUME;
+
+
+
+
+
+
+
+-- view results:
+SELECT * FROM TARGET_TABLE;
+
+
+
+
+SHOW TASKS LIKE '%TGT_MERGE%';
+
+
+SELECT * FROM TABLE(SNOWFLAKE.INFORMATION_SCHEMA.TASK_HISTORY());
+
+
+-- view results:
+SELECT * FROM TARGET_TABLE;
+
+
+
+
+
+
+
+
+
+OK... FUNCIONOU....
+
+
+
+
+
+
+
+
+
+
+O OUTPUT DESSA TARGET TABLE FICA TIPO ASSIM:
+
+
+
+
+
+
+ID	NAME	STREAM_TYPE	REC_VERSION	REC_DATE
+2	linus	INSERT	0	2023-08-23 11:24:44.527 -0700
+3	charlie brown	INSERT	0	2023-08-23 11:24:44.527 -0700
+5	linus linus	INSERT	0	2023-08-23 11:24:44.527 -0700
+4	lucy lucy	INSERT	0	2023-08-23 11:24:44.527 -0700
+0	charlie brown	INSERT	0	2023-08-23 11:24:44.527 -0700
+1	lucy	INSERT	0	2023-08-23 11:24:44.527 -0700
+
+
+
+
+
+
+
+
+
+
+
+
+
+TEMOS "RECORD_VERSION" E "RECORD_DATE",
+
+basicamente...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ISSO REGISTRA, PARA CADA ROW:
+
+1) QUAL "VEZ" FOI ESSA ALTERACAO DESSE ROW (se o row foi modificado múltiplas vezes)...
+
+
+
+2) QUAL DATE OCORREU ESSA ALTERACAO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OS RECORDS ANTIGOS AINDA SERAO MAINTAINED,
+
+
+
+MAS 
+
+OS RECORDS QUE SAO UPDATADOS 
+
+
+
+
+FICAM COM 1 VALUE MAIOR...
+
+
+
+EX:
+
+
+
+
+
+
+ID	NAME	STREAM_TYPE	REC_VERSION	REC_DATE
+0	ahc	INSERT	0	2023-08-23 11:30:36.727 -0700
+2	linus	INSERT	0	2023-08-23 11:24:44.527 -0700
+3	charlie brown	INSERT	0	2023-08-23 11:24:44.527 -0700
+5	linus linus	INSERT	0	2023-08-23 11:24:44.527 -0700
+4	lucy lucy	INSERT	0	2023-08-23 11:24:44.527 -0700
+0	charlie brown	DELETE	9,999	2023-08-23 11:24:44.527 -0700
+1	lucy	INSERT	0	2023-08-23 11:24:44.527 -0700
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ID	NAME	STREAM_TYPE	REC_VERSION	REC_DATE
+0	ahc2	INSERT	0	2023-08-23 11:33:13.234 -0700
+2	linus	INSERT	0	2023-08-23 11:24:44.527 -0700
+3	charlie brown	INSERT	0	2023-08-23 11:24:44.527 -0700
+5	linus linus	INSERT	0	2023-08-23 11:24:44.527 -0700
+4	lucy lucy	INSERT	0	2023-08-23 11:24:44.527 -0700
+0	ahc	INSERT	-1	2023-08-23 11:30:36.727 -0700
+0	charlie brown	DELETE	9,998	2023-08-23 11:24:44.527 -0700
+1	lucy	INSERT	0	2023-08-23 11:24:44.527 -0700
+
+
+
+
+
+
+
+updatei o value de ahc, para ahc2 ...
+
+
+
+
+
+
+ok, agora o 'ahc' está como rec_version '-1',
+
+pq ele ficou old...
+
+
+
+
+
+
+
+já o 'ahc2'
+
+FICOU COMO 0,
+
+
+pq ele é o mais novo...
+
+
+
+
+
+
+
+rodo esse update mais uma vez, 
+
+para testar....
+
+
+
+
+
+
+
+EX:
+
+
+
+
+
+
+
+
+
+
+
+
+ID	NAME	STREAM_TYPE	REC_VERSION	REC_DATE
+0	ahc3	INSERT	0	2023-08-23 11:34:24.473 -0700
+2	linus	INSERT	0	2023-08-23 11:24:44.527 -0700
+3	charlie brown	INSERT	0	2023-08-23 11:24:44.527 -0700
+5	linus linus	INSERT	0	2023-08-23 11:24:44.527 -0700
+4	lucy lucy	INSERT	0	2023-08-23 11:24:44.527 -0700
+0	ahc2	INSERT	-1	2023-08-23 11:33:13.234 -0700
+0	ahc	INSERT	-2	2023-08-23 11:30:36.727 -0700
+0	charlie brown	DELETE	9,997	2023-08-23 11:24:44.527 -0700
+1	lucy	INSERT	0	2023-08-23 11:24:44.527 -0700
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> se 1 record for deletado no source,
+
+
+
+todos os records na target table devem ser marcados como deleted...
+
+
+
+
+
+
+
+
+
+DELETAMOS O RECORD DE ID '2':
+
+
+
+
+
+
+
+
+
+ID	NAME	STREAM_TYPE	REC_VERSION	REC_DATE
+0	ahc3	INSERT	0	2023-08-23 11:34:24.473 -0700
+2	linus	DELETE	9,999	2023-08-23 11:24:44.527 -0700
+3	charlie brown	INSERT	0	2023-08-23 11:24:44.527 -0700
+5	linus linus	INSERT	0	2023-08-23 11:24:44.527 -0700
+4	lucy lucy	INSERT	0	2023-08-23 11:24:44.527 -0700
+0	ahc2	INSERT	-1	2023-08-23 11:33:13.234 -0700
+0	ahc	INSERT	-2	2023-08-23 11:30:36.727 -0700
+0	charlie brown	DELETE	9,997	2023-08-23 11:24:44.527 -0700
+1	lucy	INSERT	0	2023-08-23 11:24:44.527 -0700
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+certo... esse código pode ser útil, eventualmente...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+O PROFESSOR MOSTRA MAIS 1 CENÁRIO, ANTES DE ACABAR A LECTURE...
+
+
+
+
+
+
+
+
+
+
+
+
+--> ELE UPDATA O RECORD DE ID '1',
+TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+
+
+UPDATE SOURCE_TABLE 
+SET NAME='lllucy'
+WHERE id=1;
+
+
+
+
+
+
+UPDATE SOURCE_TABLE 
+SET NAME='lllucy2'
+WHERE id=1;
+
+
+
+
+
+
+
+-> AGORA VAMOS UPDATAR O RECORD 2, 3 vezes,
+
+
+
+para ver como as versions sao updatadas...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+FICOU TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+ID	NAME	STREAM_TYPE	REC_VERSION	REC_DATE
+1	lllucy2	INSERT	0	2023-08-23 11:38:56.134 -0700
+0	ahc3	INSERT	0	2023-08-23 11:34:24.473 -0700
+2	linus	DELETE	9,999	2023-08-23 11:24:44.527 -0700
+3	charlie brown	INSERT	0	2023-08-23 11:24:44.527 -0700
+5	linus linus	INSERT	0	2023-08-23 11:24:44.527 -0700
+4	lucy lucy	INSERT	0	2023-08-23 11:24:44.527 -0700
+0	ahc2	INSERT	-1	2023-08-23 11:33:13.234 -0700
+0	ahc	INSERT	-2	2023-08-23 11:30:36.727 -0700
+0	charlie brown	DELETE	9,997	2023-08-23 11:24:44.527 -0700
+1	lucy	INSERT	-1	2023-08-23 11:24:44.527 -0700
+
+
+
+
+
+
+
+
+
+
+
+parece que só a última change ficou na table target..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ID	NAME	STREAM_TYPE	REC_VERSION	REC_DATE
+1	lllucy2	INSERT	0	2023-08-23 11:41:35.594 -0700
+0	ahc3	INSERT	0	2023-08-23 11:34:24.473 -0700
+2	linus	DELETE	9,999	2023-08-23 11:24:44.527 -0700
+3	charlie brown	INSERT	0	2023-08-23 11:24:44.527 -0700
+5	linus linus	INSERT	0	2023-08-23 11:24:44.527 -0700
+4	lucy lucy	INSERT	0	2023-08-23 11:24:44.527 -0700
+0	ahc2	INSERT	-1	2023-08-23 11:33:13.234 -0700
+0	ahc	INSERT	-2	2023-08-23 11:30:36.727 -0700
+0	charlie brown	DELETE	9,997	2023-08-23 11:24:44.527 -0700
+1	lllucy	INSERT	-1	2023-08-23 11:41:21.963 -0700
+1	lllucy2	INSERT	-2	2023-08-23 11:38:56.134 -0700
+1	lucy	INSERT	-3	2023-08-23 11:24:44.527 -0700
+
+
+
+
+
+
+
+
+
+
+
+o value mais recente, "lllucy2",
+
+ficou com um value de rec_version de 0 (mais recente),
+
+
+e o value mais antigo ficou com '-3'...
+
+
+
+
+
+certo....
+
+
+
+

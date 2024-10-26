@@ -1,0 +1,966 @@
+
+
+
+
+
+
+
+
+
+OK... AGORA TEMOS UMA TASK EM QUE 
+
+TEMOS 
+
+QUE 
+COPIAR A DATA DO S3 PARA O SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+ASSIM QUE VC 
+
+COPIAR A DATA VC:
+
+
+
+
+
+
+
+
+1) HAVE TO COPY DATA FROM S3 TO SNOWFLAKE...
+
+
+
+
+
+
+
+2) RECORD REJECTED RECORDS IN A SEPARATE TABLE....
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE A EMPRESA TEM A DATA 
+
+ARMAZENADA NO S3... --> AGORA ELES QUEREM 
+
+MOVER A DATA DO S3 PARA O SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+--> PARA ISSO, ESCREVEREMOS NOSSAS QUERIES:
+
+
+
+
+
+
+
+
+
+
+PRIMEIRO, CRIAMOS 1 TABLE PARA ENFIAR OS RECORDS:
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE TABLE DEMO_DB.PUBLIC.EMP_EXT_STAGE (
+    FIRST_NAME STRING,
+    LAST_NAME STRING,
+    EMAIL STRING,
+    STREETADDRESS STRING,
+    CITY STRING,
+    START_DATE DATE
+);
+
+
+
+
+CREATE OR REPLACE STORAGE INTEGRATION S3_INTEGRATION
+    TYPE=EXTERNAL_STAGE
+    STORAGE_PROVIDER=S3
+    ENABLED=TRUE
+    STORAGE_AWS_ROLE_ARN= 'arn:aws:iam::269021562924:role/new-snowflake-access'
+    STORAGE_ALLOWED_LOCATIONS = ('s3://new-snowflake-course-bucket/CSV/')
+
+
+CREATE OR REPLACE FILE FORMAT DEMO_DB.FILE_FORMATS.MY_CSV_FORMAT
+    TYPE=CSV 
+    FIELD_DELIMITER=','
+    SKIP_HEADER=1;
+
+
+
+DESC STORAGE INTEGRATION S3_INTEGRATION;
+
+
+
+
+CREATE OR REPLACE STAGE DEMO_DB.PUBLIC.S3_EXTERNAL_STAGE
+    URL='s3://new-snowflake-course-bucket/CSV/'
+    STORAGE_INTEGRATION=S3_INTEGRATION
+    FILE_FORMAT=DEMO_DB.FILE_FORMATS.MY_CSV_FORMAT;
+
+
+
+
+
+
+
+
+
+----------------------
+
+
+
+
+
+
+
+já temos o integration object e o file format,
+
+e também o stage object...
+
+
+
+
+
+
+
+--. agora só falta copiarmos a data, usando 
+
+o comando copy into...
+
+
+
+
+
+
+
+
+
+
+
+
+LÁ NO BUCKET S3,
+
+temos estas files:
+
+
+
+
+employees_error_file0.csv
+employees_error_file1.csv 
+e vários employees normais...
+
+
+
+
+EX:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE TABLE DEMO_DB.PUBLIC.EMP_EXT_STAGE_TABLE (
+    FIRST_NAME STRING,
+    LAST_NAME STRING,
+    EMAIL STRING,
+    STREETADDRESS STRING,
+    CITY STRING,
+    START_DATE DATE
+);
+
+
+
+
+CREATE OR REPLACE STORAGE INTEGRATION S3_INTEGRATION
+    TYPE=EXTERNAL_STAGE
+    STORAGE_PROVIDER=S3
+    ENABLED=TRUE
+    STORAGE_AWS_ROLE_ARN= 'arn:aws:iam::269021562924:role/new-snowflake-access'
+    STORAGE_ALLOWED_LOCATIONS = ('s3://new-snowflake-course-bucket/CSV/')
+
+
+CREATE OR REPLACE FILE FORMAT DEMO_DB.FILE_FORMATS.MY_CSV_FORMAT
+    TYPE=CSV 
+    FIELD_DELIMITER=','
+    SKIP_HEADER=1;
+
+
+
+DESC STORAGE INTEGRATION S3_INTEGRATION;
+
+
+
+
+CREATE OR REPLACE STAGE DEMO_DB.PUBLIC.S3_EXTERNAL_STAGE
+    URL='s3://new-snowflake-course-bucket/CSV/'
+    STORAGE_INTEGRATION=S3_INTEGRATION
+    FILE_FORMAT=DEMO_DB.FILE_FORMATS.MY_CSV_FORMAT;
+
+
+
+
+
+
+-- COPY COMMAND
+COPY INTO DEMO_DB.PUBLIC.EMP_EXT_STAGE_TABLE
+FROM @DEMO_DB.PUBLIC.S3_EXTERNAL_STAGE
+-- ON_ERROR
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+É CLARO QUE ESSE COPY COMMAND FARÁ 
+
+O THROW DE ALGUNS ERRORS...
+
+
+
+E TEREMOS DE HANDLAR ESSES ERRORED-OUT 
+
+RECORDS....
+
+
+
+
+
+--> PARA ISSO, ANTES É MELHOR 
+
+RODAR 1 SELECT 
+
+
+NESSES ARQUIVOS, PARA VER QUE TIPO DE ERROR 
+
+
+ESTÁ SENDO THROWN...
+
+
+
+
+EX:
+
+
+
+
+
+SELECT 
+*
+FROM  @DEMO_DB.PUBLIC.S3_EXTERNAL_STAGE;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... RECEBEMOS UM ERROR DE DATA TYPE:
+
+
+
+
+Date 'pradeep' is not recognized
+
+
+
+
+
+
+
+
+
+
+--> TEMOS 2 OPCOES:
+
+
+
+
+
+1) OU COPIAMOS TODOS ESSES ROWS PARA 1 TABLE SEPARADA,
+
+DE "ERRORED_OUT" OU ALGO ASSIM...
+
+
+OU 
+
+
+
+2) TRANSFORMAMOS ESSE VALUE EM ALGUMA OUTRA COISA,
+COMO "NULL"...
+
+
+
+
+
+
+
+
+como resolver:
+
+
+
+
+
+https://docs.snowflake.com/en/user-guide/data-load-internal-tutorial-resolve 
+
+
+
+
+
+
+
+
+
+
+
+CONSEGUI....
+
+
+
+
+
+
+FOI UMA COMBINACAO DE TODAS ESTAS QUERIES:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE TRANSIENT TABLE DEMO_DB.PUBLIC.EMP_EXT_STAGE_TABLE (
+    FIRST_NAME STRING,
+    LAST_NAME STRING,
+    EMAIL STRING,
+    STREETADDRESS STRING,
+    CITY STRING,
+    START_DATE DATE
+);
+
+SELECT * FROM DEMO_DB.PUBLIC.EMP_EXT_STAGE_TABLE;
+
+CREATE OR REPLACE TABLE DEMO_DB.PUBLIC.IRREGULAR_EMP_TABLE (
+    ERROR_MESSAGE STRING,
+    RAW_DATA STRING
+);
+
+
+
+-- check row state
+SELECT 
+T.$1,
+T.$2,
+T.$3,
+T.$4,
+T.$5,
+T.$6,
+FROM  @DEMO_DB.PUBLIC.S3_EXTERNAL_STAGE AS T;
+
+
+
+
+
+TRUNCATE DEMO_DB.PUBLIC.EMP_EXT_STAGE_TABLE;
+
+
+SHOW STAGES;
+
+-- 
+
+
+-- COPY COMMAND
+COPY INTO DEMO_DB.PUBLIC.EMP_EXT_STAGE_TABLE
+FROM @DEMO_DB.PUBLIC.S3_EXTERNAL_STAGE
+ON_ERROR='CONTINUE'-- continue copying even if errors occur...
+
+
+-- errored-out --> queryId: 01ae5a2a-0001-464c-0000-00046d2a2479
+
+
+    CREATE OR REPLACE TABLE save_copy_errors AS SELECT * FROM TABLE(VALIDATE(DEMO_DB.PUBLIC.EMP_EXT_STAGE_TABLE, JOB_ID=>'01ae5a2a-0001-464c-0000-00046d2a2479'));
+
+
+
+
+SELECT * FROM SAVE_COPY_ERRORS;
+
+
+
+
+
+CREATE OR REPLACE TABLE FORMATTED_COPY_ERRORS AS
+SELECT 
+SPLIT_PART(rejected_record, ',', 1 ) as first_name,
+SPLIT_PART(rejected_record, ',', 2 ) as last_name,
+SPLIT_PART(rejected_record, ',', 3 ) as email,
+SPLIT_PART(rejected_record, ',', 4 ) as streetaddress,
+SPLIT_PART(rejected_record, ',', 5 ) as city,
+SPLIT_PART(rejected_record, ',', 6 ) as start_date
+FROM save_copy_errors;
+
+
+
+SELECT * FROM DEMO_DB.PUBLIC.FORMATTED_COPY_ERRORS;
+
+
+
+
+
+
+
+
+
+
+
+OK... AGORA DEVO ASSISTIR A AULA DO PROFESSOR....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+A DIFERENCA ENTRE INTERNAL STAGING AREAS 
+
+E EXTERNAL STAGING AREAS 
+
+
+É A EXISTENCIA DE "url:"
+
+
+
+e OS INTEGRATION OBJECTS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+PARA CONSEGUIR RETRIEVAR 
+
+
+OS RECORDS QUE DERAM "ERROR-OUT",
+
+
+
+devemos usar 
+
+
+
+
+a option de "ON_ERROR='CONTINUE'"
+
+
+
+
+
+
+
+
+--> isso vai continuar o load 
+
+
+dos records sem error....
+
+
+
+(e os 
+
+records que ERRORED-OUT ficaram CACHED OUT)....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NA VIDA REAL,
+
+FREQUENTEMENTE TEREMOS 
+
+
+
+ERRORS QUANDO COPIARMOS 
+
+
+
+
+ROWS DE NOSSAS FILES...
+
+
+
+
+
+
+
+
+
+----> NO MUNDO REAL:
+
+
+
+
+
+1) EXISTIRAO ERRORS DURANTE O COPY...
+
+
+
+
+
+
+
+2) ESSES ERRORED RECORDS 
+
+
+NAO DEVEM SER IGNORADOS COMPLETAMENTE...
+
+
+
+
+
+
+3) É MELHOR CONTINUAR CARREGANDO A DATA,
+E SE EXISTIREM 
+
+
+ERRORED-OUT RECORDS,
+
+É BOM 
+
+
+SALVAR ESSES RECORDS EM 1 TABLE SEPARADA,
+
+
+
+PARA SEREM DEBUGGED NO FUTURO..
+
+
+
+
+
+
+
+
+
+--> É POR ISSO QUE O PROFESSOR ESCREVEU ASSIM:
+
+
+
+
+
+
+
+
+
+
+COPY INTO DEMO_DB.PUBLIC.EMP_EXT_STAGE 
+FROM (
+    SELECT 
+    T.$1,
+    T.$2,
+    T.$3,
+    T.$4,
+    T.$5,
+    T.$6
+    FROM @DEMO_DB.EXTERNAL_STAGES.MY_S3_STAGE/CSV AS T
+)
+ON_ERROR='CONTINUE';
+
+
+
+
+
+
+
+
+
+
+
+
+ALGUNS RECORDS TERAO SIDO 
+
+REJECTED... --> POR ISSO 
+
+
+TEREMOS 
+
+
+
+O STATUS DE "PARTIALLY LOADED"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> AGORA QUEREMOS:
+
+
+""COLLECT OS REJECTED RECORDS""....
+
+
+
+
+
+
+
+
+
+
+--> para isso, devemos copiar o 
+
+
+QUERY ID 
+
+DESSA QUERY QUE RECÉM RODAMOS..
+
+
+
+
+
+
+
+
+
+
+
+--> AÍ DEVEMOS USAR A FUNCTION DE VALIDATE,
+
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+
+SELECT 
+*
+FROM TABLE(validate(EMP_EXT_STAGE, job_id=><your_query_id>));
+
+
+
+
+
+
+
+
+
+
+--> ISSO VAI NOS DAR 1 LISTA DOS RECORDS QUE DERAM 
+
+ERROR_OUT,
+
+
+E TAMBÉM 
+
+VAI NOS DAR 1 COLUMN COM "REJECTED_rECORD",
+
+
+QUE NO DARÁ 
+
+O RECORD INTEIRO...
+
+
+
+
+
+
+
+--> E ISSO FICARÁ EM 1 
+
+TABLE SEPARADA, 
+
+
+COM "CREATE OR REPLACE REJECTED_RECORDS 
+AS 
+SELECT 
+*
+FROM TABLE(validate(EMP_EXT_STAGE, job_id=><your_query_id>));
+"
+
+
+
+
+
+
+
+
+
+
+
+--> MAIS TARDE, PODEMOS CRIAR AINDA OUTRA 
+TABLE,
+
+
+COM 
+
+
+OS ROWS CRIADOS A PARTIR 
+
+DESSES VALUES EM "REJECTED_RECORDS"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+O PROFESSOR FALA DE MAIS UM COMPORTAMENTO 
+
+
+DO SNOWFLAKE... -----> 
+
+
+
+
+
+
+
+""SE USAMOS METADATA$FILENAME OU 
+
+QUALQUER OUTRA DESSAS PROPERTIES E TENTAMOS 
+
+COPIAR A DATA PARA DENTRO DA TABLE E TENTAMOS 
+
+USAR A SINTAXE DE "validate(emp_ext_stage, job_id => <query_id>"),
+
+ISSO VAI 
+
+ME DAR BLANK"" (é um behavior bem estranho... 
+
+
+SE VC USAR O "METADATA$FILENAME",
+
+nao seremos 
+
+capazes 
+
+de 
+
+RECUPERAR ESSES REJECTED RECORDS...
+
+)
+
+
+
+
+
+
+
+
+--> MAS SE TRANSFORMARMOS ESSE OUTPUT 
+
+
+DE 'metadata$filename'
+
+
+COM O USO DE ALGUMA FUNCTION COMO "split()",
+
+
+
+
+AINDA PODEREMOS RECUPERAR ESSES REJECTED RECORDS (
+    bem estranho, esse fenômeno...
+)
+
+
+
+
+
+
+-> por isso é melhor sempre TRANSFORMAR 
+
+A STRING 
+
+DO metadata$filename,
+
+
+remover a parte inicial,
+tipo isso,
+
+com 
+
+'split_part'...
+
+
+
+
+
+
+
+RESUMINDO,
+
+APRENDEMOS:
+
+
+
+
+
+
+
+1) COMO COPIAR DATA DO S3 AO SNOWFLAKE...
+
+
+(parecido com o internal stage > table do snowflake)
+
+
+2)  COMO 
+
+COLETAR REJECTED RECORDS 
+
+PRODUZIDOS DURANTE O COMANDO DE COPY...
+
+
+
+3) SE USAMOS O 'metadata$filename',
+
+
+COM O COPY COMMAND,
+
+NAO CONSEGUIREMOS PEGAR OS REJECTED RECORDS (
+    isso se nao transformarmos a string
+
+    de metadata$filename com coisas como 
+    'split_part()' e outras string 
+    functions...
+)

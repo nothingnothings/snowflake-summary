@@ -1,0 +1,315 @@
+
+
+
+TERMINAMOS O ASSIGNMENT ANTERIOR....
+
+
+
+
+
+
+
+AGORA HÁ OUTRO:
+
+
+
+
+
+
+
+""COPY ONLY FIRST 3 COLUMNS FROM THIS FILE'S 
+
+ROWS INTO A SNOWFLAKE TABLE""...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> NAS FILES,
+
+TEMOS 
+
+
+ISTO:
+
+
+
+
+
+
+name 
+
+
+address 
+
+email..
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUEREMOS ESSAS 3 COLUMNS..
+
+
+
+
+
+
+A PRIMEIRA COISA QUE TEMOS QUE FAZER É CRIAR A TABLE...
+
+
+
+
+
+
+
+
+
+
+
+
+POR ISSO ESCREVEMOS ASSIM:
+
+
+
+
+
+
+
+
+
+
+-- Create second table 
+
+
+
+
+
+CREATE OR REPLACE TABLE DEMO_DB.PUBLIC.EMP_BASIC_2 (
+    FIRST_NAME STRING,
+    LAST_NAME STRING,
+    EMAIL STRING
+);
+
+
+
+
+
+
+
+
+
+
+--> ISSO FEITO, VAMOS QUERER COLOCAR 
+FILES 
+
+
+
+NA STAGING AREA DESSA TABLE...
+
+
+
+
+
+
+
+
+
+PARA ISSO, PRECISAMOS RODAR O COMANDO DE PUT,
+TIPO ASSIM:
+
+
+
+
+put file://data-to-be-loaded/employees0*.csv  
+        @DEMO_DB.PUBLIC.%EMP_BASIC_2;
+
+
+
+
+
+
+
+
+
+
+
+
+OK... ISSO COPIOU 5 FILES PARA 
+
+
+DENTRO DESSE STAGING AREA DA TABLE..
+
+
+
+
+
+
+
+
+
+
+--> RECAPITULANDO:
+
+
+
+
+
+
+NAO É POSSÍVEL COPIAR DATA 
+
+DE 
+
+
+
+FILES DENTRO DE 1 STAGING AREA 
+
+DE 1 
+
+GIVEN 
+TABLE 
+
+
+
+PARA 1 OUTRA TABLE, totalmente diferente....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+PARA CONSEGUIRMOS SELECIONAR APENAS ALGUMAS COLUMNS 
+
+DE DENTRO DE NOSSOS ARQUIVOS,
+
+
+
+
+ESCREVEMOS ASSIM:
+
+
+
+
+
+
+
+
+
+COPY INTO DEMO_DB.PUBLIC.EMP_BASIC_2
+FROM (
+    SELECT
+    t.$1,
+    t.$2,
+    t.$3
+    FROM @demo_db.public.%emp_basic_2 AS t
+)
+FILE_FORMAT=DEMO_DB.FILE_FORMATS.MY_CSV_FORMAT
+PATTERN='.*employees0[1-5].csv.gz'
+ON_ERROR='SKIP_FILE';
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... ISSO DEU CERTO...
+
+
+
+
+25 rows dentro da table...
+
+
+
+
+
+
+
+E NESSA TABLE TEREMOS RECORDS COM REALMENTE APENAS 
+3 COLUMNS,
+
+
+PQ FORAM APENAS ESSAS 3 COLUMNS QUE SELECIONAMOS,
+
+
+LÁ DE NOSSOS ARQUIVOS..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... AGORA SABEMOS COMO PEGAR COLUMNS EM PARTICULAR 
+
+
+DE SEUS FILES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> e nao podemo fazer cross copy de files 
+
+de 1 table staging area para a staging area de outra table...
+
+
+
+
+
+
+
+
+
+NA PRÓXIMA AULA, VEREMOS UMA ATIVIDADE DIFERENTE...

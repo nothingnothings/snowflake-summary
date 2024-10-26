@@ -1,0 +1,885 @@
+
+
+
+
+
+
+
+
+OK, VIMOS QUE PRECISAMOS REFRESHAR 
+
+NOSSA EXTERNAL TABLE MANUALMENTE SEMPRE QUE 
+
+ADICIONAMOS 1 NOVA FILE 
+
+
+AO S3 BUCKET que usamos para criar 
+
+a external table...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS AGORA VEREMOS O QUE DEVEMOS FAZER SE 
+
+DELETAMOS ALGUMA FILE DO S3...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PROFESSOR DELETOU 1 CSV LÁ DO BUCKET DO S3...
+
+
+
+
+
+
+
+
+
+
+
+
+--> O PROFESSOR RODA 1 SELECT NA TABLE...
+
+
+
+
+
+
+
+
+select * from emp_ext_table;
+
+
+
+
+
+
+
+
+
+
+
+
+--> AINDA VAMOS  CONSEGUIR OS RECORDS QUE FORAM 
+
+DELETADOS...
+
+
+
+
+
+
+
+
+--> o snowflake ainda está escaneando as 
+
+6 files (mesmo que 1 delas já tenha sido removida) --> 
+
+
+ISSO ACONTECE/ACONTECEU 
+
+
+JUSTAMENTE PQ O SNOWFLAKE ESTÁ USANDO O CACHED RESULT 
+
+
+DO CLOUD SERVICES LAYER... (os 30 records de lá)..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> SE CHECARMOS A METADATA TABLE 
+
+PARA ESSA EXTERNAL TABLE,
+
+
+
+COM 
+
+
+
+
+SELECT 
+*
+FROM TABLE(information_schema.external_table_files(TABLE_NAME=> 'emp_ext_table')),
+
+,
+
+
+
+
+
+
+
+
+
+VEREMOS QUE 
+
+
+
+
+
+AS 6 FILES AINDA ESTARAO PRESENTES..
+
+
+
+
+
+
+
+
+
+
+
+também temos a query de "external_table_file_registration_history"..
+
+
+
+
+
+TIPO ASSIM:
+
+
+
+
+SELECT 
+*
+FROM table(information_schema.external_table_file_registration_history(TABLE_NAME=>'emp_ext_table'));
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SE RODAMOS ESSA QUERY,
+
+
+PERCEBEMOS QUE ESSA OPERATION DE DELETE TAMBÉM 
+
+AINDA NAO APARECEU NA TABLE DE METADATA...
+
+
+
+
+
+
+
+
+
+
+
+--> PARA FAZER ESSA OPERATION DE DELETE SER "COMPUTADA/PROCESSADA"
+
+
+POR ESSA EXTERNAL TABLE (E as metadata tables),
+
+
+PRECISAMOS 
+
+
+
+RODAR 
+
+
+
+O COMANDO DE REFRESH MANUAL,
+
+
+QUE É 
+
+
+
+
+
+
+
+ALTER EXTERNAL TABLE emp_ext_table REFRESH;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ISSO FEITO,
+
+
+
+PODEMOS RE-RODAR A QUERY DE "external_table_file_registration_history",
+
+
+
+PARA PERCEBER QUE 
+
+
+AGORA AQUELE ARQUIVO ESTARÁ 
+
+"UNREGISTERED" (ou seja, seus rows terao sido removidos... agora 
+
+ficaremos com 25 records, em vez de 30)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... QUER DIZER QUE EM external_table_file_registration_history
+
+
+
+
+TEMOS 1 HISTORY 
+
+
+
+DOS REGISTER E UNREGISTER DE FILES,
+
+
+
+MAS 
+
+
+ESSA TABLE TEM QUE SER REFRESHADA MANUALMENTE 
+
+SEMPRE QUE OCORRER
+
+
+ALGUMA MUDANCA/ADD 
+
+NAS FILES DO S3 LOCATION,
+PARA QUE 
+
+
+AS CHANGES SEJAM APLICADAS 
+
+
+NESSA TABLE EXTERNA E EM SUA METADATA TABLE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUANDO VC RODAR QUERIES EM CIMA 
+
+
+DA EXTERNAL TABLE,
+
+
+
+
+
+
+ELA VAI CHECAR A METADATA TABLE,
+
+
+
+
+ANTES 
+DE 
+
+
+
+FAZER SCAN 
+
+DAS FILES NO S3 LOCATION...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> rodamos 
+
+select * from ext_table_example;
+
+
+
+
+
+
+
+
+
+
+
+PARA VER A QUERY PROFILE.. --> MAS O QUE ACONTECE?
+
+
+
+
+O RESULT SET É FETCHEADO 
+
+
+DO CLOUD SERVICES CACHED LAYER....
+
+
+
+
+
+
+
+
+
+
+--> isso aconteceu DEVIDO 
+
+
+
+
+AO USO DE METADATA (
+
+    o snowflake percebeu que 
+
+    a única diferenca do cached result 
+
+    para a table atual 
+
+
+    é a INEXISTENCIA DOS ROWS 
+
+
+    extraídos daquela file que foi deletada agora,
+
+    que ele vai ignorar...
+)
+
+
+
+
+
+
+
+
+
+
+PARA COMPREENDER TUDO MAIS CLARAMENTE,
+
+
+O PROFESSOR FAZ 1 COISA:
+
+
+
+
+
+
+1) ELE REUPLOADA A FILE QUE RECÉM 
+
+DELETAMOS (employees010.csv)..
+
+
+
+
+
+
+
+
+2) DEPOIS DISSO,
+
+ELE REFRESHA 
+
+
+A TABLE,
+
+
+COM 
+
+
+
+ALTER EXTERNAL TABLE emp_ext_table REFRESH;
+
+
+
+
+
+3) COM ISSO, NOVAMENTE TEREMOS 30 RECORDS...
+
+
+
+
+
+
+
+
+
+
+
+4) DEPOIS O PROFESSOR RE-DELETA 
+
+
+A FILE 
+
+DE 
+
+"emplyoees10.csv"...
+
+
+
+
+
+
+
+
+
+5) ISSO FEITO, O PROFESSOR 
+
+AINDA NAO 
+
+FEZ REFRESH DA TABLE MANUALMENTE...
+
+
+
+
+
+
+
+6) ELE RE-RODA A QUERY DE SELECT 
+
+
+
+SELECT * FROM emp_ext_table;
+
+
+
+
+
+
+
+7) COM ISSO, RECEBEREMOS 30 RECORDS, EM VEZ DE 
+25 (por conta do fetched cached result set)...
+
+
+
+
+
+
+
+8) AÍ ELE REFRESHA A TABLE,
+MAIS UMA VEZ,
+
+COM 
+
+
+ALTER EXTERNAL TABLE emp_ext_table;
+
+
+
+
+
+
+
+9) ELE RE-RODA A QUERY DE SELECT 
+
+
+SELECT * FROM emp_ext_table;
+
+
+
+
+
+10) FINALMENTE,
+
+COM ISSO,
+
+ELE NAO VERÁ, NA QUERY PROFILE,
+
+
+1 FULL TABLE SCAN,
+
+E SIM 
+
+VERÁ 
+
+
+O USO DO RESULT SET CACHEADO... ( e ficaremos com 
+25 records)...
+
+
+
+
+
+ELE CONSEGUIU FAZER ISSO JUSTAMENTE 
+
+
+POR CONTA DA METADATA ARMAZENADA PELO SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ISSO É BOM,
+
+MAS HÁ CERTA __ INCONSISTENCIA, AQUI....
+
+
+
+
+
+
+
+
+
+
+--> PARA DEMONSTRAR ESSA INCONSISTENCIA,
+
+O PROFESSOR DELETA 1 OUTRO ARQUIVO,
+
+
+employees05.csv;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ELE:
+
+
+
+
+
+1) DELETA employees05.csv 
+
+
+
+
+
+
+
+2) RODA O COMANDO DE REFRESH....
+
+ALTER EXTERNAL TABLE emp_ext_table REFRESH;
+
+
+
+
+3) ELE RODA O 
+
+SELECT * FROM emp_ext_table;
+
+
+
+
+
+
+4) ISSO VAI ESCANEAR O S3 LAYER...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> COM ISSO, O QUE O PROFESSOR QUIS DIZER:
+
+
+
+
+
+
+
+
+""QUANDO EU DELETEI O employees010.csv,
+
+EU RODEI O STATEMENT 
+
+DE 
+
+
+select * from emp_ext_table
+
+
+E 
+
+
+SÓ DEPOIS 
+
+
+RODEI 
+
+
+
+ALTER EXTERNAL TABLE emp_ext_table REFRESH,
+
+E SÓ DEPOIS RODEI 
+
+SELECT * FROM emp_ext_table; (
+
+    E AÍ O RESULT FOI TIRADO DO CACHE LAYER...
+)""
+
+
+
+
+
+
+
+
+
+--> "MAS QUANDO EU DELETEI O employees05.csv,
+
+
+
+EU NAO RODEI SELECT * FROM emp_ext_table,
+
+
+
+E SIM RODEI APENAS O 
+
+ALTER EXTERNAL TABLE emp_ext_table REFRESH;,
+
+
+PARA SÓ DEPOIS RODAR 
+
+O SELECT * FROM emp_ext_table,
+
+QUE AÍ 
+
+
+
+REALMENTE FEZ O FETCH 
+
+DA DATA LÁ DO LAYER S3....
+"
+
+
+
+
+
+
+
+
+QUER DIZER QUE O MELHOR APPROACH É:
+
+
+
+
+
+
+1) DELETE FILE FROM S3 LAYER....
+
+
+
+
+
+
+2) RUN SIMPLE SELECT QUERY ON 
+TOP OF EXTERNAL TABLE
+(
+    this will use RESULT SET, CACHED, from services layer
+)
+
+
+
+3) REFRESH EXTERNAL TABLE, MANUALLY,
+WITH 
+
+ALTER EXTERNAL TABLE <table_name> REFRESH;
+
+
+
+
+4) RUN SIMPLE SELECT QUERY ON TOP OF EXTERNAL TABLE,
+
+AGAIN (will use result set, cached, from services 
+layer)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+O PROFESSOR NAO SABE 
+
+A RAZAO DESSE BEHAVIOR,
+
+MAS ELE PERCEBEU...
+
+
+
+
+
+
+
+
+
+
+-> 2 COISAS QUE DEVEMOS TER EM MENTE:
+
+
+
+
+
+1) CADA VEZ QUE 1 FILE É DELETADA,
+
+QUANDO VC REFRESHAR A TABLE DE METADATA,
+
+VC RECEBERÁ 
+
+1 NEW ENTRY,
+DIZENDO QUANDO A FILE FOI REGISTERED E UNREGISTERED 
+
+(
+    com a query de 
+
+    SELECT * FROM 
+    TABLE(information_schema.external_table_file_registration_history(TABLE_NAME => 'emp_ext_table'))
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CERTO... E TODA ESSA METADATA INFORMATION PODE SER CONSEGUIDA 
+
+DESSA TABLE DE METADATA...
+
+
+
+
+
+
+
+
+
+
+
+--> CERTO....

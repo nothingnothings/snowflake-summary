@@ -1,0 +1,1029 @@
+
+
+
+
+
+
+
+
+NAS LECTURES ANTERIORES, VIMOS COMO PODEMOS 
+
+
+"ASSIGN PRIVILEGES" PARA AS TABLES...
+
+
+
+
+
+
+
+
+
+
+
+--> MAS NAO DISCUTIMOS COISA ALGUMA SOBRE DATABASE OBJECTS 
+
+
+COMO "FILE FORMATS",
+
+STAGES, 
+
+"FUNCTIONS"  (UDFs) 
+
+
+
+E 
+
+
+PROCEDURES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AGORA VEREMOS COMO PODEMOS CONSTRUIR UMA HIERARQUIA,
+
+
+COM ESSES OBJECTS...
+
+
+
+
+
+
+
+
+
+
+
+--> TEREMOS A MESMA ESTRUTURA BÁSICA USADA COM 
+
+
+AS TABLES/SCHEMAS...
+
+
+
+
+
+
+
+
+
+
+1) PRIMEIRO, USAMOS O ROLE DE "SYSADMIN"...
+
+
+
+
+
+
+
+2) ESSE ROLE CRIA 1 DATABASE, DE NOME "SHARED_DB"...
+
+
+
+
+
+
+
+3) AÍ O SECURITYADMIN CRIA 1 ROLE, O "SCHEMAADMIN"...
+    (responsável pelos database-related objects, como schemas)..
+
+
+
+
+
+
+4) A PERMISSION PARA CREATE SCHEMA E MANAGE OBJECTS 
+
+DENTRO DA DATABASE SERÁ DADA AO "SCHEMAADMIN"....
+
+
+
+
+
+
+5) O SCHEMAADMIN VAI CRIAR VÁRIOS SCHEMAS PARA ABRIGAR NOSSOS 
+
+OBJECTS.... OS SCHEMAS PODEM SER:
+
+
+
+
+
+
+A) FUNCTIONS (o primeiro schema) 
+
+
+
+B) PROCEDURES (conterão todas as procedures)
+
+
+C) FILE_FORMATS 
+
+
+
+
+
+
+
+
+
+
+
+
+--> CERTO... DA MESMA FORMA, PODEM SER CRIADOS OUTROS SCHEMAS,
+
+
+COMO:
+
+
+
+D) STAGES 
+
+
+
+
+E) MASKING_POLICIES
+
+
+
+
+
+
+
+
+
+
+
+
+--> ok... E CADA TIPO DE OBJECT VAI PERTENCER 
+
+
+AO SEU SCHEMA APROPRIADO...
+
+
+
+
+
+
+
+--> E ESSES SCHEMAS FICARAO NESSA DATABASE, "SHARED_DB"...
+
+
+
+
+
+
+
+
+
+
+
+6) QUANTO à PARTE DE "PRIVILEGES",
+
+O 
+
+
+
+SCHEMAADMIN VAI SEGURAR __TODOS OS PRIVILEGES_ _ 
+PARA CRIAR 
+
+
+ESSES OBJECTS (os schemas)...
+
+
+
+
+
+7) O SCHEMAADMIN VAI PROVIDENCIAR APENAS 
+
+"READ ACCESS" aos objects contidos nesses schemas (
+    functions, procedures, FILE_FORMATS, stages, etc
+),
+
+
+
+
+POR MEIO DE ACCESS CONTROL ROLES COMO:
+
+
+
+
+
+
+A) FUNCTION_R (FUNCTION READ ROLE)
+
+B) PROCEDURE_R (PROCEDURE READ ROLE) 
+
+C) FILE_FORMAT_R (FILE FORMAT READ ROLE)...
+
+
+D) STAGE_R (STAGE READ ROLE)
+
+
+
+
+
+
+
+
+
+8) TODOS ESSES ROLES, "ACCESS CONTROL ROLES" (de "READ"),
+ SERÃO "ROLLED BACK" 
+
+AO DEVELOPER EM SI,
+
+
+
+QUE USARÁ ESSES ROLES 
+
+PARA 
+
+FAZER 
+
+READ DOS SCHEMAS...
+
+
+
+
+
+9) POR FIM, FAZEMOS "ROLL BACK" 
+
+DO DEVELOPER EM SI, EM DIREÇÃO AO "SYSADMIN",
+
+
+
+PARA QUE A HIERARQUIA SEJA MANTIDA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+O ESQUEMA FICA TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+               SYSADMIN (grants privileges to database and schema objects to other roles)
+
+                    |
+                    |
+
+                SCHEMAADMIN (actually creates the schemas and database objects in the schemas... full control over that, in the "SHARED_DB" )
+
+
+    FUNCTION_R    PROCEDURE_R     FILE_FORMAT_R
+
+        |              |                |
+
+        ---->       DEVELOPER   <--------
+                (can use each of these roles,
+                to SELECT different objects, in each
+                schema)
+
+                       |
+                       |
+                       |
+                       V 
+                    
+                    SYSADMIN
+
+
+
+----------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+ok...
+
+
+
+
+
+
+
+
+
+
+
+10) ASSIM QUE OS OBJECTS SAO CRIADOS,
+
+DENTRO DOS SCHEMAS,
+
+
+
+
+DEVEMOS NOS REFERIR A ELES COM A ESCRITA CLÁSSICA DE 
+
+
+
+
+
+<database_name>.<schema>.<object_name>
+
+
+
+
+
+
+
+
+
+
+
+
+
+CERTO.... MAS, PASSADO 1 TEMPO, É CLARO QUE 
+
+SERÁ 
+
+DIFÍCIL "KEEP TRACK"
+
+DOS OBJECTS QUE 
+
+
+SERAO CRIADOS DENTRO DESSES SCHEMAS...
+
+
+
+
+
+
+
+
+
+-> ISSO PODE LEVAR À CRIAÇÃO DE OBJECTS DUPLICADOS,
+
+
+QUE ACABARÃO FAZENDO AS MESMAS OPERATIONS,
+
+MAS COM NOMES DIFERENTES...
+
+
+
+
+
+
+
+
+
+
+
+EXEMPLO: PARA PARSEAR 1 ARQUIVO CSV,
+
+
+MÚLTIPLOS FILE_FORMATS PODEM ACABAR SENDO CRIADOS,
+
+
+COM NOMES DIFERENTES, MAS COM MESMA LÓGICA...
+
+
+
+
+
+
+
+
+--> isso acontece/acontecerá pq 
+
+nao temos 1 maneira de "keep track" desses objects 
+que 
+
+serao criados...
+-------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+AGORA VAMOS NO SNOWFLAKE,
+E CRIAMOS ESSA HIERARQUIA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+no snowflake,
+
+
+O PROFESSOR ESCREVE ASSIM:
+
+
+
+
+
+
+
+--- OTHER SCHEMA OBJECTS ----
+
+
+
+
+
+USE ROLE SYSADMIN;
+
+CREATE OR REPLACE DATABASE SHARED_DB;
+
+GRANT USAGE ON DATABASE SHARED_DB TO ROLE SCHEMAADMIN WITH GRANT OPTION;
+
+GRANT CREATE SCHEMA ON DATABASE SHARED_DB TO ROLE SCHEMAADMIN;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ou seja, criamos essa shared_db,
+
+
+E JÁ GARANTIMOS USAGE NESSA DATABASE, AO ROLE "SCHEMAADMIN"...
+
+
+
+
+
+
+--> TAMBÉM JÁ COLOCAMOS A PERMISSION PARA "CREATE SCHEMA"...
+
+
+
+
+
+
+
+
+
+
+
+--> isso feito, usamos esse role de "schemaadmin"
+
+
+e CRIAMOS TODOS OS RESPECTIVE SCHEMAS,
+
+
+
+MAS CRIAMOS NO FORMATO "MANAGED SCHEMA" (
+    em que o RESPONSÁVEL PELA CRIAÇÃO 
+    DOS DATABASE OBJECTS É OUTRO SUJEITO, E NAO 
+    O schemaadmin... O SCHEMAADMIN APENAS CONFERE ACESSO A ESSES 
+    OBJECTS, A OUTROS ACCESS CONTROL ROLES... ISSO NOS DÁ 
+
+    MAIS CONTROLE...
+)
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+--- Create schema using schemaadmin ----
+
+
+USE ROLE SCHEMAADMIN;
+
+USE DATABASE SHARED_DB;
+
+
+
+CREATE OR REPLACE TRANSIENT SCHEMA FILE_FORMAT WITH MANAGED ACCESS;
+CREATE OR REPLACE SCHEMA FUNCTIONS WITH MANAGED ACCESS;
+CREATE OR REPLACE TRANSIENT SCHEMA PROCEDURES WITH MANAGED ACCESS;
+CREATE OR REPLACE TRANSIENT SCHEMA STAGES WITH MANAGED ACCESS;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AÍ CRIAMOS ACCESS CONTROL ROLES 
+
+
+
+PARA ESSES RESPECTIVOS SCHEMAS, e 
+
+
+entao FAZEMOS ROLL BACK DE ESSES ROLES 
+
+AO ROLE DE "SCHEMAADMIN",
+
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+
+USE ROLE SECURITYADMIN;
+
+
+CREATE OR REPLACE ROLE FILE_FORMAT_R;
+GRANT ROLE FORMAT_R TO ROLE SCHEMAADMIN;
+
+
+CREATE OR REPLACE ROLE FUNCTION_R;
+GRANT ROLE FUNCTION_R TO ROLE SCHEMAADMIN;
+
+
+CREATE OR REPLACE ROLE PROCEDURE_R;
+GRANT ROLE PROCEDURE_R TO ROLE SCHEMAADMIN;
+
+
+CREATE OR REPLACE ROLE STAGES_R;
+GRANT ROLE STAGES_R TO ROLE SCHEMAADMIN;
+
+
+
+
+
+
+
+
+
+----------------------------------
+
+
+
+
+
+
+
+
+isso feito, FAZEMOS GRANT DE USAGE ACCESS A ESSES ROLES,
+
+
+para os schemas que criamos antes...
+
+
+
+
+
+
+
+
+
+
+
+
+
+EX:
+
+
+
+
+
+
+
+USE ROLE SCHEMAADMIN;
+
+
+
+
+GRANT USAGE ON DATABASE SHARED_DB TO ROLE FUNCTION_R;
+GRANT USAGE ON SCHEMA SHARED_DB.FUNCTIONS TO ROLE FUNCTION_R;
+
+
+
+GRANT USAGE ON DATABASE SHARED_DB TO ROLE PROCEDURE_R;
+GRANT USAGE ON SCHEMA SHARED_DB.PROCEDURES TO ROLE PROCEDURE_R;
+
+
+
+GRANT USAGE ON DATABASE SHARED_DB TO ROLE FILE_FORMAT_R;
+GRANT USAGE ON SCHEMA SHARED_DB.FILE_FORMAT TO ROLE FILE_FORMAT_R;
+
+
+GRANT USAGE ON DATABASE SHARED_DB TO ROLE STAGE_R;
+GRANT USAGE ON SCHEMA SHARED_DB.STAGES TO ROLE STAGE_R;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+FINALMENTE, FAZEMOS ROLL BACK DE TODOS ESSES ROLES 
+
+AO "DEVELOPER",
+
+tipo assim:
+
+
+
+
+
+
+
+
+
+GRANT ROLE FUNCTION_R TO ROLE DEVELOPER;
+GRANT ROLE PROCEDURE_R TO ROLE DEVELOPER;
+GRANT ROLE FILE_FORMAT_R TO ROLE DEVELOPER;
+GRANT ROLE STAGE_R TO ROLE DEVELOPER;
+
+
+
+
+
+
+
+DEPOIS DISSO, USAMOS O ROLE DE DEVELOPER,
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+
+USE ROLE DEVELOPER;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> USAMOS ESSE ROLE AÍ...
+
+
+
+
+
+
+
+
+
+
+--> COM ISSO, FICO COM ACESSO AO SHARED_DB,
+
+
+E ENTAO 
+
+COM ACESSO A TODOS OS SCHEMAS (
+
+
+    FUNCTIONS,
+    PROCEDURES,
+    FILE_FORMATS,
+    STAGES...
+)
+
+
+
+
+
+
+
+
+
+--> E NESSES SCHEMAS TEREMOS ACESSO A ESSES OBJECTS...
+
+
+
+
+
+
+
+
+--> COM ISSO, FICAMOS COM TODOS ESSES OBJECTS EM 1 LOCAL CENTRALIZADO...
+
+
+
+
+
+
+
+
+
+
+
+
+--> TODOS QUE CHECAREM ESSE CÓDIGO 
+
+
+
+
+
+SABERAO COM MAIS CERTEZA O LOCAL EM QUE 
+
+
+
+ESSES OBJECTS VIVEM,
+
+
+
+
+
+
+
+PQ O FORMATO FICARÁ ASSIM:
+
+
+
+
+
+
+<DATABASE_NAME>.<SCHEMA>.<OBJECT> 
+
+
+
+
+FICA ASSIM:
+
+
+
+SHARED_DB.FILE_FORMAT.CSV_FORMAT;
+
+
+
+ou
+
+
+
+SHARED_DB.STAGES.S3_STAGE;
+
+
+
+
+
+
+ou 
+
+
+
+
+SHARED_DB.MASKING_POLICIES.DISTRICT_MASK;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+FICA BEM MAIS FÁCIL DE 'TRACK" e fazer CORREÇÕES...
+
+
+
+
+
+
+
+
+
+
+
+
+--> COM ISSO, NAO VAMOS CRIAR DUPLICATE 
+OBJECTS,
+
+
+OU CONFUSAO,
+
+QUANDO ESCREVEMOS NOSSO CÓDIGO...
+
+
+
+
+
+
+
+
+
+
+
+--> ISSO FAZ SENTIDO, SIM....
+
+
+
+
+
+
+
+
+
+
+
+--> MAS DURANTE A ATIVIDADE DE DEVELOPMENT,
+
+
+
+
+O DEVELOPER TEM QUE CRIAR TODOS ESSES 
+
+
+OBJECTS,
+
+PARA TESTAR COISAS.... --> SE ELE QUER 
+
+
+TESTAR TUDO ISSO,
+
+
+
+ELE 
+
+
+
+DEVE FAZÊ-LO 
+
+
+DENTRO 
+
+
+
+
+
+
+
+DE SCHEMAS DE NOME "SANDBOX",
+
+FEITOS PARA ISSO...
+
+
+
+
+
+
+
+--> SOMENTE DEPOIS DE TESTAR MUITO,
+
+ELE 
+
+PODE PEDIR AO 
+
+
+SCHEMAADMIN QUE 
+
+
+AQUELE 
+
+
+FILE FORMAT, SUA LÓGICA,
+
+
+
+SEJA 
+
+ADICIONADO/CRIADO 
+
+
+
+
+
+DENTRO 
+
+
+
+DOS SCHEMAS DO "SHARED_DB" --> ISSO FEITO,
+
+
+É CLARO QUE 
+
+O 
+
+
+
+
+DEVELOPER (e outros roles) 
+
+
+
+APENAS TERÃO "READ-ONLY" ACCESS 
+
+
+A ESSE E OUTROS OBJECTS,
+
+NESSES SCHEMAS..
+
+
+

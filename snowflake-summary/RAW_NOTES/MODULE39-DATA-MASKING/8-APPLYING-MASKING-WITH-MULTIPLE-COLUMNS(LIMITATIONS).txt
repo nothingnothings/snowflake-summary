@@ -1,0 +1,454 @@
+
+
+
+
+
+
+
+
+
+
+OK.... AGORA TENTAREMOS APLICAR O QUE DISCUTIMOS 
+
+
+NA ÚLTIMA AULA:
+
+
+
+
+
+
+--> AGORA, A RULE QUE É APLICADA 
+
+
+NA COLUMN É ACTUALLY DEPENDENTE 
+
+
+DO VALUE __DE OUTRA _ COLUMN....
+
+
+
+
+
+
+
+
+
+
+
+--> VEREMOS COMO FAZER ISSO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+PRIMEIRO USE-CASE:
+
+
+
+
+
+
+
+1) QUEREMOS QUE OS "SERVICE_START_DATE"
+
+E 
+
+"SERVICE_END_DATE"
+
+
+sejam __rEDACTED (censurados)
+
+
+SE __ O DIAGNOSIS CODE DA PESSOA 
+
+
+FOR DE "DEATH"...
+
+
+
+
+
+
+--> O REDACT SERÁ O ADD/SUBTRACT 
+
+DE 
+
+14 DIAS AO START_DATE E END_dATE....
+
+
+
+
+
+
+--> A IDEIA É NAO EXPORMOS 
+
+
+O EXATO DIA DA MORTE DAQUELA PESSOA.....
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA CONSEGUIR ESSE DATA MASK,
+
+
+INICIALMENTE 
+
+TEMOS 
+
+
+ESTE CÓDIGO:
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE MASKING POLICY DIAGNOSIS_CODE_MASK
+AS 
+(VAL VARCHAR) RETURNS STRING -> 
+    CASE WHEN CURRENT_ROLE() IN ('ANALYST') THEN 
+        CASE WHEN VAL IN ('G9382','O312','O3120','O3120X1','7681','39791') THEN NULL
+            ELSE 
+                CASE WHEN VAL IN ('S55091D', 'S82421H', 'S37828D', 'J239', 'R019') then substring(val,1,3)
+                    ELSE
+                        CASE when val in ('Y09', 'Y09', 'V3101', 'V3101', '79913', 'Y389X1A', 'E9688') then '00'
+                            ELSE VAL
+                        END
+                END
+        END
+    ELSE 
+        VAL
+    
+
+    END;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+MAS É CLARO QUE EDITAREMOS ESSA POLICY...
+
+
+
+
+
+
+
+
+
+VAMOS PASSAR 2 ARGUMENTS A ELA...
+
+
+
+
+
+ARGUMENTS:
+
+
+
+
+1) O VALUE DO "DIAGNOSIS" FIELD...
+
+
+
+
+
+
+2) O VALUE DO "SERVICE_DATE"...
+
+
+
+
+
+
+
+
+
+
+---> PARA CONSEGUIRMOS FAZER ISSO,
+
+
+
+
+ESCREVEMOS 
+
+
+"(VAL VARCHAR, SERVICE_DATE DATE)"...
+
+
+
+
+
+
+
+
+
+
+EX:
+
+
+
+
+
+CREATE OR REPLACE MASKING POLICY DIAGNOSIS_CODE_MASK
+AS 
+(VAL VARCHAR, SERVICE_DATE DATE) RETURNS STRING -> 
+    CASE WHEN CURRENT_ROLE() IN ('ANALYST') THEN 
+        CASE WHEN VAL IN ('G9382','O312','O3120','O3120X1','7681','39791') THEN NULL
+            ELSE 
+                CASE WHEN VAL IN ('S55091D', 'S82421H', 'S37828D', 'J239', 'R019') then substring(val,1,3)
+                    ELSE
+                        CASE when val in ('Y09', 'Y09', 'V3101', 'V3101', '79913', 'Y389X1A', 'E9688') then '00'
+                            ELSE VAL
+                        END
+                END
+        END
+    ELSE 
+        VAL
+    
+
+    END;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... TENTAMOS RODAR ESSE CÓDIGO, E ENTAO....
+
+
+
+GANHAMOS __ UM ERROR__...
+
+
+
+
+
+
+
+
+
+
+--> O ERROR:
+
+
+""MASKING POLICY ____MUST___ HAVE EXACTLY ONE ARGUMENT,
+
+BUT WE GOT 2 ARGUMENTS""...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> RESUMINDO:
+
+
+
+SE EU QUERO CRIAR 1 MASKING POLICY,
+
+
+
+POSSO PASSAR APENAS 1 ÚNICO ARGUMENT... O QUE QUER DIZER 
+
+
+
+QUE PODEMOS APLICAR APENAS MASKING PARA 
+
+AQUELA COLUMN ESPECÍFICA (
+
+    apenas 1 parameter 
+
+    permitido, que é "VAL"...
+)
+
+
+
+
+QUER DIZER QUE NAO PODEMOS 
+
+
+CENSURAR O VALUE DE 1 COLUMN 
+
+
+
+COM 1 CONDICAO DEPENDENTE DO VALUE DE OUTRA COLUMN...
+
+
+
+
+
+
+
+
+
+
+
+QUER DIZER QUE SATISFAZER O USE-CASE 1 É IMPOSSÍVEL...
+
+
+
+
+
+
+
+
+
+
+
+
+ok... quer dizer que esse é um problema/limitacao 
+
+
+da masking policy que temos, no momento...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ISSO QUER DIZER QUE:
+
+
+SE AS NOSSAS MASKING RULES FICAM MAIS COMPLEXAS,
+
+
+
+
+
+A FEATURE DO SNOWFLAKE NAO FUNCIONA....
+
+
+
+
+
+
+
+
+
+
+
+
+--> SE SUA MASKING POLICY DEPENDE DE 2+ COLUMNS,
+
+
+
+NAO PODEREMOS USAR ESSA FEATURE DE DATA MASKING DO SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+
+--> QUANDO AS RULES FICAM MAIS COMPLEXAS,
+
+
+
+TEMOS DE DEPENDER APENAS DAS VIEWS... --> MAS O PROFESSOR JÁ MENCIONOU 
+
+
+OS PROBLEMAS QUE PODEMOS ENFRENTAR,
+
+QUANDO USAMOS VIEWS
+
+PARA FAZER ESSA MASKING (
+
+    mas é a única opção...
+)
+
+
+
+
+
+
+
+
+
+--> AGORA TENTAREMOS MITIGAR AS ISSUES DISCUTIDAS NAS AULAS ANTERIORES (
+    issues das views
+),
+ 
+
+
+ MAS AINDA USANDO AS VIEWS...
+
+
+
+
+
+
+
+
+
+ --> VEREMOS COMO FAZER ISSO NA PRÓXIMA LECTURE...

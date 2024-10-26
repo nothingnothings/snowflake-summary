@@ -1,0 +1,58 @@
+APRENDEREMOS:
+
+
+
+
+
+
+
+
+1) COMO CLUSTERING FUNCIONA 
+UNDER THE HOOD ...
+
+
+
+
+
+
+
+
+2) MICRO PARTITIONS E COMO SAO CRIADAS 
+NO SNOWFLAKE....
+
+
+
+
+
+
+
+3) ENTENDEREMOS COMO QUERY PROCESSING ACONTECE 
+
+NO SNOWFLAKE...
+
+
+
+
+4) O QUE FAZER E O QUE NAO FAZER, COM CLUSTERING...
+
+
+
+
+
+
+
+
+
+5) vantagens de clustering...
+
+
+
+
+
+
+
+
+
+--> VEREMOS 1 MONTE DE DEMOS....
+
+

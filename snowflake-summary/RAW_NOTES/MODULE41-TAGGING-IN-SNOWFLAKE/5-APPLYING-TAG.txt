@@ -1,0 +1,994 @@
+
+
+
+
+
+
+
+
+
+
+
+NESSA LECTURE,
+
+VEREMOS COMO APLICAR AS TAGS QUE CRIAMOS NA ÚLTIMA AULA:
+
+
+
+
+
+
+
+CREATE OR REPLACE TAG TAG.GOVERNANCE.phone_number;
+CREATE OR REPLACE TAG TAG.GOVERNANCE.address;
+CREATE OR REPLACE TAG TAG.GOVERNANCE.names;
+CREATE OR REPLACE TAG TAG.GOVERNANCE.comments;
+CREATE OR REPLACE TAG TAG.GOVERNANCE.date;
+CREATE OR REPLACE TAG TAG.GOVERNANCE.keys;
+CREATE OR REPLACE TAG TAG.GOVERNANCE.region;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> COM TODAS ESSAS TAGS CRIADAS,
+
+
+
+FICAMOS NO ROLE DE "TAG_ADMIN"...
+
+
+
+
+
+
+
+
+
+
+-> já temos databases, agora basta 
+
+
+colocar tags 
+
+nessas tables....
+
+
+
+
+
+
+
+
+
+
+
+
+-> o TAG_aDMIN TAMBÉM PRECISA DE PERMISSION PARA CHECAR 
+
+AS TABLES,
+
+POR ISSO 
+
+
+ENTRAMOS NO ROLE DE ACCOUNTADMIN 
+
+E RODAMOS GRANT DE ACESSO A ELE:
+
+
+
+
+
+
+
+
+GRANT USAGE ON DATABASE REVENUE TO ROLE TAG_ADMIN;
+GRANT USAGE ON SCHEMA REVENUE.MEDIA TO ROLE TAG_ADMIN;
+GRANT USAGE ON SCHEMA REVENUE.TRANSPORT TO ROLE TAG_ADMIN;
+GRANT USAGE ON SCHEMA REVENUE.SUPERMARKET TO ROLE TAG_ADMIN;
+
+
+
+GRANT SELECT ON ALL TABLES IN SCHEMA REVENUE.MEDIA TO ROLE TAG_ADMIN;
+GRANT SELECT ON ALL TABLES IN SCHEMA REVENUE.TRANSPORT TO ROLE TAG_ADMIN;
+GRANT SELECT ON ALL TABLES IN SCHEMA REVENUE.SUPERMARKET TO ROLE TAG_ADMIN;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AO CHECAR ESSAS TABLES,
+
+O TAG_ADMIN 
+
+
+
+
+
+PERCEBERÁ QUE 
+
+
+EXISTEM COLUMNS IMPORTANTES EM CADA 1 DAS TABLES...
+
+
+
+
+
+
+
+
+
+
+
+--> E O TAG_ADMIN VAI QUERER COLOCAR 
+
+
+TAGS EM ALGUMAS DESSAS COLUMNS,
+
+COM ESTA SINTAXE:
+
+
+
+
+
+
+
+
+
+
+
+
+
+SELECT * FROM REVENUE.TRANSPORT.AIRLINE;
+
+
+
+
+
+
+ALTER TABLE REVENUE.TRANSPORT.AIRLINE
+MODIFY COLUMN "Airlines Name"
+SET TAG TAG.GOVERNANCE.NAMES='Airline Name'; -- tag name, tag value.
+
+
+ALTER TABLE REVENUE.TRANSPORT.AIRLINE
+MODIFY COLUMN "Airlines RegionId"
+SET TAG TAG.GOVERNANCE.REGION='Region of airline'; -- tag name, tag value.
+
+
+ALTER TABLE REVENUE.TRANSPORT.AIRLINE
+MODIFY COLUMN "Date"
+SET TAG TAG.GOVERNANCE.DATE='Arrival Date'; -- tag name, tag value.
+
+
+
+
+ALTER TABLE REVENUE.TRANSPORT.AIRLINE
+MODIFY COLUMN "Airlines Notes"
+SET TAG TAG.GOVERNANCE.COMMENTS='Traffic Control Comments'; -- tag name, tag value.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... COM ISSO, ESSAS TAGS SAO APLICADAS 
+
+NESSAS COLUMNS ESPECÍFICAS....
+
+
+
+
+
+
+
+
+
+
+--> AGORA SE QUISERMOS CHECAR 
+
+
+
+EM 1 "DATABASE LEVEL",
+
+VER QUE TAGS FORAM APPLICADAS 
+
+
+DENTRO 
+
+
+DESSA DATABASE,
+
+
+PODEMOS RODAR ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+SELECT 
+*
+FROM TABLE(
+    INFORMATION_SCHEMA.tag_references_all_columns('revenue.transport.airline', 'table');
+)
+
+
+
+
+
+
+
+
+--> OBS:: SEMPRE QUE VC ADICIONA 1 TAG/ALTERA 
+
+
+ALGO NO METADATA LAYER,
+
+
+HÁ UMA CERTA DEMORA PARA REFLETIR ESSAS CHANGES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+QUER DIZER QUE SE TENTARMOS RODAR 
+
+ESSE STATEMENT,
+
+
+O DE 
+
+
+"""
+
+
+
+SELECT 
+*
+FROM TABLE(
+    INFORMATION_SCHEMA.tag_references_all_columns('revenue.transport.airline', 'table');
+)
+
+
+""""
+
+
+
+
+
+,
+
+
+ele vai demorar 1 pouco para ser executado...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+O PROFESSOR APONTA 1 DETALHE:
+
+
+
+
+
+TEMOS 1 COLUMN 
+
+
+DE "TAG_VALUE", nesse result_Set...
+
+
+
+
+
+
+
+
+
+--> alguns values estao aparecendo 
+
+nessa TAG_VALUE:
+
+
+
+
+
+traffic control comments 
+arrival date 
+
+
+
+
+e 
+
+MUITOS "confidential"...
+
+
+
+esse "confidential"
+
+
+ESTÁ VINDO DA TAG 
+DE 
+
+"DB_DATA_SENSITIVITY"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> temos mt "confidential" JUSTAMENTE 
+
+PQ APLICAMOS 
+
+
+
+A TAG DE "DB_DATA_SENSITIVITY", de value 'confidential',
+
+
+
+EM VÁRIAS 
+
+
+DE
+
+
+NOSSAS TABLES (Tables inteiras)... -> e, quando aplicamos 
+
+em tables inteiras,
+
+
+TODAS COLUMNS FICAM COM ESSA TAG...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+o professor também adiciona tags 
+
+
+NAS COLUMNS DA TABLE DE 
+
+"TELECALLS", tipo assim:
+
+
+
+
+alter table revenue.media.telecalls modify column "Country" set tag tag.governance.keys='Country key';
+alter table revenue.media.telecalls modify column "Country Name" set tag tag.governance.region='Country name';
+alter table revenue.media.telecalls modify column "Topic Notes" set tag tag.governance.comments='Broadband connection notes';
+alter table revenue.media.telecalls modify column "Date" set tag tag.governance.date='Connection date';
+
+ select *
+      from table(information_schema.tag_references_all_columns('revenue.media.telecalls', 'table'));
+      
+
+
+
+
+
+
+
+
+
+
+
+      TAMBÉM NO "market_reach":
+
+
+
+
+
+      
+alter table revenue.supermarket.market_reach modify column "COUNTRY" set tag tag.governance.region='Country code';
+alter table revenue.supermarket.market_reach modify column "COUNTRY_NAME" set tag tag.governance.region='Country full name';
+alter table revenue.supermarket.market_reach2 modify column "DATE" set tag tag.governance.date='promotiondate';
+
+
+
+ select *
+      from table(information_schema.tag_references_all_columns('revenue.supermarket.market_reach', 'table'));
+      
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> OK.... APLICAMOS 
+
+
+ESSAS TAGS,
+
+COMO PARTE DO TRABALHO DO TAG_ADMIN...
+
+
+
+
+
+
+
+
+
+
+
+
+--> O USO DE TAGS ENVOLVE:
+
+
+
+
+
+
+
+1) CRIACAO E APLICACAO DE TAGS..
+
+
+
+
+
+
+
+2) "dISCOVER/SEARCH" de objects,
+
+POR MEIO DO USO DE TAGS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AGORA FAREMOS O SEGUNDO PASSO...
+
+
+
+
+
+
+
+
+
+
+
+PQ QUANDO NOSSO SYSTEM CRESCE DEMAIS,
+AS TAGS PODEM NOS AJUDAR 
+
+A "NOS ENCONTRAR"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ASSUMA QUE AS TAGS JÁ FORAM APLICADAS 
+
+EM TODOS OS OBJECTS...
+
+
+
+(nas columns, nas tables, etc)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA CONSEGUIRMOS ENCONTRAR 
+
+
+
+QUAIS OBJECTS FORAM TAGGADOS COM QUAIS TAGS,
+
+
+DEVEMOS RODAR ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SELECT 
+*
+FROM SNOWFLAKE.ACCOUNT_USAGE.TAG_REFERENCES 
+ORDER BY TAG_NAME, DOMAIN, OBJECT_ID;
+
+
+
+
+
+
+
+
+
+
+--> é claro que APENAS O ACCOUNTADMIN TERÁ 
+
+PERMISSION PARA RODAR ESSA QUERY (
+    pq é o object global snowflake...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> SE QUISERMOS QUE O __TAG_ADMIN __ CONSIGA 
+
+
+QUERIAR 
+
+
+
+ESSA INFORMATION,
+
+
+
+
+
+PRECISAMOS IMPORTAR PRIVILEGES,
+
+
+
+O ROLE 
+
+DE 
+
+"TAG_aDMIN"
+
+PRECISA FAZER "iMPORT" 
+
+
+DOS PRIVILEGES,
+
+
+COM ESTE COMANDO:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+GRANT IMPORTED PRIVILEGES 
+ON DATABASE SNOWFLAKE TO ROLE TAG_ADMIN;
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> É CLARO QUE ESSE COMANDO DEVE SER RODADO 
+
+USANDO 
+
+O 
+
+"ACCOUNTADMIN"..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ISSO FEITO,
+
+PODEMOS CRIAR 1 TABLE A PARTIR DESSA INFO,
+
+
+COM 1 QUERY TIPO ESTA:
+
+
+
+
+
+
+
+
+CREATE OR REPLACE TABLE ACCOUNT_TAGS_INFORMATION
+AS 
+SELECT * FROM SNOWFLAKE.ACCOUNT_USAGE.TAG_REFERENCES 
+ORDER BY TAG_NAME, DOMAIN, OBJECT_ID;
+
+
+
+
+
+
+
+
+
+
+
+ESSA TABLE DE 
+
+""ACCOUNT_TAGS_INFORMATION""
+
+vai conter info sobre 
+
+
+QUAIS TAGS FORAM APLICADAS 
+
+EM QUAIS TABLES/DATABASES...
+
+
+
+
+
+
+
+
+
+--> e já podemos USAR ESSAS TAGS 
+
+NOS NOSSOS SELECTS,
+
+COM FILTERS,
+
+TIPO ASSIM:
+
+
+
+
+
+
+SELECT
+DATABASE,
+SCHEMA,
+TABLE_NAME,
+COLUMN_NAME,
+TAG_VALUE
+FROM ACCOUNT_TAGS_INFORMATION
+WHERE TAG_NAME='REGION';
+
+
+
+
+
+
+
+
+
+
+
+--> OK... ISSO NOS DÁ A INFO 
+
+MT BEM ESTRUTURADA...
+
+
+
+
+
+
+
+
+
+
+--> SE VC TIVER CENTENAS DE TABLES,
+
+E SE VC 
+SEGUIR 
+
+ESSA DISCIPLINA 
+
+
+DE __ APLICAR _ AS TAGS CADA VEZ QUE CRIA 1 OBJECT,
+
+
+
+SERÁ BEM MAIS FÁCIL 
+
+
+
+__ RESPONDER A PERGUNTAS COMO 
+
+""QUANTAS 
+
+TABLES NO SEU SISTEMA ESTAO COM 
+
+1 COLUMN DE __rEGION_...  COLUMN DE REGION QUE 
+ACTUALLY REPRESENTA 1 REGION"" --> se vc tiver 
+
+tags,
+
+
+é bem mais fácil 
+
+
+saber isso..
+
+
+
+
+
+
+
+
+
+
+
+PODEMOS FAZER ISSO COM OUTRAS TAGS,
+tipo assim:
+
+
+
+
+
+
+-- see how many date columns are in your schemas...
+SELECT 
+DATABASE,
+SCHEMA,
+TABLE_NAME,
+COLUMN_NAME,
+TAG_VALUE 
+FROM ACCOUNT_TAGS_INFORMATION 
+WHERE TAG_NAME='DATE';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OU ASSIM:
+
+
+-- see how many name columns are in your schemas...
+SELECT 
+DATABASE,
+SCHEMA,
+TABLE_NAME,
+COLUMN_NAME,
+TAG_VALUE 
+FROM ACCOUNT_TAGS_INFORMATION 
+WHERE TAG_NAME='NAMES';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... QUER DIZER QUE TAGGING VAI NOS AJUDAR
+
+
+
+COM "DATA DISCOVERY" ao longo do nosso sistema...
+
+
+
+
+
+
+
+
+
+
+
+MAS, PARA ISSO, PRECISAMOS DE 1 POUCO DE DISCPLINA...
+
+
+
+
+
+
+
+
+PQ CADA VEZ QUE CRIARMOS UMA NOVA TABLE OU 
+
+ALGO DO GÊNERO,
+
+
+
+
+temos que aplicar 1 tag para ela...
+
+
+
+
+
+
+
+
+
+
+
+--> MAS NO LONG RUN,
+
+ISSO VAI NOS AJUDAR A ENTENDER COMO 
+
+A NOSSA DATA É DISTRIBUÍDA AO LONGO 
+
+DO SISTEMA... 
+
+
+
+
+
+--> OK....
+
+
+
+

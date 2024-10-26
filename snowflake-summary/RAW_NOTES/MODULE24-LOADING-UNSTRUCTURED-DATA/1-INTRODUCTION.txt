@@ -1,0 +1,44 @@
+
+FALAREMOS SOBRE O LOAD DE 
+
+
+
+UNSTRUCTURED DATA NO 
+
+SNOWFLAKE DATABASE...
+
+
+
+
+
+
+
+
+
+
+PRINCIPALMENTE VEREMOS:
+
+
+
+
+
+1) LOADING JSON, XML...
+
+
+
+
+
+
+
+2) BEST PRACTICES TO LOAD UNSTRUCTURED DATA...
+
+
+
+----------------------
+
+
+
+
+
+
+

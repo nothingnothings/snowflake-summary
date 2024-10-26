@@ -1,0 +1,508 @@
+
+
+
+
+
+
+
+AGORA TEMOS 1 BOM ENTENDIMENTO 
+
+
+SOBRE COMO CRIAR DASHBOARD E DYNAMIC FILTERS (
+
+    como aquele 
+
+    'my_warehouse" que criamos,
+
+    que te deixa selecionar qualquer warehouse/todas warehouses...
+)
+
+
+
+
+
+
+
+
+--> TAMBÉM VIMOS METADATA TABLES,
+
+
+COMO "warehouse_metering_history",
+
+
+"event_history"
+
+
+e 
+
+"queue_history" tables....
+
+
+
+
+
+
+
+
+
+
+
+
+--> COM ESSAS TABLES,
+
+O  PROFESSOR CRIOU 1 DASHBOARD PARA RESPONDER ALGUMAS PERGUNTAS...
+
+
+
+
+
+
+
+
+
+
+
+
+--> DEVEMOS RESPONDER AS PERGUNTAS, 1 POR 1...
+
+
+
+
+
+
+
+            OS PAINÉIS FICARAM ASSIM:
+
+
+
+
+                        warehouse_cost_usd 
+
+                                SUM
+        
+        idle_cost_usd                 utilization_cost 
+
+            SUM                             SUM 
+
+
+        
+         cost_by_date              warehouse_cost_table
+
+
+        gráfico em                          Gráfico em
+            coluna                          barra
+
+
+
+
+                idle_percentage_by_warehouse
+
+
+
+
+
+
+
+
+
+
+
+--> VEREMOS ESSAS QUESTIONS 1 POR 1 ...
+
+
+
+
+
+
+
+
+
+
+
+
+
+1a pergunta:
+
+
+
+"COST OF ALL WAREHOUSES" --> primeiro tile, warehouse_cost_usd (ao longo de todas warehouses)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2a pergunta:
+
+
+
+
+
+idle cost e utilization cost....
+
+segundo e terceiro tiles,
+
+
+
+em que temos aquelas sums....
+
+
+
+
+
+
+
+
+
+3a pergunta:
+
+
+
+
+""HOW CREDIT AND DOLLAR COST IS DISTRIBUTED ACROSS DATES?""
+
+
+
+
+
+--> QUARTO PAINEL,
+
+
+
+NOS MOSTRA O "CREDIT" cost, e o DOLLAR COST correspondente,
+ao longo dos dias...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+4a pergunta:
+
+
+
+
+""How idle cost and utilization cost 
+is distributed across dates?""
+
+
+
+
+
+
+
+--> a resposta está no quinto painel,
+
+
+
+que nos mostra o resultado da table "warehouse_cost"...
+
+
+
+
+---> 2 cores, "idle_cost" e "QUERY_EXECUTION_COST"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+5a pergunta:
+
+
+
+"active and passive percentages of warehouses"...
+
+
+
+
+
+
+
+--> temos outro tile, "idle_percentage_by_warehouse"
+
+
+
+
+
+--> ISSO NOS MOSTRA O QUANTO CADA WAREHOUSE ESTÁ 
+FICANDO EM IDLE/USO...
+
+
+
+
+
+------------------------------------------------
+
+
+
+
+
+
+
+
+
+6a pergunta:
+
+
+
+"HOW IDLE COST FOR A WAREHOUSE IS DISTRIBUTED?"
+
+
+
+
+
+--> temos o tile de "warehouse_category"...
+
+
+
+
+
+--> PRIMEIRO DEVEMOS APONTAR:
+
+
+
+PARA UMA WAREHOUSE SER CATEGORIZADA COMO "mUITO USADA",
+
+A WAREHOUSE DEVE TER NO MÁXIMO 25% DE IDLE... SE ELA TIVER 75% 
+de uso,
+
+podemos a considerar como warehouse mt ativa...
+
+
+
+
+
+
+--> outras categorias, nessa tile,
+
+seriam 
+
+"dormant" e "active"...
+
+
+
+
+
+
+
+--> "dormant" significa que 
+
+
+a maior parte do cost/tempo 
+
+
+
+foi de tipo IDLE...
+
+
+
+
+-> active significa que foi usada,
+
+mas seu idle time ainda foi maior do que 25% 
+
+(entre 25% e 75% )  (ex: 49% idle)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+7a pergunta:
+
+
+
+
+""Total time consumed by all warehouses""....
+
+
+
+
+-> para isso, temos mais 2 tiles:
+
+
+
+
+
+"total_hour_consumed" --> (idle + usage)...
+
+
+
+
+
+"hours_utilized" (usage de verdade)...
+
+
+
+
+
+
+
+
+
+
+
+
+9a pergunta:
+
+
+
+
+
+""How total time of warehouses 
+is distributed across dates""..
+
+
+
+
+
+
+
+
+o tile 
+
+de 
+
+
+"hours_consumed_by_date"
+
+
+
+
+
+
+
+
+
+
+10a pergunta: 
+
+
+
+"How many times warehouse suspended and resumed?"
+
+
+
+
+
+
+
+tile de 
+
+
+"number_of_times_warehouse_suspended_and_resumed"...
+
+
+
+
+
+
+
+
+11a pergunta:
+
+
+
+"In terms of data size, how much is scanned, written 
+
+and cached"?
+
+
+
+
+
+
+
+--> tile de 
+
+
+"GB_SCANNED"...
+
+
+
+--> mostra tudo isso por WAREHOUSE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> esse dashboard é extremamente útil...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> NA PRÓXIMA LECTURE,
+
+TENTAREMOS 
+
+
+PEGAR 1 CENÁRIO E ANALISAR 
+
+O BEHAVIOR DE 1 
+
+WAREHOUSE 
+
+POR MEIO DESSE DASHBOARD... (que ainda temos de criar,
+
+muitos dos tiles ainda nao temos)...

@@ -1,0 +1,57 @@
+
+
+
+
+
+
+
+O PROFESSOR CRIOU UMA CONTA GITHUB...
+
+
+
+
+
+
+
+
+
+
+--> CRIOU 1 REPOSITORY, TAMBÉM...
+
+
+
+
+
+
+
+
+--> AGORA VAMOS SETTAR O SNOW CLI ENVIRONMENT 
+
+
+LÁ DO GITHUB...
+
+
+
+
+
+
+
+
+
+
+
+--> DEPOIS VEREMOS COMO PODEMOS SETTAR O "GITPOD"
+
+
+EM CIMA DESSE REPOSITORY QUE CRIAMOS,
+
+
+
+E COMO PODEMOS 
+
+CONECTAR A CLI DO SNOWFLAKE 
+
+COM O GITPOD..... (nunca fiz isso)...
+
+
+

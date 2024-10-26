@@ -1,0 +1,276 @@
+
+
+
+AGORA VEREMOS ALGUMAS DAS MELHORES PRACTICES A SEREM SEGUIDAS
+
+
+
+QUANDO USAMOS 
+
+
+1 SNOWFLAKE DATABASE....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SNOWFLAKE IMPORTANT FEATURES:
+
+
+
+
+
+
+
+
+1) CLONE 
+
+
+2) TRANSIENT, TEMPORARY, PERMANENT TABLES 
+
+3) FAIL SAFE 
+
+4) TIME TRAVEL 
+
+5) RETENTION PERIOD 
+
+6) COPY COMMAND 
+
+7) INTERNAL STAGE, EXTERNAL STAGE 
+
+8) SAMPLING
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> DEVEMOS REVISAR ALGUMAS DAS FEATURES 
+IMPORTANTS 
+
+QUE JÁ 
+
+VIMOS NAS LECTURES ANTERIORES...
+
+
+
+
+
+
+
+
+
+
+
+
+--> A PRIMEIRA FEATURE QUE USAMOS 
+
+
+
+NO SNOWFLAKE É A  DE "CLONE"..
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> 1) CLONE 
+
+
+
+
+
+
+
+
+
+
+COM A FEATURE DE CLONE, NÓS NAO COPIAMOS A __ DATA__ DE 1 
+
+TABLE,
+
+
+E SIM APENAS COPIAMOS SUA _ METADATA__...
+
+
+
+
+
+
+
+
+
+
+
+--> MESMO COPIADA SUA METADATA, A TABLE CLONADA 
+SERÁ 1 TABLE INDEPENDENTE  (
+    mas que nao usará nenhum storage, no início...
+)
+
+
+
+
+
+
+
+
+
+2) TRANSIENT TABLES, SCHEMAS, DATABASES...
+
+(também TEMPORARY TABLES, SCHEMAS, DATABASES)....
+
+
+
+
+
+
+
+
+
+
+
+
+3) FAIL SAFE 
+
+(existe apenas em permanent tables)
+
+
+
+
+
+--> O SNOWFLAKE VAI, CONTINUAMENTE,
+
+TIRAR BACKUPS 
+
+
+DE NOSSA DATABASE E TABLES...
+
+
+
+
+
+
+
+
+
+
+
+4) o termo "TRANSIENT" --> uma keyword que usamos quando 
+criamos databases e tables -------> TRANSIENT 
+
+DEVE SER USADO EM DEVELOPMENT E COM STAGING (truncate and load)....
+
+
+
+
+
+
+5) TIME TRAVEL --> estudamos o time travel, em que 
+
+podemos fazer time travel BACK a 1 certo período de 
+tempo (de 1 a 90 dias)...
+
+
+
+
+
+
+6) RETENTION PERIOD -> é a quantidade de dias 
+
+definidas para seu timetravel...
+
+
+
+--> vimos que o retention period tem a ver com 
+o funcionamento 
+
+
+da aws, e com o time travel...
+
+
+
+
+
+
+
+
+
+
+
+7) BEM NO INÍCIO DO CURSO,
+
+
+DISCUTIMOS SOBRE O COMANDO DE "COPY",
+
+
+E sobre como ele pode ser útil quando copiamos 
+data de diferentes sources...
+
+
+
+
+
+
+8) EXTERNAL STAGING AREA E INTERNAL STAGING AREA...
+
+
+A diferença de 1 em relacao ao outro...
+
+
+
+
+
+
+9) SAMPLING 
+
+--> vimos os diferentes sampling methods, e sobre 
+
+quanod usar BERNOULLI e quando usar SYSTEM...
+
+
+
+
+--> vimos, também, que o SAMPLING é diferente de "clone", e é 
+bem melhor para TESTAR SUAS QUERIES... (gasta menos processamento 
+e storage)
+
+
+
+
+
+
+
+
+
+--> COM BASE NESSE CONHECIMENTO QUE ADQUIRIMOS, FORMATAREMOS 
+
+ALGUMAS DAS BEST PRACTICES A SEREM USADAS NO SNOWFLAKE...

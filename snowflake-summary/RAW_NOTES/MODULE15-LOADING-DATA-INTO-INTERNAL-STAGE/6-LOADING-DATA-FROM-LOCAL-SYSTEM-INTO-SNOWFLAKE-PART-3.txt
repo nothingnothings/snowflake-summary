@@ -1,0 +1,975 @@
+
+
+
+
+
+
+
+NA NOSSA PRÓXIMA ATIVIDADE,
+
+TEMOS ISTO:
+
+
+
+
+
+
+""COPY ALL COLUMNS TO TABLE. RECORD THE NAME 
+OF THE FILE FROM WHICH YOU ARE LOADING EACH 
+RECORD""....
+
+
+
+
+
+
+""COMPARE THE COUNT OF RECORDS""....
+
+
+
+
+
+
+OK...
+
+
+
+
+
+PARA ISSO,
+
+
+
+VAMOS USAR AS TABLES DE ANTES...
+
+
+
+
+PROVAVELMENTE PRECISAREMOS 
+
+
+USAR A METADATA DO 
+
+SNOWFLAKE,
+
+AQUELA DATA 
+DE 
+
+"metadata$filename"...
+
+
+
+
+
+
+
+
+
+
+
+
+--> ESSE TIPO DE COISA É ÚTIL QUANDO VC 
+
+
+ESTÁ FAZENDO 1 MIGRATION ACTIVITY...
+
+
+
+
+
+--> pq se vc estiver fazendo uma atividade 
+
+de migration 
+e 
+
+1 
+
+
+DE SUAS FILES CSV ou qualquer outra coisa 
+dá problema,
+
+
+SE VC _TIVER__ 
+
+O NOME 
+
+DA FILE QUE FOI USADA PARA PRODUZIR CADA 
+ROW,
+
+
+FICA MT MAIS FÁCIL 
+
+DEBUGGAR O QUE 
+
+DEU ERRADO 
+
+NO MOMENTO EM QUE 
+
+AS FILES FORAM 
+IMPORTADAS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+A SEGUNDA VANTAGEM É QUE 
+
+PODEMOS CONTAR 
+
+
+A QUANTIDADE DE RECORDS QUE FORAM CARREGADOS 
+
+
+NA TABLE,
+
+
+
+
+PODEMOS GARANTIR QUE 
+
+
+
+TODOS OS ROWS DE 1 GIVEN FILE FORAM 
+
+
+CARREGADOS NA TABLE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> O PROFESSOR COMECA COM ESTE CÓDIGO:
+
+
+
+
+
+
+
+
+
+# CREATE TABLE AND ITS STAGING AREA (automatic):
+
+CREATE OR REPLACE TABLE DEMO_DB.PUBLIC.EMP_BASIC_LOCAL (
+
+    FILE_NAME STRING,
+    FILE_ROW_NUMBER STRING,
+    FIRST_NAME STRING,
+    LAST_NAME STRING,
+    EMAIL STRING,
+    STREETADDRESS STRING,
+    CITY STRING,
+    START_DATE STRING
+);
+
+
+
+
+# UPLOAD DATA TO STAGING AREA (run inside of snowsql)
+
+
+put file://path/to/file/in/local/machine/employees0*.csv
+@DEMO_DB.PUBLIC.%EMP_BASIC_LOCAL;
+
+
+(
+    exemplo: 
+    put file://data-to-be-loaded/employees0*.csv  
+    @DEMO_DB.PUBLIC.%EMP_BASIC_LOCAL;
+
+)
+
+# COPY DATA FROM STAGING AREA TO SNOWFLAKE
+
+
+COPY INTO DEMO_DB.PUBLIC.EMP_BASIC_LOCAL
+FROM (
+    SELECT
+    METADATA$FILENAME,
+    METADATA$FILE_ROW_NUMBER,
+    T.$1,
+    T.$2,
+    T.$3,
+    T.$4,
+    T.$5,
+    T.$6
+    FROM @DEMO_DB.PUBLIC.%EMP_BASIC_LOCAL AS T
+)
+FILE_FORMAT=(
+    TYPE=CSV
+    FIELD_OPTIONALLY_ENCLOSED_BY='"'
+)
+PATTERN='.*employees0[1-5].csv.gz'
+ON_ERROR='skip_file';
+
+
+
+
+
+
+
+
+
+
+
+
+
+CERTO... AGORA SÓ RESTOU CONTAR O NÚMERO DE ROWS PRODUZIDOS PARA CADA FILE...
+
+
+
+
+
+
+
+
+PODEMOS CONSEGUIR ESSA INFO ASSIM:
+
+
+
+
+
+SELECT 
+DISTINCT FILE_NAME AS file_name,
+COUNT (*) AS amount_of_rows
+FROM emp_basic_local
+GROUP BY file_name;
+
+
+
+
+
+
+
+
+
+----------------------------------
+
+
+
+
+
+
+
+
+
+
+
+o professor usou as properties de 
+
+
+
+metadata$filename 
+
+
+e 
+
+
+
+metadata$file_row_number 
+
+
+
+
+
+
+
+
+
+
+--> metadata$file_row_number 
+
+
+DÁ UM 
+
+
+IDENTIFIER UNIQUE PARA CADA 
+
+1 
+
+DOS 
+
+
+
+RECORDS QUE ESTÁ SENDO CARREGADO....
+
+
+
+
+
+COM ESSA ORGANIZACOA,
+
+PODEMOS 
+
+FACILMENTE 
+
+
+ENCONTRAR QUAISQUER ERROS 
+
+
+
+QUE ACONTECAM DURANTE O LOAD DA DATA...
+
+
+
+
+
+
+
+-----------------------
+
+
+
+
+
+
+
+
+
+PARA O PROCESSO DE COUNT DAS ROWS, O PROFESSOR ESCREVEU ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+SELECT * FROM demo_db.public.emp_basic_local;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+digamos que vc carregou 1 row, a partir de 1 file,
+
+para dentro de sua table...
+
+
+
+
+
+mas, entao, do nada,
+
+vc percebe que o row NAO ESTÁ EXATAMENTE 
+
+IGUAL AO ROW LÁ DA FILE...
+
+
+
+
+
+
+
+
+
+--> ENTAO VC TALVEZ QUEIRA VER 
+
+
+
+
+
+COMO ESSE ROW ESTÁ SE PARECENDO NA FILE...
+
+
+
+
+
+
+
+--> PARA PASSAR O PENTE-FINO E ENTENDER A RAZAO 
+
+DESSA INCONGRUÊNCIA, VC TEM 2 OPCOES:
+
+
+
+
+
+1) GO AHEAD E DOWNLOAD A FILE QUE ORIGINOU O ROW BUGADO...
+
+DEPOIS ABRIR A FILE MANUALMENTE EM 1 NOTEPAD,
+
+E AÍ CHECAR COMO O NOME DO CARA/COLUMN VALUE ESTÁ....
+
+
+
+
+
+
+
+2) VC PODE QUERIAR DIRETAMENTE ESSA INTERNAL TABLE 
+
+STAGING AREA,
+
+
+DE DENTRO DO SNOWFLAKE....
+
+
+
+
+
+
+PARA A SEGUNDA OPCAO,
+
+
+A SINTAXE FICA ASSIM:
+
+
+
+
+
+
+
+
+
+SELECT
+    METADATA$FILENAME,
+    METADATA$FILE_ROW_NUMBER,
+    $1,
+    $2,
+    $3,
+    $4,
+    $5,
+    $6
+    FROM @DEMO_DB.PUBLIC.%emp_basic_local
+    (
+        FILE_FORMAT => CONTROL_DB.FILE_FORMATS.MY_CSV_FORMAT;
+    );
+
+
+
+
+
+
+
+COMO VC PODE PERCEBER, MUDAMOS 1 POUCO A SINTAXE DE SELECT,
+
+PQ ESCOLHEMOS 1 FILE_fORMAT (csv) DURANTE O SELECT...
+
+
+
+
+
+
+
+
+
+
+
+QUER DIZER QUE QUANDO TENTAMOS ACTUALLY QUERIAR 
+A DATA EXISTENTE DENTRO DE 1 STAGING AREA DE UMA GIVEN TABLE,
+
+
+
+TEMOS QUE USAR ESSA SINTAXE ESTRANHA,
+
+
+
+DE 
+
+"    (
+        FILE_FORMAT => CONTROL_DB.FILE_FORMAT.MY_CSV_FORMAT;
+    )
+    "
+
+
+
+
+
+
+
+
+
+OK... FAZ SENTIDO...
+
+
+
+
+
+
+
+
+
+
+O PROFESSOR TENTA RODAR ESSA QUERY,
+
+E ENTAO RECEBE O ERROR DE 
+
+
+""NUMBER OF COLUMNS IN FILE DOES NOT MATCH OF THE CORRESPONDING TABLE (8),
+use file format option ERROR_ON_COLUMN_COUNT_MISMATCH=false to
+ignore this error. File xxxx"" 
+
+
+
+
+
+
+
+--> ESSE ERRO ACONTECEU PQ 
+
+
+ESTAMOS COM 2 COLUMNS EXTRAS 
+
+NA NOSSA TABLE (metadata$filename e metadata$row_file_number)...
+
+
+
+
+
+
+
+
+
+
+--> É POR ISSO QUE DEVEMOS
+
+COLOCAR O "ERROR_ON_COLUMN_COUNT_MISMATCH=FALSE",
+
+para IGNORAR ESSE ERROR completamente...
+
+
+
+
+
+
+
+
+tipo assim:
+
+
+CREATE OR REPLACE FILE FORMAT DEMO_DB.FILE_FORMATS.MY_CSV_FORMAT 
+TYPE=CSV
+FIELD_OPTIONALLY_ENCLOSED_BY='"'
+FIELD_DELIMITER=','
+NULL_IF=('NULL', 'null')
+EMPTY_FIELD_AS_NULL=TRUE
+ERROR_ON_COLUMN_COUNT_MISMATCH=FALSE
+compression=gzip;
+
+
+
+
+
+
+
+SELECT
+    METADATA$FILENAME,
+    METADATA$FILE_ROW_NUMBER,
+    $1,
+    $2,
+    $3,
+    $4,
+    $5,
+    $6
+    FROM @DEMO_DB.PUBLIC.%emp_basic_local
+    (
+        FILE_FORMAT => DEMO_DB.FILE_FORMATS.MY_CSV_FORMAT
+    );
+
+
+
+
+
+
+
+
+
+    DEIXAREMOS ESSE "ERROR_ON_COLUMN_COUNT_MISMATCH=FALSE"
+
+
+    APENAS DURANTE ESTA ATIVIDADEE...
+    MAIS TARDE PODEMOS O REMOVER...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CERTO... ISSO FUNCIONOU...
+
+(por isso precisamos dessa option de "file_format",
+
+se desejamos queriar o value das columns de files DIRETAMENTE,
+
+diretamente das staging areas internas, de staging areas de tables,
+por exemplo, mas também de external stages como o aws...)
+
+
+
+
+
+
+
+AGORA PODEMOS VERIFICAR SE 
+
+
+A DATA DESSE ARQUIVO 
+
+
+É PARECIDA COM A DATA QUE FOI LOADED PARA DENTRO DA TABLE....
+
+
+
+
+
+
+
+
+
+
+
+JÁ A QUERY QUE CONTA O NÚMERO DE RECORDS É ESTA:
+
+
+
+
+
+
+
+
+SELECT COUNT(*) 
+FROM @demo_db.public.%emp_basic_local 
+(FILE_FORMAT => control_db.file_formats.my_csv_format);
+
+
+(isso nos dá o número de rows na file/staging area)
+
+
+
+
+
+
+
+-_> ok... para contar o número de records na nossa table,
+
+basta rodar 
+
+
+
+
+SELECT COUNT(*) 
+FROM emp_basic_local;
+
+
+
+
+
+
+
+
+
+OK...
+
+
+
+
+
+SELECT * FROM demo_db.public.emp_basic_local;
+
+
+
+
+
+
+
+
+
+
+
+
+O PROFESSOR MENCIONA A CLAUSE DE "MINUS",
+
+também (nunca usei/ouvi falar)...
+
+
+
+
+
+
+
+
+
+O JEITO QUE ELE USA É ASSIM:
+
+
+
+
+
+
+
+SELECT
+metadata$filename,
+metadata$file_row_number,
+$1,
+$2,
+$3,
+$4,
+$5,
+$6 
+FROM @demo_db.public.%emp_basic_local 
+(FILE_FORMAT => demo_db.file_formats.my_csv_format)
+MINUS 
+SELECT * FROM demo_db.public.emp_basic_local;
+
+
+
+
+
+
+SE NENHUM ROW É RETORNADO,
+
+ISSO SIGNIFICA QUE AS 2 COISAS/RESULT SETS 
+SAO IGUAIS (
+    significa que toda a data das files 
+    foi carregada com sucesso para dentro da table...
+)
+
+
+
+
+
+
+
+
+
+
+AGORA VEREMOS 1 ÚLTIMA COISA...
+
+
+
+
+
+
+
+
+
+
+-> COM 
+
+
+
+metadata$filename, 
+
+ESTAMOS FICANDO COM O FILENAME COMPLETO...
+
+
+
+
+
+
+
+
+MAS DIGAMOS QUE NAO QUEREMOS ISSO...
+
+
+
+
+
+
+
+QUEREMOS SÓ UMA PARTE DESSE STRING VALUE....
+
+
+
+@emp_basic_local/employees03.csv.gz
+
+
+ficaria 
+
+employees03.csv.gz
+
+
+
+
+
+
+--> PARA ISSO, PODEMOS USAR A FUNCTION DE SPLIT_PART(),
+
+
+tipo assim:
+
+
+
+
+
+
+
+
+
+
+SELECT SPLIT_PART(file_name, '/', '2') FROM demo_db.public.emp_basic_local;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK, COM ISSO, VEREMOS SÓ A FILE NAME...
+
+
+
+
+
+
+
+
+
+
+--> É CLARO QUE PODEMOS USAR 
+
+ESSE SPLIT PART 
+
+
+JÁ DENTRO DO COPY COMMAND,
+
+
+
+
+
+QUE ENTAO JÁ VAMOS TIRAR ESSE PEDACO ANTERIOR DESSA STRING...
+
+
+
+
+
+--> COM ISSO, PODEMOS APLICAR 1 TRANSFORMATION ENQUANTO 
+
+REALIZAMOS ESSE 
+
+PROCESSO DE COPY DA DATA DAS FILES PARA DENTRO DAS TABLES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK, RESUMINDO, O QUE APRENDEMOS:
+
+
+
+
+
+
+
+1) COPIED DATA, WITH THE FILENAME IN EACH ROW...
+
+
+
+
+
+2) CHECK FOR COLUMN VALUE DIRECTLY IN THE 
+TABLE STAGING AREA...
+
+
+
+
+3) validated the count (com o select com option de FILE_FORMAT => )
+
+
+
+
+
+4) VALIDATE VALUES WITH RESPECT TO 
+
+TABLE STAGE (
+
+    comparamos/nos certificamos 
+
+    que os values 
+
+
+    que estao na staging area foram copiados com sucesso/adequadamente 
+    para dentro da table...
+)
+
+
+
+5) split_part --> vimos como 
+
+
+podemos usar isso para "limpar" a string 
+do metadata$filename...
+
+
+
+
+
+
+
+
+
+
+
+
+por fim, revertemos a change de ERROR_ON_COLUMN_COUNT_MISMATCH=false 
+
+que colocamos no file format de my_csv_format...
+
+
+
+

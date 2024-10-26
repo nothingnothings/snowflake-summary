@@ -1,0 +1,550 @@
+
+
+
+
+STREAMS IN SNOWFLAKE:
+
+
+
+
+
+
+
+
+
+
+
+
+REVISANDO...
+
+
+
+
+
+
+
+
+
+IMAGINE ESTE COMANDO:
+
+
+
+
+
+
+
+
+
+UPDATE TABLE EMPLOYEE 
+SET NAME='JOHNNY'
+WHERE NAME='JOHN';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> JÁ SABEMOS QUE O SNOWFLAKE USA BLOB STORAGES COMO 
+
+AWS S3,
+
+AZURE E GCS 
+
+
+PARA 
+
+ARMAZENAR DATA...
+
+
+
+
+
+
+
+
+
+
+--> NESSES STORAGES,
+
+
+
+AS FILES SÓ PODEM SER OVERWRITTEN COMPLETAMENTE... NAO É 
+
+NEM MESMO POSSÍVEL 
+
+
+APPENDAR DATA AO FINAL DAS FILES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> POR CONTA DESSA PROPRIEDADE,
+
+
+SE VC PERFORMA QUALQUER DML OPERATION 
+
+
+NO SNOWFLAKE,
+
+UM 
+
+NOVO SET DE FILE É CRIADO,
+
+
+E A VERSAO MAIS ANTIGA DA FILE É MANTIDA... (pq essa é uma feature do aws s3)...
+
+
+
+
+
+
+
+
+
+
+
+
+-> NO NOSSO EXEMPLO,
+
+
+
+
+QUANDO EXECUTAMOS 1 UPDATE STATEMENT,
+
+
+AS FILES VELHAS SAO MARCADAS COMO "DELETED",
+
+
+E AS 
+
+
+
+NOVAS FILES SAO 
+
+CONSIDERADAS COMO "INSERTED"...
+
+
+
+
+
+
+
+
+
+
+
+PODERIA-SE AFIRMAR QUE 
+
+O CONJUNTO ANTERIOR DE FILES, "DELETED",
+
+
+
+
+É O CONJUNTO "V1" DAS FILES,
+
+
+
+
+
+
+E 
+
+
+O NOVO CONJUNTO, INSERIDO COM ESSE UPDATE,
+
+
+
+É 
+
+
+O CONJUNTO "V2"...
+
+
+
+
+
+
+
+
+
+
+
+
+V1 --> FILES VELHAS, OLD RECORD..
+
+
+
+
+
+
+V2 --> FILES NOVAS, NEW RECORD...
+
+
+
+
+
+
+
+
+
+
+
+
+--> E PODEMOS CRIAR 1 OBJECT NO SNOWFLAKE PARA 
+
+MONITAR 
+
+ESSAS DML OPERATIONS, REALIZADAS EM 1 GIVEN TABLE...
+
+
+
+
+
+
+
+
+
+
+
+--> O NOME DESSE OBJECT É O "STREAM OBJECT"...
+
+
+
+
+
+
+
+--> SEMPRE QUE VC DEFINE 1 STREAM OBJECT EM 1 TABLE,
+
+
+
+VC PODE CAPTURAR 
+
+AS CHANGES FEITAS NA TABLE IMEDIATAMENTE...
+
+
+
+
+
+
+
+
+
+
+
+
+--> E ESSE PROCESSO É CHAMADO DE "CHANGE DATA CAPTURE"...
+
+
+
+
+
+
+
+
+
+
+
+
+OK, MAS COMO A DOCUMENTACAO DO SNOWFLAKE DEFINE ESSAS STREAMS?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+"" A STREAM OBJECT RECORDS DATA MANIPULATION LANGUAGE (DML) 
+CHANGES MADE TO TABLES, INCLUDING INSERTS,
+UPDATES, DELETES, AS WELL AS METADATA ABOUT EACH CHANGE,
+SO THAT ACTIONS CAN BE TAKEN USING THE CHANGED DATA."" 
+
+
+""LOAD SELECTED FILES (FILES)""...
+
+
+
+
+
+
+
+VEREMOS COMO ISSO FUNCIONA NAS PRÓXIMAS LECTURES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ""NOTE THAT A STREAM ITSELF DOES NOT CONTAIN ANY TABLE DATA. 
+A STREAM ONLY STORES THE OFFSET FOR THE SOURCE TABLE (3 columns de metadata),
+AND RETURNS CDC (change data capture) RECORDS BY LEVERAGING THE 
+VERSIONING HISTORY FOR THE SOURCE TABLE""...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ok, continuando...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+QUANDO VC DEFINE 1 STREAM OBJECT EM 1 TABLE,
+
+
+
+
+STREAM ___OBJECT____... -> 
+
+
+
+
+
+
+
+
+
+
+
+
+O STREAM É UM OBJECT, QUE É CRIADO __ EM CIMA __ 
+
+DE UMA TABLE (on a table)....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUANDO VC DEFINE 1 STREAM OBJECT EM CIMA DE 1 TABLE,
+
+
+ELE MANTÉM UM "OFFSET"...
+
+
+
+
+
+
+--> NESSE EXEMPLO, NO CASO, DIGAMOS QUE 
+
+O 
+
+
+OFFSET É A POSITION/TIME 
+
+
+
+DE 
+
+
+"Offset 1(10:51)"
+
+
+
+
+
+
+
+
+--> AGORA, COM ESSE OBJECT, QUALQUER 
+
+
+OPERATION REALIZADA 
+
+NESSA TABLE VAI SER RECORDED... 
+
+
+
+
+
+
+--> ASSIM QUE ESSAS CHANGES FOREM CONSUMIDAS POR 
+
+OUTRA TABLE,
+
+
+
+ESSE OFFSET VAI 
+
+"MOVE"
+
+PARA O PRÓXIMO "PONTO"
+
+
+
+na linha do tempo,
+
+
+
+tipo 
+
+
+
+
+
+
+
+
+
+
+"Offset 2(10:55)"...
+
+
+
+
+
+
+
+
+
+-> O PRÓXIMO OFFSET POINT É NADA MAIS DO QUE 
+
+
+O "TIME EM QUE A PRÓXIMA DML OPERATION FOI REALIZADA 
+
+NA TABLE"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ESSE É UM HIGH-LEVEL OVERVIEW DE STREAMS....
+
+
+
+
+
+
+
+
+
+
+
+
+
+---> OK...
+
+
+
+
+
+MAS ANTES DE CONCLUIRMOS,
+
+
+
+HÁ 2 TIPOS DE STREAMS:
+
+
+
+
+
+
+
+
+
+1) STANDARD STREAMS
+
+
+
+
+
+
+
+
+
+
+
+2) APPEND-ONLY STREAM...
+
+
+
+
+
+
+
+
+
+--> ESSES SAO OS 2 TIPOS DE STREAM OBJECTS QUE 
+
+
+PODEM SER CRIADOS EM 1 TABLE (já vi isso antes,
+brevemente)....
+
+
+
+
+

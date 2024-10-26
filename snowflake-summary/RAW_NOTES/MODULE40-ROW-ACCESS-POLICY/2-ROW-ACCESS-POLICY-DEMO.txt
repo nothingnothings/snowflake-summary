@@ -1,0 +1,948 @@
+
+
+
+
+
+AGORA TENTAREMOS COMPREENDER COMO ADICIONAR 
+
+1 ROW-LEVEL ACCESS POLICY NO SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+COMECAREMOS COM ESTE CÓDIGO:
+
+
+
+
+
+
+
+
+
+
+
+use role sysadmin;
+create database claims;
+create schema pharmacy;
+
+create table patient
+(
+Name varchar,
+age integer,
+icdcode varchar,
+zip_code varchar,
+city varchar,
+provider_name varchar
+
+)
+insert into patient
+values('john','12','E910','49715','Michigan','CVS Health Corp'),
+('Simon','25','F00','43009','Ohio','McKesson Corp'),
+('Mike','58','W13','61727','Illinois','Cigna Corp'),
+('Andrew','32','J09','39425','Mississipp','UnitedHealth Group Inc'),
+('Brian','40','H03','39425','Mississipp','UnitedHealth Group Inc'),
+('David','37','F70','63013','Beaufort','UnitedHealth Group Inc'),
+('Dom','23','H60','63013','Beaufort','UnitedHealth Group Inc'),
+('Jack','30','H30','46030','Indiana','Cigna Corp'),
+('Doli','35','E65','64722','Amoret','Cigna Corp'),
+('Padma','50','O81.0','64722','Amoret','Cigna Corp');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+RODAMOS 1 SELECT:
+
+
+
+
+
+
+
+
+
+
+
+
+SELECT * FROM CLAIMS.pharmacy.PATIENT;
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> CADA ICDCODE 
+
+
+DIZ QUAL DOENCA CADA PATIENT TEM...
+
+
+
+
+
+
+
+
+--> PROVIDER_NAME É DE ONDE ELE PEGOU A INSURANCE...
+
+
+
+
+
+
+
+--> F70 --> DIGAMOS QUE TEMOS 
+
+
+UMA POLICY NA NOSSA COMPANY 
+
+
+QUE DITA QUE NAO PODEMOS 
+
+
+
+MOSTRAR 
+
+ESSA INFO A QUAISQUER USERS..
+
+
+
+
+
+
+
+
+
+
+
+--> PARA APLICAR 1 POLICY NOS ROWS QUE CONTENHAM 
+
+
+"ICDCODE=F70",
+
+
+
+ESCREVEMOS ASSIM:
+
+
+
+
+
+
+
+CREATE OR REPLACE ROW ACCESS POLICY PATIENT_POLICY 
+AS (icdcode VARCHAR)
+    RETURNS boolean -> 
+        CASE 
+            WHEN icdcode='F70' THEN FALSE
+            ELSE TRUE 
+        END;
+
+
+
+
+
+
+
+COM BASE EM 'icdcode',
+
+estamos decidindo SE EXPOMOS ESSE GIVEN 
+
+RECORD OU NAO....
+
+
+
+
+--> E O RETURN VALUE, PARA UMA POLICY,
+
+SEMPRE SERÁ "BOOLEAN" (true ou false)....
+
+
+
+
+
+
+
+
+--> CASE WHEN  --> quando for igual a F70, queremos 
+
+QUE SEJA false (then FALSE)...
+
+
+CASO CONTRÁRIO, QUEREMOS RETORNAR 
+
+TRUE (ELSE TRUE), para retornar 
+
+
+o record (retornar o resto dos records)...
+
+
+
+
+
+
+
+-> OK...
+
+
+
+
+
+
+
+--> MAS ESSE CÓDIGO TODO, VISTO ACIMA,
+
+
+NAO 
+
+APLICA A ROW ACCESS POLICY,
+
+
+
+E SIM MERAMENTE 
+CRIA-A...
+
+
+
+
+
+
+
+--> PARA APLICARMOS ESSA POLICY EM ALGUMA TABLE,
+
+
+
+ESCREVEMOS ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+
+ALTER TABLE CLAIMS.PHARMACY.PATIENT
+ADD ROW ACCESS POLICY PATIENT_POLICY ON (icdcode);
+
+
+
+
+
+
+
+
+
+--> ou seja,
+
+
+COLOCAMOS "ADD ROW ACCESS POLICY <policy_name> ON (<col_name>)"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+COM ISSO, VEREMOS MENOS RECORDS,
+
+PQ OS RECORDS 
+
+DE "DEMENTIA" SERAO CENSURADOS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+------> AQUI PERCEBEMOS UMA CARACTERÍSTICA 
+
+PRINCIPAL 
+
+
+DAS ROW ACCESS POLICIES:
+
+
+
+
+
+"""NEM MESMO O ROLE QUE DEFINIU A ROW ACCESS POLICY 
+
+
+SERÁ CAPAZ DE VISUALIZAR OS RECORDS QUE DEFINIU COMO 
+
+CENSURADOS""...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... AÍ TENTAMOS MODIFICAR ESSA POLICY UM POUCO,
+
+RODAR ESTE COMANDO:
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE ROW ACCESS POLICY PATIENT_POLICY
+AS (ICDCODE VARCHAR) RETURNS VARCHAR ->
+    CASE
+        WHEN icdcode='F70' THEN 'F60'
+        ELSE icdcode
+    END;
+
+
+
+
+
+
+
+
+
+
+--> COM ISSO, DISFARÇAMOS 
+
+O 
+
+
+
+icdcode, colocamos outro value no seu lugar...
+
+
+
+
+
+
+
+
+
+
+
+
+MAS SE TENTAMOS FAZER ISSO, FICAMOS COM UM 
+
+ERRO:
+
+
+
+
+""ROW ACCESS POLICY RETURN TYPE VARCHAR IS NOT BOOLEAN"...
+
+
+
+
+
+
+
+
+
+
+ISSO QUER DIZER QUE ROW ACCESS POLICIES 
+
+
+__SEMPRE__ VAO EXPECT__ QUE 
+
+
+O RETURN VALUE SEJA "TRUE" OU "FALSE (ou seja, 1 boolean)...
+
+
+
+
+
+
+
+
+-> QUER DIZER QUE OU OS RECORDS VAO APARECER,
+OU NAO VAO APARECER...
+
+
+
+
+
+
+
+
+
+
+--> SE VC QUER REALMENTE 
+TRANSFORMAR O VALUE DE SEUS RECORDS (
+    e nao fazer eles SUMIREM, que é o que 
+    o row access policy fz
+),
+
+
+
+
+VC DEVE __ USAR FUNCTIONS, FUNCTIONS CUSTOMIZADOS (
+    que podem transformar os records definidos por voce 
+
+    e entao os retornar...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> OK... CONTINUANDO,
+VAMOS TENTAR APLICAR OUTRA POLICY 
+
+NESSA MESMA TABLE...
+
+
+
+
+
+
+--> A POLICY SERÁ ESTA:
+
+
+
+
+
+
+
+
+
+
+
+
+--- Create another policy and attach it to table 
+CREATE OR REPLACE ROW ACCESS POLICY PATIENT_POLICY_2
+AS (ICDCODE VARCHAR, ZIP_CODE VARCHAR) RETURNS BOOLEAN ->
+CASE
+    WHEN ICDCODE='F70' OR ZIP_CODE='61727' THEN FALSE 
+    ELSE TRUE 
+END; 
+
+
+
+
+ALTER TABLE CLAIMS.PHARMACY.PATIENT
+ADD ROW ACCESS POLICY PATIENT_POLICY_2 ON (ICDCODE, ZIP_CODE);
+
+
+
+
+
+
+
+
+
+
+AGORA, NESSA ROW ACCESS POLICY,
+
+ESTAMOS CONSIDERANDO 2 
+
+COLUNAS (em vez de apenas uma)...
+
+
+
+
+
+SE O ZIP_CODE FOR DE 61727 (Digamos que temos POUCOS pacientes nesse hospital)
+
+OU 
+
+
+DE 
+
+F70,
+
+
+
+ignoramos esses values...
+
+
+
+
+
+
+
+
+--> OK, A POLICY É APLICADA 
+
+NA TABLE,
+
+
+E ISSO, ENTAO,
+
+
+
+VAI OCULTAR 
+
+
+ESSE RECORD 
+
+
+
+FRENTE ÀS PESSOAS QUE ACESSAM A DATABASE....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... MAS AO TENTARMOS APLICAR 
+ESSA POLICY NA TABLE (que já está com uma policy),
+
+
+RECEBEMOS UM ___ERROR___:
+
+
+
+
+
+
+"object PATIENT already ha 
+ROW_ACCESS_POLICY. Only one ROW_ACCESS_POLICY is 
+allowed at a time"..
+
+
+
+
+
+
+
+
+
+
+
+
+-> QUER DIZER QUE TABLES SÓ PODEM TER 1 ÚNICO 
+
+ROW ACCESS POLICY... 
+
+
+
+
+
+
+
+
+
+
+
+--> PARA CONSEGUIRMOS APLICAR ESSA SEGUNDA POLICY,
+
+
+
+PRECISAMOS DROPPAR A PRIMEIRA,
+
+COM ESTA SINTAXE:
+
+
+
+
+
+
+
+
+
+
+
+
+
+ALTER TABLE CLAIMS.PHARMACY.PATIENT 
+DROP ROW ACCESS POLICY PATIENT_POLICY;
+
+
+
+
+
+
+
+
+AGORA PODEMOS APLICAR A SEGUNDA POLICY:
+
+
+
+
+
+ALTER TABLE CLAIMS.PHARMACY.PATIENT
+ADD ROW ACCESS POLICY PATIENT_POLICY_2 ON (ICDCODE, ZIP_CODE);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DIGAMOS QUE 
+
+
+
+
+""ESSA TABLE PODE SER EXPOSTA AO ADMIN,
+
+MAS NAO PODE SER EXPOSTA COMPLETAMENTE 
+A ALGUM DE NOSSOS CLIENTS"" (
+    como "UnitedHealth Group"...
+)
+
+
+
+
+
+
+
+
+
+-- PARA ESSE CLIENT,
+
+
+NAO DEVE SER ENTREGUE ESSA SENSITIVE 
+
+INFORMATION...
+
+
+
+
+
+
+
+
+
+
+--> PARA ISSO,
+
+VAMOS 
+
+ALTERAR 1 POUCO NOSSA POLICY,
+
+PARA QUE 
+
+
+SEJA APLICADA 
+
+
+
+SOMENTE A 1 ROLE....
+
+
+
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE ROW ACCESS POLICY PATIENT_POLICY
+AS (ICDCODE VARCHAR) RETURNS BOOLEAN -> 
+CASE
+    WHEN CURRENT_ROLE()='SYSADMIN' THEN TRUE -- se o role for de "sysadmin", ficamos ok com o expose de esses records...
+    ELSE 
+        CASE 
+            WHEN ICDCODE='F70' THEN FALSE 
+            ELSE TRUE
+        END;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-->  DROPPADA A POLICY ANTERIOR,
+
+
+
+PODEMOS APLICAR 
+
+
+ESSA POLICY NA NOSSA TABLE...
+
+
+
+
+
+
+
+
+
+
+
+--> AGORA APENAS O SYSADMIN VERÁ TODOS OS RECORDS...
+
+
+
+
+
+
+
+
+
+------> OK... UM ÚLTIMO DETALHE,
+
+QUE VC DEVE LEMBRAR,
+
+É:
+
+
+
+""CREATE POLICY"",
+
+
+
+O QUE ESTAMOS CRIANDO,
+
+
+
+É UM "SCHEMA-LEVEL OBJECT"....
+
+
+
+
+
+
+
+
+
+
+--> quer dizer que ele é QUE NEM TABLE OBJECT,
+
+
+
+ELE 
+
+
+EXISTE DENTRO DE SCHEMAS... --> E ESSAS POLICIES 
+
+TAMBÉM PERTENCEM DENTRO DE SCHEMAS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE 
+
+SE EU 
+DESEJO 
+
+
+REFERIR A ESSA POLICY DE QUALQUER OUTRA 
+
+
+TABLE,
+
+
+PRECISO ESCREVER O NOME INTEIRO,
+
+
+EX:
+
+
+
+"DEMO_DB.PUBLIC.PATIENT_POLICY"....
+
+
+
+
+
+------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+RESUMINDO O ROW ACCESS POLICY:
+
+
+
+
+
+
+
+
+
+1) OBJECT OWNER __ TAMBÉM NAO É CAPAZ 
+DE VISUALIZAR OS RECORDS DA PRÓPRIA TABLE QUE 
+CRIOU, SE ELE APLICOU ALGUMA POLICY NELA... (que barre seu acesso)...
+
+
+
+
+
+
+
+
+
+2) UMA GIVEN TABLE SÓ PODE 
+TER 
+
+APLICADA SOBRE SI 1 ÚNICA POLICY... (impossível 
+aplicar múltiplas POLICIES)
+
+
+
+
+
+
+
+
+3) vocÊ pode usar MÚLTIPLAS COLUMNS COMO INPUT 
+PARAMETER PARA A POLICY...
+
+(no exemplo, usamos icdcode e zip_code)...
+
+
+
+
+
+
+
+4) voce só pode usar o data type 
+
+
+"BOOLEAN" como return type, quando cria a policy...
+
+
+nenhum outro return type é permitido (nem varchar,
+nem number, nada)
+
+
+
+
+
+
+
+
+
+5) POLICIES SAO SCHEMA-LEVEL OBJECTS,
+
+exatamente como stages, tables, file_formats....
+
+
+
+
+
+
+CERTO...

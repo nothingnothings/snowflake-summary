@@ -1,0 +1,450 @@
+
+
+
+
+
+
+
+
+DEVEMOS ENTENDER ALGUMAS DAS PROPRIEDADES 
+
+
+E DIFERENTES TIPOS DE VIRTUAL WAREHOUSES EM SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> USING VIRTUAL WAREHOUSE, WE PROCESS DATA....
+
+
+
+
+
+
+
+
+
+
+
+
+--> VIRTUAL WAREHOUSES 
+
+
+SEMPRE 
+
+
+POSSUEM DIFERENTES TAMANHOS...
+
+
+
+
+
+
+
+
+
+
+
+
+--> O NÚMERO DE SERVERS/CLUSTERS 
+
+
+ASSOCIADO COM VIRTUAL WAREHOUSES 
+
+
+DETERMINARÁ 
+
+
+SEU TAMANHO...
+
+
+
+
+
+
+
+EX:
+
+
+
+
+
+
+
+
+X-SMALL --> 1 SERVER
+
+SMALL ---> 2  SERVER
+
+
+MEDIUM ---> 4  SERVER 
+
+
+LARGE ---> 8 
+
+
+
+
+X-LARGE --> 16 
+
+
+
+2X-LARGE --> 32 
+
+
+3X-LARGE --> 64 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OS SERVERS SAO BASICAMENTE EC2 MACHINES 
+
+RODANDO NO BACKGROUND...
+
+
+
+
+
+--. 4X LARGE -.- SIGNIFICA QUE VC ESTÁ RODANDO 
+
+128 EC2 MACHINES 
+
+NO BACKGROUND...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ISSO TE AJUDA A PROECSSAR A DATA, MAS CUSTA 
+
+
+BASTANTE DINHEIRO...
+
+
+
+
+
+
+
+
+
+
+
+
+--> AGORA VAMOS TENTAR VISUALIZAR AS WAREHOUSES....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+XS --> 1 SERVER 
+
+
+
+
+
+SMALL --> 2 SERVER 
+
+
+
+
+MEDIUM --> 4 SERVER 
+
+
+
+
+
+
+
+
+
+CUSTO:
+
+
+
+
+
+
+
+
+SE 1 SERVER RODA CONTINUAMENTE POR 1 HORA,
+
+
+ELE TE CUSTARÁ 
+1 CREDIT...
+
+
+
+
+
+
+
+
+
+
+-> 1 CREDIT VARIA DE PREÇO... PODE SER DE 1.35 DOLLAR A 4 DOLLARS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+3X LARGE ---> SE ISSO RODA POR 1 HORA,
+
+
+
+
+
+
+
+ELE VAI CUSTAR + OU - 86 DOLARES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> COMO ESSES VW SAO ASSIGNED?
+
+
+
+
+
+
+
+
+
+
+--> PODEMOS ASSIGNAR DIFERENTES WAREHOUSES 
+
+A DIFERENTES 
+
+GRUPOS DE USERS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> 1 MESMO USER/PESSOA PODE SER ASSIGNADO A MÚLTIPLAS 
+
+WAREHOUSES....
+
+
+
+
+
+
+
+
+
+MÚLTIPLAS PESSOAS 
+
+
+
+PODEM SER ASSIGNADAS A 1 MESMA WAREHOUSE,
+
+TAMBÉM...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> SE COLOCAMOS MT USERS/ACCOUNTS 
+
+
+EM CIMA DE 1 MESMA WAREHOUSE,
+
+
+
+
+
+AS USER QUERIES VAO CERTAMENTE 
+
+COMECAR A AUMENTAR.... --> PARA RESOLVER 
+
+
+ESSE PROBLEMA,
+
+
+PODEMOS 
+
+AUMENTAR O TAMANHO 
+
+
+
+
+DA VIRTUAL WAREHOUSE, PARA AUMENTAR 
+A VELOCIDADE 
+
+DE QUERIES INDIVIDUAIS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> O PROFESSOR FALA SOBRE 
+
+
+MULTI CLUSTER VIRTUAL WAREHOUSE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> VC PODE PEDIR PARA O SNOWFLAKE CRIAR OUTRAS 
+
+
+INSTANCIAS DE SEUS CLUSTERS, AUTOMATICAMENTE....
+
+
+
+
+
+
+
+
+
+AUTO-SCALE UP E AUTO-SCALE DOWN....
+
+
+
+
+
+
+
+
+
+
+
+
+
+-----> APENAS PRECISAMOS AUMENTAR O TAMANHO 
+
+
+DE NOSSA WAREHOUSE 
+
+
+SE AS QUERIES INDIVIDUAIS ESTIVEREM LENTAS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> O PROFESSOR FALARÁ SOBRE O MULTI-CLUSTER WAREHOUSE 
+
+NAS PRÓXIMAS AULAS...

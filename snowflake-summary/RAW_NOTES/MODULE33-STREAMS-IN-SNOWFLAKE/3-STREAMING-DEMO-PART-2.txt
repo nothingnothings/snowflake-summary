@@ -1,0 +1,600 @@
+
+
+
+
+
+
+
+
+
+
+
+OK.... AGORA O PROFESSOR CRIA OUTRO STREAM OBJECT,
+
+PARA A TABLE DE "members"...
+
+
+
+
+
+
+
+
+--> APRENDEMOS QUE DEVEMOS TER 
+
+""APENAS 1 ÚNICO STREAM OBJECT POR CONSUMER TABLE""... 
+
+
+
+(nao podemos usar 1 mesmo stream object para múltiplas consumer tables,
+justamente pq a data do stream object 
+já será consumida pela primeira table, nao podendo ser reutilizada)
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK...
+
+
+
+
+
+CRIAMOS O SEGUNDO STREAM OBJECT ASSIM:
+
+
+
+
+
+
+
+---------------- MULTIPLE STREAMS --------------------
+
+
+
+CREATE OR REPLACE STREAM MEMBER_CHECK2 ON TABLE MEMBERS;
+
+
+
+
+
+-- Check offset (timestamp) of this stream object.
+SELECT SYSTEM$STREAM_GET_TABLE_TIMESTAMP('member_check2');
+
+
+
+
+
+
+
+
+
+--> ESSE SELECT NOS RETORNA UMA TIMESTAMP,
+
+
+timestamp desse stream object....
+
+
+
+
+
+
+
+
+
+COMPLEMENTANDO:
+
+
+
+
+
+
+
+1) QUANDO O PROFESSOR INICIALMENTE CRIOU O STREAM 
+OBJECT DE "member_check", em cima da table de "MEMBERS_PROD",
+
+
+O OFFSET ESTAVA COMO "0"... --> zero pq 
+
+
+NENHUMA CHANGE HAVIA OCORRIDO NA TABLE...
+
+
+
+
+
+
+2) SE VC EXECUTAR UPDATE, DELETE OU MERGE 
+
+OPERATION NA TABLE,
+
+ISSO SERÁ CONSIDERADO COMO UMA _____cHANGE___... change de data na table...
+
+
+E ISSO VAI __ MUDAR O __ OFFSET__... (vai ser INCREMENTADO,
+
+INCREMENTADO NO STREAM OBJECT...)
+
+
+
+
+
+
+3) o stream object vai APONTAR 
+
+A 1 TIMESTAMP... 
+
+
+
+esse timestamp é em direção ao momento em que nenhuma change 
+tinha acontecido...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+basicamente,
+
+se 
+
+
+CRIAMOS 1 STREAM OBJECT,
+
+
+ELE COMEÇA A TRACKAR CHANGES 
+
+
+A PARTIR DO MOMENTO EM QUE ELE FOI/É CRIADO...
+
+
+
+
+
+
+
+
+
+-------------------------
+
+
+
+
+
+
+
+E PODEMOS CRIAR MÚLTIPLOS STREAM OBJECTS,
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+
+------------- MULTIPLE STREAMS ------------
+
+
+
+
+
+
+
+CREATE OR REPLACE STREAM MEMBER_CHECK2 ON TABLE MEMBERS;
+
+
+
+INSERT INTO MEMBERS VALUES (xxxxxx);
+
+
+
+
+
+CREATE STREAM MYSTREAM ON TABLE MYTABLE BEFORE (timestamp => TO_TIMESTAMP(40*365*86400));
+
+
+
+
+
+
+
+CREATE STREAM MYSTREAM ON TABLE MYTABLE AT(offset => 60*5);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+AS CHANGES PODEM SER CONSUMIDAS PELA MESMA TABLE,
+
+
+OU POR OUTRA TABLE...
+
+
+
+
+
+
+
+--> QUER DIZER QUE VC PODE FAZER UMA RELATION 
+
+
+
+DE MANY-TO-ONE 
+
+
+
+
+ENTRE A STREAM TABLE E A CONSUMER TABLE....
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... E AQUI ESTAMOS SEMPRE RODANDO ESSES STATEMENTS 
+
+DE CONSUME MANUALMENTE...
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS JÁ TEMOS CIENCIA DA FEATURE DE TASKS 
+
+DO SNOWFLAKE...
+
+
+
+
+-> EM VEZ DE RODARMOS ESSES STATEMENTS 
+
+
+DE CONSUME MANUALMENTE,
+
+
+
+
+
+PODEMOS CRIAR TASKS QUE FAZEM ESSE CONSUME DE FORMA AUTO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+
+------------- STREAM WITH TASK -----------------
+
+
+
+
+
+
+
+
+CREATE TASK MYTASK1 
+    WAREHOUSE=COMPUTE_WH 
+    SCHEDULE='1 MINUTE'
+WHEN 
+    SYSTEM$STREAM_HAS_DATA('member_check')
+AS 
+    INSERT INTO MEMBERS_PROD(id, name, fee) SELECT id, name, fee 
+    FROM member_check WHERE metadata$action='INSERT';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... QUER DIZER QUE ESSA TASK VAI FAZER ESSE CONSUME 
+
+A CADA 1 MINUTO, SEMPRE QUE 
+
+
+
+A STREAM TIVER ALGUMA DATA (qualquer change capturada 
+
+no stream object)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+quer dizer que PODEMOS AUTOMATIZAR A PARTE DE "CDC"...
+
+
+
+
+
+
+
+
+
+
+
+--> QUAISQUER CHANGES OCORRIDAS NA TABLE SERAO 
+
+CAPTURADAS NESSA STREAM,
+
+E ENTAO REPASSADAS À CONSUMER TABLE...
+
+
+
+
+
+
+
+
+
+
+
+--> OK... MAIS UMA COISA:
+
+
+
+
+O STREAM SEMPRE VAI APONTAR PARA O "mOST RECENT OFFSET"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS PODEMOS FORÇAR 1 "OFFSET A QUE O STREAM ESTÁ APONTANDO"
+
+DIFERENTE...
+
+
+
+
+
+
+
+BASTA USAR ESTA SINTAXE:
+
+
+
+
+
+
+
+
+
+CREATE STREAM MYSTREAM ON TABLE MYTABLE BEFORE (TIMESTAMP => TO_TIMESTAMP(40*365*86400));
+
+
+
+
+
+
+
+
+
+
+--> ISSO ESPECIFICA 1 TIMESTAMP 
+
+
+A QUE VC QUER QUE O STREAM APONTE...
+
+
+
+
+
+
+--> quer dizer que podemos CUSTOMIZAR NOSSA 
+OFFSET POSITION,
+
+
+
+POR MEIO DE "before",
+
+"at",
+
+
+"offset",
+
+
+e 
+
+"statement",
+
+
+tipo assim:
+
+
+
+
+
+CREATE STREAM MYSTREAM ON TABLE MYTABLE BEFORE (TIMESTAMP => TO_TIMESTAMP(40*365*86400));
+
+
+
+CREATE STREAM MYSTREAM ON TABLE MYTABLE BEFORE (offset=> 60*5);
+
+CREATE STREAM MYSTREAM ON TABLE MYTABLE BEFORE (statement => <query_id>);
+
+
+
+
+
+
+
+
+
+--------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+certo...
+
+
+
+
+
+
+
+
+
+ANTES DE TERMINARMOS,
+
+
+RESUMIMOS:
+
+
+
+
+
+
+
+
+
+1) STREAM OBJECT VAI "MAINTAIN OFFSET"...
+
+
+
+
+
+
+2) STREAM OBJECT CREATED VAI __ APONTAR AO 
+
+"mOST RECENT OFFSET" (da table original), quando é criada...
+
+
+
+
+
+3) O OFFSET VAI _ INCREMENTAR, UMA VEZ QUE O STREAM 
+
+FOR CONSUMIDO....
+
+
+
+
+
+
+
+
+4) VOCE PODE CRIAR MÚLTIPLOS STREAM OBJECTS EM CIMA DE 1 TABLE...
+
+
+
+
+
+
+
+
+
+5) VC PODE TIE STREAMS COM TASKS...
+
+
+
+
+
+
+
+--> OK...
+

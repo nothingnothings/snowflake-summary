@@ -1,0 +1,706 @@
+AGORA VEREMOS COMO 
+
+
+COMPARTILHAR DATA ENTRE MÚLTIPLAS ACCOUNTS, NO SNOWFLAKE....
+
+
+
+
+
+
+
+
+
+
+
+
+---> JÁ TÍNHAMOS VISTO COMO FAZER ISSO, NO CURSO ANTERIOR...
+
+
+
+
+
+
+
+
+
+
+
+
+--> PRECISAMOS DE 
+
+
+1) 2 CONTAS 
+
+
+
+
+2) CRIAR 1 DATA SHARE NA CONTA "PERMITIDORA" (Owner/producer account)
+
+
+
+
+3) USAR ESSE DATA SHARE, E AÍ CRIAR 1 "SHARED TABLE" 
+
+A PARTIR DESSE DATA SHARE, NA "CONSUMER ACCOUNT"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NO CURSO ANTERIOR, JÁ VI UM POUCO SOBRE COMO FAZER ISSO,
+
+
+É TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+-- Create a share object (data sharing) 
+
+CREATE OR REPLACE SHARE EXAMPLE_SHARE;
+
+
+
+
+
+
+--> PARA SETTAR ESSA SHARE,
+
+-- PRECISAMOS DEFINIR OS __ "GRANTS" DELA....
+
+
+
+
+
+
+
+
+-- -> AS PRIMEIRAS ETAPAS SERAO  
+
+
+-- DAR __ GRANT __ DE "USAGE"
+
+-- NA DATABASE E TAMBÉM NO SCHEMA EM SI...
+
+
+
+
+
+
+
+
+
+-- GRANTS NEEDED FOR DATA SHARING --
+
+
+
+
+
+
+
+
+
+
+-- Grant usage on DATABASE 
+GRANT USAGE ON DATABASE DEMO_DB TO SHARE EXAMPLE_SHARE;
+
+
+
+
+
+
+-- USAGE ON SCHEMA 
+GRANT USAGE ON SCHEMA DEMO_DB.PUBLIC TO SHARE EXAMPLE_SHARE;
+
+
+-- GRANT SELECT USAGE ON THIS SPECIFIC TABLE 
+GRANT SELECT ON TABLE DEMO_DB.PUBLIC.<table_name> TO SHARE EXAMPLE_SHARE;
+
+
+-- Check if Grants were given to share object:
+SHOW GRANTS TO SHARE ORDERS_SHARE; -- usage, usage and select (on a single table).
+
+
+
+
+
+
+-- Done (on the PRODUCER account side). Now we only need to have a CONSUMER ACCOUNT.
+
+
+(
+    só faltou o ADD DA CONTA QUE 
+
+    DEVERÁ 
+    "CONSUMIR" ESSE DATA SHARE,
+
+    COM 
+
+
+    "ALTER SHARE EXAMPLE_SHARE
+    ADD ACCOUNTS=<account_id>"
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+O CÓDIGO DO OUTRO PROFESSOR FOI ASSIM:
+
+
+
+
+
+
+
+
+
+CREATE DATABASE SALES;
+
+
+
+CREATE TABLE CUSTOMER AS 
+SELECT * FROM SNOWFLAKE_SAMPLE_DATA.TPCH.SF1000.CUSTOMER;
+
+
+
+
+CREATE SHARE SALES_S;
+
+
+
+
+GRANT USAGE ON DATABASE SALES TO SHARE SALES_S;
+
+
+
+
+
+GRANT USAGE ON SCHEMA SALES.PUBLIC TO SHARE SALES_S;
+GRANT SELECT ON TABLE SALES.PUBLIC.CUSTOMER TO SHARE SALES_S;
+
+
+
+
+
+
+
+SHOW GRANTS TO SHARE SALES_S;
+
+
+
+
+
+
+
+
+
+
+
+-- TO ADD THE "CONSUMER ACCOUNT" TO THIS SHARE:
+ALTER SHARE SALES_S
+ADD ACCOUNTS=<account_id>;
+
+
+
+
+
+
+
+
+--> depois disso,
+
+o professor cria uma SECURE VIEW (
+    é uma view que 
+
+    NAO TE DEIXA VISUALIZAR OS DADOS DE SUA 
+
+    CRIACAO, FICA COM O CAMPO "TEXT" em branco...
+)
+
+
+
+
+
+A SINTAXE DE CREATE SECURE VIEW:
+
+
+
+
+
+
+
+CREATE OR REPLACE SECURE VIEW SALES.PUBLIC.DISTRIBUTOR_SALES_DATA
+AS SELECT sku, date, qty
+FROM sales.public.unitsales;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+TAMBÉM PODEMOS DROPPAR SHARES,
+
+
+
+COM ESTE COMANDO:
+
+
+
+
+
+
+
+
+
+
+
+DROP SHARE SALES_S;
+
+
+
+
+
+
+
+
+
+ALTER SHARE SALES_S 
+ADD ACCOUNTS=
+
+
+
+
+
+
+
+
+
+-------_> QUANDO NOSSA CONTA É ADICIONADA 
+
+
+EM 1 SHARE,
+
+
+
+
+
+PODEMOS VER ISSO EM "SHARES" DA CONTA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ok... aí vamos para a outra conta,
+
+
+a conta "consumer"...
+
+
+
+
+
+
+
+
+--> AÍ TEMOS O COMANDO PARA "CREATE DATABASE FROM SECURE SHARE"...
+
+
+
+
+
+
+
+
+--> ISSO VAI CRIAR 1 DATABASE SHARED, COM ESSA CONSUMER 
+
+ACCOUNT....
+
+
+
+
+
+
+
+
+
+
+--> PARA ISSO, TEMOS ESTE COMANDO:
+
+
+
+
+
+-- Show all shares (consumers (you) and PRODUCERS) 
+SHOW SHARES;
+
+-- See details of a share 
+-- ex: --> shows our grants of database, schema and table
+DESC SHARE <producer_account>.ORDERS_SHARE;
+
+-- Create a database in CONSUMER ACCOUNT, USING THE SHARE
+CREATE DATABASE DATA_S FROM SHARE <producer_account>.ORDERS_SHARE;
+
+-- Validate table access (uses compute from account B, storage from account A)
+SELECT * FROM DATA_S.PUBLIC.ORDERS;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+---> PODEMOS RODAR SELECT NESSA SHARED TABLE,
+
+
+MAS NAO PODEMOS FAZER DROP DELA.... ---------> 
+
+
+
+NAO PODEMOS FAZER ISSO 
+
+
+
+
+PQ 
+ESSA 
+
+CONTA PERTENCE à CONTA A ------> E, NA CONTA B,
+
+
+TEMOS ACESSO APENAS à METADATA DE "A",
+
+
+E NAO AO STORAGE DE "A"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> VOCE TAMBÉM __ NAO _ PODE __ CLONAR__ 
+
+
+A SHARED TABLE, LÁ NA CONTA B...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE ISTO NAO FUNCIONA:
+
+
+
+
+
+
+
+
+CREATE OR REPLACE TABLE CUSTOMER_2 CLONE SHARED_SALES.PUBLIC.CUSTOMER;
+
+
+
+
+
+
+
+
+
+
+------> ISSO FALHA,
+
+
+
+"CANNOT CLONE FROM A TABLE THAT WAS IMPORTED FROM A SHARE"...
+
+
+
+
+
+
+
+
+--> ISSO NAO FUNCIONA PQ __ ESTAMOS TENTANDO CLONAR A 
+
+
+INFO/METADATA 
+
+
+
+DA CONTA "A" PARA A CONTA "B".... E ISSO NAO É POSSÍVEL...
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE A METADATA DA CONTA "A" 
+
+
+SÓ PODE EXISTIR NA CONTA "A",
+
+NAO PODE EXISTIR EM OUTRA CONTA..
+
+
+
+
+
+
+
+
+
+--> CERTO...
+
+
+
+
+
+
+
+
+
+
+E TAMBÉM NAO PODEMOS ALTERAR ESSA METADATA,
+
+NEM UM POUCO:
+
+
+
+-- In consumer account
+ALTER TABLE SALES.PUBLIC.CUSTOMER
+ADD COLUMN CUSTNAME VARCHAR;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> tentamos adicionar 1 column nessa table,
+
+mas é claro que 
+
+nao temos permission para isso....
+
+
+
+""insufficient privileges to do that""...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... MAS QUAL É O KEY TAKEAWAY?
+
+
+
+
+
+
+
+
+
+1) SOMOS CAPAZES DE ACESSAR A DATA,
+
+MAS NAO PODEMOS A MODIFICAR...
+
+
+
+
+
+2) NAO SOMOS CAPAZES DE CLONAR A DATA....
+
+
+
+
+
+
+
+3) NAO PODEMOS DELETAR ESSA DATA...
+
+
+
+
+
+
+
+
+
+4) NAO PODEMOS DROPPAR ESSA TABLE...
+
+
+
+
+
+
+
+
+
+
+
+
+PODEMOS TENTAR GRANT OUTRAS COISAS,
+
+
+
+COMO "GRANT ALL"...
+
+
+
+
+
+
+--> ficamos com "grant partially executed. Privileges 
+INSERT, DELETE, UPDATE, TRUNCATE, REFERENCES not granted"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+----> QUER DIZER QUE APENAS SELECT PODE SER EXECUTADO,
+
+
+NAS CONSUMER ACCOUNTS...
+
+
+
+
+
+
+
+
+
+
+
+
+RESUMINDO:
+
+VC NAO PODE REALIZAR QUALQUER CHANGE 
+
+
+
+NA CONTA CONSUMER,
+
+EM CIMA DA TABLE/SCHEMA COMPARTILHADO PELA CONTA PRODUCER...
+
+
+
+
+
+
+
+
+

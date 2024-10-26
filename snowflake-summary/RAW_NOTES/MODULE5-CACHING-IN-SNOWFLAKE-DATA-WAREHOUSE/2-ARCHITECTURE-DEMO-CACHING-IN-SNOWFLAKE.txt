@@ -1,0 +1,768 @@
+
+
+PROFESSOR COLOCA 1 DEMO,
+QUE VAI NOS MOSTRAR 
+
+
+COMO SNOWFLAKE ARCHITECTURAL 
+
+LAYERS 
+
+
+INTERAGEM UNS COM OS OUTROS...
+
+
+
+
+
+
+
+
+
+
+
+
+-> O PROFESSOR RODA 1 QUERY EM CIMA DA TABLE 
+
+"SUPPLIER"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA EXECUTAR A QUERY, PROFESSOR PRECISA DE 1 VIRTUAL 
+WAREHOUSE...
+
+
+
+
+
+
+
+
+ELE 
+
+EXECUTA O STATEMENT CLÁSSICO 
+
+
+DE 
+
+
+
+CREATE OR REPLACE WAREHOUSE know_architecture_1 with
+warehouse_size='X-SMALL'
+auto_suspend = 180
+auto_resume = true
+initially_suspended=true;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> TAMANHO XSMALL...
+
+
+
+
+
+
+
+--> ESSE WAREHOUSE SUSPENDE 
+
+DEPOIS 
+
+DE 
+180 SEGUNDOS INATIVO...
+
+
+
+
+
+
+
+
+--> ASSIM QUE O PROFESSOR EXECUTA 1 QUERY 
+
+COM ESSE VIRTUAL WAREHOUSE,
+
+ELE AUTOMATICAMENTE RESUME....
+
+
+
+
+
+
+
+
+
+
+
+
+
+-_> OS WAREHOUSES, QUANDO SAO CRIADOS,
+
+COMECAM EM UM STATE DE "SUSPENDED"...
+
+
+
+
+
+
+
+QUANDO A QUERY É EXECUTADA,
+
+
+
+
+O WAREHOUSE VAI 
+
+ENTRAR NA CONDITION DE "LIVE"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS O QUE ACONTECE QUANDO RODAMOS 
+
+ESSA QUERY...
+
+
+
+
+
+
+
+
+
+
+--> ELA É ENVIADA AO 
+
+
+
+LAYER DE CLOUD SERVICES... --> ESSE LAYER CHECA 
+
+SE 
+
+EXISTE ALGUMA 
+OPTIMIZATION A SER FEITA... --> AÍ A QUERY 
+
+É ENVIADA ATÉ O LAYER 
+DE 
+
+"VIRTUAL WAREHOUSE",
+
+
+QUE 
+
+PUXA A DATA 
+
+
+DO LAYER DE "DATA STORAGE"...
+
+
+
+ESSA DATA É PROCESSADA 
+
+
+
+NO LAYER DE "VIRTUAL WAREHOUSE",
+
+
+E ENTAO É 
+
+RETORNADA 
+
+
+NO LAYER DE 
+
+
+"CLOUD SERVICES">..
+
+
+
+
+
+
+
+
+
+
+
+RODAMOS
+
+
+
+SELECT * FROM SUPPLIER;
+
+
+
+
+
+
+
+
+
+
+
+
+CLICAMOS NA QUERY ID PARA VER 
+
+O QUE 
+
+
+
+ACONTECEU...
+
+
+
+
+
+
+
+
+
+--> NO EXECUTION PLAN,
+
+
+
+
+
+TEMOS ALGUNS DETALHES:
+
+
+
+
+1) A TABLE FOI SCANNED...
+
+
+
+
+
+2) RESULTADO FOI RETORNADO..
+
+
+
+
+3) BYTES WRITTEN TO RESULT....
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> bytes written to result...
+
+
+
+
+
+
+--> partitions 
+
+SCANNED: 32...
+
+
+
+
+
+
+"MOST EXPENSIVE NODES"...
+
+
+
+
+
+
+
+
+
+--> result tomou 51% do tempo...
+
+
+
+
+
+no meu caso, tomou 64% do tempo...
+
+
+
+
+
+
+
+
+
+
+NO CONSUMO, TEMOS ISTO:
+
+
+
+
+
+
+1) PROCESSING 
+
+
+
+2) LOCAL DISK I/O 
+
+
+3) REMOTE DISK I/O 
+
+
+
+4) SYNCHRONIZATION 
+
+
+
+5) INITIALIZATION
+
+
+
+
+
+
+
+
+
+
+DATA STORAGE LAYER --> É PURAMENTE O "REMOTE DISK" (I/o)...
+                        NADA MAIS DO QUE ISSO... 
+                            (
+                                OU SEJA, É O LAYER DE DATA STORAGE...
+                            )
+
+                            --> para pullar data DO LAYER DE 
+                            "DATA STORAGE" para o layer de VIRTUAL WAREHOUSES (compute layer),
+                            sempre é gasto certo custo...
+
+
+    
+
+LOCAL DISK I/O --> É PURAMENTE "O DISK NA VIRTUAL WAREHOUSE"...
+
+                    ISSO PQ CADA COMPUTE NODE 
+                    TERÁ SEU PRÓPRIO "LOCAL DATA STORAGE DISK"....
+
+
+                    --> NO MOMENTO EM QUE A DATA É PULLADA DO DATA STORAGE LAYER (""processo de remote disk"", que tira essa data dessa profundidade)
+
+                    ESSA DATA É ARMAZENADA __tEMPORARIAMENTE__ 
+                    NESSE LAYER, QUE É CHAMADO 
+
+                    DE 
+                    "LOCAL DISK I/O"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+""PERCENTAGE SCANNED FROM CACHE"" -> 0%
+
+
+(nada está sendo usado do query)...
+
+
+
+
+
+
+
+
+
+
+--> SE EXECUTARMOS ESSA QUERY NOVAMENTE,
+
+
+
+A QUERY SERÁ RODADA DO CACHE,
+
+E VAI DEMORAR BEM MENOS..
+
+
+
+
+
+
+
+
+""QUERY RESULT REUSE"" --> o  que ele quer dizer é que 
+
+
+a query 
+
+DE ANTES ESTÁ SENDO REUTILIZADA...
+
+
+
+
+
+
+
+
+
+
+
+
+-> QUER DIZER QUE O CLOUD SERVICES LAYER 
+
+INTELIGENTEMENTE USOU 
+
+O MESMO QUERY RESULT (
+
+
+QUER DIZER QUE 
+
+
+ELE NEM MESMO VOLTOU AO LAYER DE "DATA STORAGE";
+
+
+
+ele ficou no seu mesmo layer...
+
+
+
+)
+
+
+
+
+
+
+
+
+
+
+
+--> PODEMOS VER A QUERY QUE FOI EXECUTADA...
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUANDO REUTILIZAMOS 1 QUERY,
+
+
+
+
+NENHUM CLUSTER É USADO...
+
+
+
+
+
+
+
+
+
+--> NENHUM CLUSTER É USADO 
+
+PQ 
+
+FICAMOS NO LAYER DE "CLOUD SERVICES"
+
+
+
+
+
+
+
+
+
+
+SCANNED BYTES --> 0 
+
+
+
+ROWS --> 0 ...
+
+
+
+
+
+
+
+
+
+
+
+
+
+ISSO SIGNIFICA QUE QUANDO A QUERY FOI SUBMITTADA 
+
+AO LAYER DE CLOUD SERVICES,
+
+
+
+ELE 
+
+
+USA 
+
+
+APENAS SUA CACHING AREA (se existir já 
+esse result set) 
+
+
+e vai retornar esse result....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+na primeira vez, a query tomou 1min 43sec...
+
+
+
+
+
+
+
+a porcentagem do cache, na primeira query,
+
+foi 0...
+
+
+
+
+
+
+
+
+
+
+
+
+--> SE DESABILITAMOS A CACHING AREA 
+
+
+
+DO "CLOUD SERVICES AREA",
+
+PASSAMOS 
+
+A USAR 
+
+A
+ CACHING AREA 
+
+
+ DO VIRTUAL WAREHOUSE LAYER (
+
+    sao 2 coisas diferentes....
+ )
+
+
+
+
+
+
+
+
+
+
+ --> PARA DESABILITAR 
+
+
+
+ O CACHING AREA DO CLOUD SERVICES LAYER,
+
+
+
+
+
+
+
+ RODAMOS 
+
+
+
+
+ ALTER SESSION 
+ SET USE_CACHED_RESULT=FALSE;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ --> QUANDO A WAREHOUSE ENTRA 
+
+
+ NO SUSPENDED STATE,
+
+
+
+ TODO O CACHING 
+
+
+ OCORRIDO ____dENTRO__ DA VIRTUAL WAREHOUSE ( e nao no cloud services layer)
+
+ EM SI___ É PURGEADO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> FINALMENTE CONSEGUIMOS 
+
+
+
+USAR O CACHE DAS VIRTUAL WAREHOUSES... -> mas 
+
+
+esse caching é bem pior do que o caching 
+
+
+
+do cloud services layer....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+REMOTE DISK I/O ---> É O DATA STORAGE LAYER... coisas tiradas de lá..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ENTAO O ESQUEMA É ASSIM:
+
+
+
+
+
+
+
+
+
+
+RESULT CACHE (cloud services layer)
+
+
+^
+
+
+
+LOCAL DISK CACHE (warehouse layer)
+
+
+^
+
+
+REMOTE DISK (data storage layer, actual databases)

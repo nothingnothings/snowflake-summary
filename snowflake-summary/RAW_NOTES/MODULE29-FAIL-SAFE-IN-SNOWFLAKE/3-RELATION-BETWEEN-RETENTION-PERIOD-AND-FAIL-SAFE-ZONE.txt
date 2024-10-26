@@ -1,0 +1,279 @@
+
+
+
+
+
+
+
+
+
+
+QUAL A RELACAO ENTRE RETENTION PERIOD E FAIL-SAFE ZONE...
+
+
+
+
+
+
+
+
+
+
+
+DIGAMOS QUE TEMOS 1 TABLE 
+
+
+DE 
+NOME "employee"..
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AÍ VC RODOU ALGUNS TRANSACTIONAL STATEMENTS EM CIMA 
+
+DESSA TABLE,
+
+ALGUNS 
+
+
+UPDATES, ALGUNS DELETES...
+
+
+
+
+
+
+
+
+
+
+--> AÍ, PARA ESSA TABLE EM PARTICULAR,
+
+VC 
+
+TEM O 
+
+RETENTION PERIOD DE 1 DIA (
+
+    quer dizer que qualquer change 
+
+
+    nessa table pode ser travelled back
+
+    a 1 period de  1 dia...
+)
+
+
+
+
+
+
+
+
+
+
+--> DEPOIS DE 1 DIA,
+
+
+essa data é mantida na fail-safe zone --> E ESSA DATA É MANTIDA POR
+
+
+7 DIAS...
+
+
+
+
+
+
+
+
+
+---> MAS DIGAMOS QUE VC RODOU OUTROS TRANSACTIONAL STATEMENTS...
+
+
+
+
+
+
+
+
+---> O ARMAZENAMENTO DO FAILSAFE PODE AUMENTAR 
+
+
+_________MUITO___________...
+
+
+
+
+
+
+
+
+
+
+
+vc deve ter mt cuidado quando vc estiver enablando failsafe...
+
+
+
+
+
+
+
+
+
+--> VC TAMBÉM DEVE SE LEMBRAR QUE 
+
+A FAILSAFE FEATURE É ENABLADA _ POR DEFAULT___ 
+
+
+nas permanent tables...
+
+
+
+
+
+
+-_> ESSA FEATURE TAMBÉM 
+
+NAO PODE 
+
+SER DESABILITADA, NAS PERMANENT TABLES....
+
+
+
+
+
+
+--> 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> VEREMOS MAIS SOBRE OS TABLE TYPES NAS PRÓXIMAS LECTURES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> quando dizemos que o retention period é de 1,
+
+
+estamos dizendo ao snowflake, indiretamente,
+
+que deve ser tirado 
+
+1  backup de nossa table A CADA DIA...
+
+
+
+
+
+
+
+
+--> SE MEU RETENTION PERIOD PARA A TABLE É 5,
+
+
+ESTAMOS PEDINDO AO SNOWFLAKE PARA 
+
+
+"""TIRAR 1 BACKUP DE NOSSA TABLE __ A CADA__ 5 DIAS"""...
+
+(E ARMAZENADO NA FAILSAFE ZONE)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE 
+
+
+O RETENTION PERIOD DE 1 DIA,
+
+
+QUANDO SETTADO COMO 1 DIA,
+
+
+
+VAI OBRIGAR 
+
+O SNOWFLAKE A TIRAR 1 SNAPSHOT 
+
+DA TABLE E A ENVIAR 
+
+À 
+
+FAIL-SAFEZONE, todo dia...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> veremos mais sobre os drawbacks do failsafe..
+
+
+
+
+
+
+
+--> PODEMOS OPTAR ENTRE USAR OU NAO O FAILSAFE...
+
+(quando estudarmos os table types)...
+
+
+

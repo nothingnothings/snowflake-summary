@@ -1,0 +1,87 @@
+
+
+
+
+
+
+NESSA LECTURE, VEREMOS COMO PODEMOS CONSTRUIR CADA 1 DESSES TILES...
+
+
+
+
+
+
+
+
+
+
+--> O PROFESSOR COLOCA 1 WORD COM AS IMAGES DE CADA 1 DOS TILES...
+
+
+
+
+
+
+--> VC DEVE PEGAR AS QUERIES PARA CADA 1 DOS TILES...
+
+
+
+
+
+
+---> devemos copiar todas as images e queries do professor...
+
+
+
+
+
+
+
+
+
+--> OK... 
+
+
+
+MAS HÁ MAIS 1 DETALHE QUE VC DEVE TER EM MENTE, QUANDO CONSTRÓI CHARTS..
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUANDO VC QUER 
+
+CONSEGUIR 1 OUTPUT EM FORMATO DE TABLE,
+
+
+
+
+deixe a query em cima da área de "results",
+
+
+
+e aí clique na worksheet e entao em "move to dashboard".. --> AÍ 
+
+CONSEGUIREMOS VER ESSA TABULAR FORM
+
+
+LÁ NO DASHBOARD... (por isso nao devemos 
+
+clicar em "chart", para tiles 
+que vc quer que fiquem com tables)...
+
+
+
+
+
+
+
+
+

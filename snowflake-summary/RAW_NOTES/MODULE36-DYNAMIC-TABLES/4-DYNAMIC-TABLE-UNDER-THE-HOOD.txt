@@ -1,0 +1,619 @@
+
+
+
+
+
+
+
+
+NESSA LECTURE,
+
+TENTAREMOS ENTENDER COMO A 
+DYNAMIC TABLE FUNCIONA UNDER THE HOOD...
+
+
+
+
+
+
+
+
+
+
+
+-- RODAMOS ASSIM:
+
+
+
+
+
+
+-- CREATE SAMPLE TABLE FROM SAMPLE DATA --- 
+CREATE OR REPLACE TABLE DEMO_DB.PUBLIC.CALL_CENTER 
+AS 
+SELECT * FROM SNOWFLAKE_SAMPLE_DATA.TPCDS_SF100TCL.CALL_CENTER;
+
+
+
+
+
+
+--- Create dynamic table, from sample table --- 
+CREATE OR REPLACE DYNAMIC TABLE DEMO_DB.PUBLIC.CALL_CENTER_DYNAMIC
+    TARGET_LAG='1 MINUTE'
+    WAREHOUSE=COMPUTE_WH
+    AS 
+SELECT * FROM DEMO_DB.PUBLIC.CALL_CENTER;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK.... ISSO VAI CRIAR A DYNAMIC TABLE...
+
+
+
+
+
+
+
+PROFESSOR COLOCOU 1 TIME LAG DE 1 MINUTE,
+
+
+
+WAREHOUSE COMPUTE_WH...
+
+
+
+
+
+
+
+
+
+
+
+--. ISSO VAI CRIAR A TABLE,
+
+
+MAS É CLARO QUE 
+
+
+ELA AINDA ""NAO VAI EXISTIR""..
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA QUE ESSA TABLE "EXISTA",
+
+
+PRECISAMOS OU:
+
+
+
+
+1) ESPERAR 1 MINUTE (o time lag definido por nós)...
+
+
+
+
+
+
+
+2) RODAR O REFRESH MANUAL NELA,
+
+
+COM 
+
+ALTER DYNAMIC TABLE DEMO_DB.PUBLIC.CALL_CENTER_DYNAMIC REFRESH;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ISSO VAI MANUALMENTE REFRESHAR ESSA TABLE...
+
+
+
+
+
+
+
+--> com esse refresh,
+
+
+veremos um output tipo 
+
+
+
+{
+    "insertedRows": "60"
+}
+
+
+
+
+
+
+
+
+
+
+
+-> SE VAMOS ATÉ A DATA DE NOSSA CONTA,
+
+
+
+TEMOS "DATABASES",
+
+
+dentro dali temos "public",
+
+
+
+E DENTRO DO PUBLIC TEMOS "DYNAMIC TABLES"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PODEMOS VISUALIZAR A TABLE 
+
+
+QUE FOI CRIADA AGORA...
+
+
+
+
+
+
+
+
+--> PODEMOS CLICAR EM "GRAPH",
+
+
+PARA VER 
+
+
+A REPRESENTACAO GRÁFICA DO QUE ACONTECEU...
+
+
+
+
+
+
+
+
+
+
+
+--> ESSA DYNAMIC TABLE FOI CRIADA EM CIMA DA TABLE DE 
+
+"CALL_CENTER"...
+
+
+
+
+
+
+
+
+
+--> HÁ TAMBÉM UMA MENSAGEM DE "INCREMENTAL REFRESH",
+
+
+
+QUE JUSTAMENTE COMUNICA O CARÁTER 
+
+
+
+DE 
+REFRESH DESSA TABLE,
+
+QUE VAI REFRESHAR 
+
+A CADA MINUTO...
+
+
+
+
+
+
+
+
+
+
+
+
+---> SE COLOCAMOS O MOUSE EM CIMA DA REFRESH HISTORY,
+
+
+PODEMOS 
+
+
+VISUALIZAR SE OS REFRESHES FORAM AUTOMÁTICOS OU MANUAIS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> TAMBÉM HÁ UMA COLUMN DE "ROWS CHANGED",
+
+
+QUE AGORA ESTÁ MOSTRANDO 
+
+
+
+"+60 -0"... (
+    60 ROWS FORAM ADICIONADOS,
+
+    0 FORAM REMOVIDOS...
+)
+
+
+
+
+
+
+
+
+
+--> E PODEMOS CHECAR A QUERY PROFILE DE CADA UM DOS 
+
+"REFRESHES" QUE ACONTECERAM...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> NA QUERY PROFILE,
+
+PODEMOS VISUALIZAR O QUE ACONTECU NO BACKGROUND...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> É UMA QUERY PROFILE BEM GRANDE.....
+
+
+
+
+
+
+
+
+
+--> COMECOU COM 1 TABLE SCAN...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+---> O SNOWFLAKE USA UM "STANDARD TEMPLATE" NO BACKGROUND,
+
+PARA TRACKAR QUAIS UPDATES/DELETES/INSERTS ACTUALLY 
+
+ACONTECERAM,
+
+
+
+
+POR ISSO SUAS QUERY PROFILES DE DYNAMIC TABLES 
+
+
+
+SEMPRE SERAO PARECIDAS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+----> QUER DIZER QUE CADA 
+
+
+VEZ QUE 
+
+
+
+1 DYNAMIC TABLE 
+
+FOR REFRESHADA,
+
+SERÁ RODADO ESSE CONJUNTO DE TRANSFORMATIONS...
+
+
+
+
+
+
+
+
+
+
+--> E SE QUALQUER CHANGE ACONTECEU NA SOURCE 
+
+TABLE, insert, delete ou update,
+
+
+
+
+
+SUA DYNAMIC TABLE VAI POR DENTRO DESSE TEMPLATE,
+
+
+CRIADO PELO SNOWFLAKE,
+
+E AÍ 
+
+ISSO VAI DETERMINAR SE OS RECORDS 
+
+SERAO INSERIDOS, REMOVIDOS, UPDATADOS, etc...
+
+
+
+
+
+
+
+
+
+
+
+--> no  nosso caso,
+
+
+
+
+
+é uma dynamic table recém criada,
+
+o que quer dizer que 
+
+
+o 
+
+
+
+SNOWFLAKE TEM QUE 
+
+
+INSERIR TODOS ESSES RECORDS, da original table,
+
+para 
+
+
+DENTRO 
+
+
+DESSA DYNAMIC TABLE.... --> É JUSTAMENTE POR ISSO 
+
+
+
+QUE A PARTE DE "INSERT" ESTÁ COM MAIOR CUSTO DE PROCESSAMETNO,
+
+
+NESSA QUERY PROFILE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OS 60 RECORDS VAO SER INSERIDOS NESSA TABLE....
+
+
+
+
+
+
+
+
+
+--> E ESSA TABLE VAI SER MAINTAINED PELO SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+-> A INTERFACE É UM POUCO CONFUSA..
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> NUMBER OF RECORDS INSERTED --> 60 --> 
+
+AÍ PODEMOS VER QUANTOS BYTES FORAM ESCANEADOS,
+
+
+ETC...
+
+
+
+
+
+
+
+
+O RESULT DESSA QUERY, NO CASO,
+
+É A NOSSA TABLE EM SI...
+
+
+
+
+
+
+
+
+
+
+
+(OS RECORDS SAO INSERIDOS NESSA DYNAMIC TABLE)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... TUDO ISSO É UM FLOW BEM STANDARD PARA A DYNAMIC TABLE...
+
+
+
+
+
+
+
+---> QUER DIZER QUE TODA VEZ QUE VC USAR/CRIAR 1 DYNAMIC TABLE,
+
+
+VC GANNHARÁ ESSE TEMPLATE...
+
+
+
+
+
+
+
+
+
+
+---> NA PRÓXIMA AULA,
+
+VEREMOS COMO UPDATES E DELETES SAO HANDLADOS PELA 
+
+DYNAMIC TABLE...
+
+
+
+
+
+
+
+

@@ -1,0 +1,106 @@
+
+
+
+
+
+
+
+
+
+
+ATÉ AGORA TRABALHAMOS COM AS INTERNAL STAGING AREAS,
+
+
+
+DE TABLE E NAMED STAGING AREA...
+
+
+
+
+
+
+
+
+--> USAMOS ISSO PARA UPLOADAR A DATA,
+
+E PARA IMPORTAR ESSA DATA NAS SNOWFLAKE TABLES...
+
+
+
+
+
+
+
+
+
+--> MAS AGORA A EMPRESA ESTÁ USANDO O S3 COMO DATA STORAGE..
+
+
+
+
+
+
+
+
+
+
+--> COMO PRÓXIMO PASSO,
+
+
+SUA EMPRESA QUER CONFIGURAR 
+
+
+O SNOWFLAKE COM O AMAZON S3...
+
+
+
+
+-- TUDO PARA QUE CONSIGAMOS CARREGAR A DATA DIRETAMENTE 
+
+DO AWS S3 PARA O SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE NAO QUEREM MAIS USAR 
+
+SNOWFLAKE STAGING AREAS 
+
+PARA ARMAZENAR AS FILES,
+
+E SIM QUEREM CONFIGURAR 1 EXTERNAL STAGING AREA 
+
+
+DO S3..
+
+
+
+
+
+
+
+REQUIREMENTS:
+
+
+
+
+
+1) CONFIGURE SNOWFLAKE WITH AWS S3...
+
+
+(create roles in aws s3, permissions, etc)...
+
+
+
+2) create snowflake external stage 
+
+
+for aws s3, with credentials and etc...

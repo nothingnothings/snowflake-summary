@@ -1,0 +1,216 @@
+
+
+
+
+
+
+
+
+
+
+
+
+NESSA LECTURE,
+
+VEREMOS COMO FUNCIONAM SECURE VIEWS,
+
+
+E COMO 
+
+PODEMOS AS COMPARTILHAR 
+
+
+ENTRE CONTAS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> DIGAMOS QUE A CONTA "A" QUER 
+
+
+COMPARTILHAR CUSTOMER INFO COM A CONTA B...
+
+
+
+
+
+
+
+
+--> MAS, NESSA DATA,
+
+
+ALGUMAS COLUMNS NAO DEVEM SER COMPARTILHADAS/MOSTRADAS...
+
+
+
+
+
+
+
+-> APENAS ALGUNS 
+
+
+
+COLUMN VALUES DEVEM SER EXPOSTOS À CONTA B...
+
+
+
+
+
+EX:
+or
+
+
+CREATE OR REPLACE SECURE VIEW SALES.PUBLIC.DISTRIBUTOR_SALES_DATA
+AS SELECT sku, date, qty
+FROM sales.public.unitsales;
+
+
+
+
+
+
+
+
+
+
+COM ISSO, SELECIONAMOS APENAS ALGUNS FIELDS 
+
+
+
+DA TABLE...
+
+
+
+
+
+OUTRO EXEMPLO:
+
+
+
+
+
+
+CREATE OR REPLACE SECURE VIEW SALES.PUBLIC.CUSTOMER_DATA_C_VIEW
+AS SELECT C_NAME, C_MKTSEGMENT, C_ACCTBAL
+FROM sales.public.unitsales;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> ASSIM QUE ESSA VIEW FOR CRIADA, PRECISAMOS 
+
+
+GARANTIR PERMISSION PARA VISUALIZAR ESSA SECURE VIEW,
+
+
+LÁ NA DATA SHARE,
+TIPO ASSIM:
+
+
+
+
+
+
+
+
+GRANT SELECT ON SECURE VIEW SALES.PUBLIC.CUSTOMER_DATA_C_VIEW
+TO SHARE SALES_S;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> O SNOWFLAKE NOS DIZ:
+
+
+""A VIEW CAN ONLY BE SHARED IF ITS CREATED AS A SECURE VIEW,
+
+OR MARKED SECURE 
+
+USING ALTER VIEW <view_name> SET SECURE""...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ok... mas qual a diferenca entre 
+
+secure views e views?
+
+
+
+
+
+
+
+
+
+
+
+
+--> a diferenca é que 
+
+
+a view mostra a maneira pela qual foi criada...
+
+
+
+
+
+
+
+
+
+--> veremos mais detalhes sobre 
+
+essas perguntas na próxima aula...
+

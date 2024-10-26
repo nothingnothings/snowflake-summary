@@ -1,0 +1,859 @@
+
+
+
+
+
+
+
+
+
+AGORA VEREMOS 
+
+
+A FEATURE DE "DATA CLASSIFICATION", NO SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+
+
+---> JÁ ESTUDAMOS A FEATURE DE "TAG"
+
+
+NO SNOWFLAKE....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> a feature de "data classification" do snowflake 
+
+
+SE UTILIZA DE ESSA FEATURE DE "TAGS"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK, MAS O QUE É ESSA "CLASSIFICATION"?
+
+
+
+
+
+
+
+
+
+
+
+
+PONTOS:
+
+
+
+
+
+
+
+
+
+1)  "DOES THE TABLE/VIEW CONTAIN PII 
+        (Personally identifiable information) 
+        OR __ SENSITIVE DATA?""
+
+
+        (SE SIM, podemos usar essa classification)
+
+
+
+2) ""WHERE IS THE DATA STORED, AND HOW LONG HAS 
+IT BEEN STORED??""
+
+
+        (se precisamos responder essa pergunta,
+        podemos usar classification)
+
+
+
+
+
+3) ""HOW CAN THE DATA BE PROTECTED FROM EXPOSURE WHILE 
+STILL DERIVING INSIGHTS??""
+
+
+
+
+        (novamente, se precisamos responder essa pergunta,
+        
+        podemos usar classification)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+USE-CASES DE CLASSIFICATION:
+
+
+
+
+
+
+
+
+1) CLASSIFICATION DE "PERSONALLY IDENTIFIABLE INFORMATION"
+
+
+
+
+2) DATA ACCESS CONTROL 
+
+
+
+
+
+
+3) POLICY MANAGEMENT 
+
+
+
+
+
+4) ANONYMIZATION OF DATA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> VIMOS ALGUNS DESSES USE-CASES ENQUANTO DISCUTÍAMOS 
+
+TAGGING..
+
+
+
+
+
+
+
+
+
+
+-> COM A FEATURE DE TAGGING,
+
+attacheamos também "masking policies",
+
+que já fazem um certo controle de acesso...
+
+
+
+
+
+
+
+
+
+
+-> TAMBÉM JÁ FIZEMOS "POLICY MANAGEMENT",
+
+
+COM AS MASKING POLICIES E TAGS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> TODAS ESSAS 
+FEATURES, COMBINADAS,
+
+
+
+SE TRANSFORMAM NESSA "CLASSIFICATION"...
+
+
+
+
+
+
+----------------------------------
+
+
+
+
+
+
+
+
+CLASSIFICATION CATEGORIES:
+
+
+
+
+
+
+1) SEMANTIC CATEGORIES 
+
+
+
+
+
+
+2) PRIVACY CATEGORIES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK, MAS O QUE SAO ELAS?
+
+
+
+
+
+
+
+
+
+1) SEMANTIC CATEGORIES:
+
+
+
+SAO COISAS COMO:
+
+
+
+A) NAME 
+
+B) ADDRESS 
+
+C) ZIP CODE 
+
+D) PHONE NUMBER 
+
+E) AGE 
+
+F) GENDER
+
+
+
+
+
+
+
+
+
+
+--> a outra classificacao é de acordo com "privacy" 
+
+(e cada table/coisa pode ser classificada com os 2 ao mesmo tempo)
+
+
+
+
+
+
+
+2) PRIVACY CATEGORIES:
+
+
+
+
+A) IDENTIFIER 
+
+B) QUASI-IDENTIFIER 
+
+C) SENSITIVE
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ISSO É UM POUCO CONFUSO...
+
+
+
+
+
+
+
+
+
+
+
+
+ESSENCIALMENTE,
+
+QUANDO O SNOWFLAKE 
+
+CLASSIFICA SUA DATA,
+
+
+ELE CLASSIFICA 
+
+
+DE ACORDO COM ESSAS 2 
+
+CATEGORIAS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+A CATEGORIA DE "PRIVACY",
+
+
+E A CATEGORIA DE "SEMANTIC"....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DIGAMOS, PORTANTO, QUE 
+
+ELE IDENTIFICA 1 COLUMN 
+
+COMO 1 CATEGORIA DE 
+
+"PRIVACY"... ----> AÍ, O VALUE 
+
+DA SUA TAG SERÁ 
+
+"IDENTIFIER"...
+
+
+
+
+
+
+
+
+
+
+dentro de "identifier",
+
+
+
+O SNOWFLAKE 
+PODE CATEGORIZAR
+
+
+SEU VALUE, SEMANTICALLY,
+
+COMO 
+
+
+
+
+"EMAIL",
+
+
+"IBAN",
+
+"IMEI",
+
+
+"IP ADDRESS",
+
+"VIN",
+
+
+"NAME",
+
+
+
+"URL", etc etc...
+
+
+
+--> ESSES VALUES, SEMANTIC_VALUES,
+
+SERAO O VALUE ___ DE SUA TAG...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+EX: UMA COLUMN FOI IDENTIFICADA 
+
+COMO DA CATEGORIA "PRIVACY",
+
+
+
+
+DE TIPO "IDENTIFIER" (value=identifier)...
+
+
+
+
+DEPOIS, A SEMANTIC_CATEGORY DESSA COLUMN, NO CASO,
+
+
+FOI IDENTIFICADA COMO DE VALUE "EMAIL"...
+
+
+
+
+
+quer dizer que 
+
+essa column foi taggada 
+
+assim:
+
+
+
+
+PRIVACY_CATEGORY='IDENTIFIER';
+
+SEMANTIC_CATEGORY='EMAIL';
+
+
+
+
+
+
+ISSO PQ __ EMAILS PODEM SER CONSIDERADOS 
+
+IDENTIFIERS,
+
+E ELES REALMENTE 
+
+SAO PRIVATE, POR ISSO UMA "PRIVACY_CATEGORY"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+"NAME" --> Também,
+
+MESMA COISA:
+
+
+
+
+
+PRIVACY_CATEGORY='IDENTIFIER';
+
+SEMANTIC_CATEGORY='NAME';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DEPOIS DISSO,
+
+
+TEMOS OS VALUES/COISAS QUE 
+
+NAO SAO PROPRIAMENTE IDENTIFIERS,
+
+MAS QUE SAO "QUASI-IDENTIFIERS"...
+
+
+
+
+SAO ELAS:
+
+
+
+
+
+
+
+
+
+
+PRIVACY_CATEGORY            SEMANTIC_CATEGORY
+
+QUASI_IDENTIFIER -->                AGE 
+                                    GENDER 
+                                    COUNTRY 
+                                    DATE OF BIRTH 
+                                    ETHNICITY 
+                                    LATITTDE 
+                                    LAT_LONG 
+                                    LONGITUDE 
+                                    MARITAL_sTATUS 
+                                    OCCUPATION
+                                    US_COUNTY 
+                                    US_CITY
+                                    YEAR_OF_BIRTH 
+
+
+
+
+
+
+
+
+
+
+FINALMENTE,
+
+
+TEMOS VALUES SENSITIVE,
+
+COMO "SALARY",
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+PRIVACY_CATEGORY            semantic_category
+
+SENSITIVE ------->          SALARY
+
+
+
+
+
+
+--------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+----> É ASSIM QUE ESSES VALUE/VALUE TYPES 
+
+SAO CONFIGURADOS,
+
+
+
+
+EM 1 'HIGHER-LEVEL"...
+
+
+
+
+
+
+
+
+
+
+
+-> ESSENCIALMENTE,
+
+QUANDO USAMOS ESSA CLASSIFICATION 
+
+FEATURE 
+
+DO SNOWFLAKE,
+
+
+
+
+ELE VAI 
+
+
+AUTOMATICAMAENTE 
+
+TAGGAR 
+
+
+SUAS COLUMNS,
+
+
+
+
+VAI COLOCAR 
+
+
+AS 
+
+TAGS 
+
+
+
+
+DE 
+
+
+"PRIVACY_CATEGORY"
+
+
+
+E 
+
+
+
+"SEMANTIC_CATEGORY",
+
+
+E AÍ 
+
+
+
+
+VAI CONFERIR ESSES VALUES DISCUTIDOS ANTERIORMENTE...
+
+
+
+
+
+
+
+
+
+FORMATO:
+
+
+
+
+PRIVACY_CATEGORY='IDENTIFIER';
+
+SEMANTIC_CATEGORY='NAME';
+
+
+
+
+
+
+
+
+
+EX:
+
+
+
+
+PRIVACY_CATEGORY='SENSITIVE';
+
+SEMANTIC_CATEGORY='SALARY';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK, MAS O QUE SAO "QUASI_IDENTIFIER"?
+
+
+
+
+
+
+
+
+
+
+
+""ALSO KNOWN AS __INDIRECT IDENTIFIERS, THESE ATTRIBUTES,
+WHEN COMBINED WITH OTHER ATTRIBUTES, CAN BE USED TO 
+UNIQUELY IDENTIFY AN INDIVIDUAL 
+(EX: AGE + GENDER + ZIP)""
+
+
+
+
+
+
+
+
+
+
+
+NOS AJUDAM A IDENTIFICAR 1 INDIVIDUAL...
+
+
+
+
+
+
+
+
+
+
+--> CERTO... NAS PRÓXIMAS LECTURES 
+
+
+
+VEREMOS COMO USAR ESSA CLASSIFICATION FEATURE,
+
+
+
+E VER COMO ELA É APLICADA NO SNOWFLAKE...

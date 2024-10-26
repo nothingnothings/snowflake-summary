@@ -1,0 +1,75 @@
+cloud services - handla todas conexoes,
+
+
+entre virtual warehouse layer e data storagee layer
+
+
+
+
+
+
+
+
+auth e access control
+
+metadata storage 
+security
+
+
+query optimization...
+
+
+
+
+
+
+
+
+
+
+
+os layers de virtual warehouse e storage nao sao handlados por nós, sao
+
+handlados pelo cloud services layer.
+
+
+compute pode ser scaled up and down, facilmente...
+
+
+
+
+o nome dessa arch 
+
+
+
+É MULTI-DATA SHARED CLUSTER ARCHITECTURE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ESSA ARCHITECTURE É BEM MELHOR DO QUE SHARED 
+
+NOTHING...
+
+
+
+
+
+ESSA ARCHITECTURE ABRE MTAS POSSIBILIDADES...
+
+
+
+
+
+
+VEREMOS ESSAS POSSIBILIDADES NA PRÓXIMA AULA...
+

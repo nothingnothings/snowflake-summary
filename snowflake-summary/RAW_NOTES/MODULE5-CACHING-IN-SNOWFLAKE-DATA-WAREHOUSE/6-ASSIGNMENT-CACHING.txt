@@ -1,0 +1,11 @@
+Purpose : In this assignment , 
+you will be reproducing the demo you just gone through. 
+1. You will get better understanding when you do hands on.
+ 2. You will understand how three architectural layers will interact with each other.
+
+
+
+
+
+
+ 

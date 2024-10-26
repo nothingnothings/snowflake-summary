@@ -1,0 +1,1024 @@
+
+
+
+
+
+
+
+
+NESSA AULA,
+
+VEREMOS COMO DEIXAR NOSSA PROCEDURE MAIS "TRANSACTIONAL"...
+
+
+
+
+
+
+NAS LECTURES ANTERIORES,
+
+
+DISCUTIMOS 1 ERROR SCENARIO 
+
+
+EM QUE 
+
+
+ABORTÁVAMOS/ABORTAMOS 
+
+
+
+O EXECUTE DA PROCEDURE "IN BETWEEN",
+
+
+
+MAS MESMO SENDO 
+
+ABORTADA,
+
+
+
+
+A PROCEDURE CONTINUAVA/CONTINUA FAZENDO 1 INSERT PARCIAL 
+
+(
+    algumas das entries acabavam inseridas na table, por exemplo...
+
+    E isso nao é NADA SATISFATÓRIO,
+
+    PQ QUEREMOS QUE 
+    OU ELA __ FALHE POR INTEIRO,
+
+    OU SEJA 
+
+    BEM-SUCEDIDA POR INTEIRO...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUANDO A PROCEDURE FALHAR,
+
+
+POR QUALQUER RAZAO QUE O SEJA,
+
+
+
+NAO QUEREMOS ESSE 
+
+"SUCESSO PARCIAL"; NAO QUEREMOS QUE 
+
+A TABLE SEJA PREENCHIDA COM AS POUCAS ENTRIES 
+
+INSERIDAS ANTES DO ABORT/ERROR...
+
+
+
+
+
+
+
+
+
+--> OU FULL ENTRY,
+
+
+OU NO ENTRY...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-------------> VEREMOS COMO ADICIONAR TRANSACTIONAL 
+
+STATEMENTS,
+
+
+PARA CONSEGUIR JUSTAMENTE ISSO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> NESSA AULA,
+
+VEREMOS COMO ADICIONAR ESSES TRANSACTIONAL STATEMENTS...
+
+
+
+
+
+
+
+
+
+
+
+-> PARA ISSO, PRECISAMOS INSERIR 2 STATEMENTS....
+
+
+
+
+
+
+
+
+
+
+
+
+-> antes de mais nada,
+
+
+
+a parte que está causando problemas é ESTA:
+
+
+
+
+
+
+
+
+
+
+
+
+var my_sql_command4 = INSERT INTO TABLE_FILL_RATE_VALUES(:1, :2);
+
+
+
+
+
+
+
+
+
+
+--> quando abortamos a procedure "in between",
+
+
+esse statement acaba fazendo uma "partial entry"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> A SOLUCAO, NO CASO,
+
+
+
+É, 
+
+
+ANTES DE EXECUTAR ESTES STATEMENTS:
+
+
+
+
+         for (var col_num = 0; col_num < result_set2.getColumnCount(); col_num = col_num + 1) {
+         
+         var my_sql_command4 = "insert into Table_fill_rate values (:1 , :2 ) "
+      
+         var statement4 = snowflake.createStatement( {sqlText: my_sql_command4,binds: [table_as_json.key1[col_num].ColumnName,table_as_json.key1[col_num].column_value]} );
+      
+          statement4.execute();
+         
+
+
+,
+
+
+
+
+
+
+ANTES DE EXECUTAR ESSES STATEMENTS,
+
+
+TRANSFORMAR 
+
+ESSA OPERACAO TODA COMO UMA "TRANSACTION"...
+
+
+
+
+
+
+
+
+
+--> PARA ISSO,
+
+
+ADICIONAMOS 
+
+
+
+
+ESTA LINHA, ANTES DO TRY-CATCH:
+
+
+
+
+
+
+    snowflake.execute({
+        sqlText: "BEGIN WORK;"  //ESTA LINHA.
+    });
+
+
+   try{
+         for (var col_num = 0; col_num < result_set2.getColumnCount(); col_num = col_num + 1) {
+         
+         var my_sql_command4 = "insert into Table_fill_rate values (:1 , :2 ) "
+      
+         var statement4 = snowflake.createStatement( {sqlText: my_sql_command4,binds: [table_as_json.key1[col_num].ColumnName,table_as_json.key1[col_num].column_value]} );
+      
+          statement4.execute();
+         
+         }
+
+   } 
+   catch (err) {
+    ...
+   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+COM "BEGIN WORK",
+
+
+
+COMEÇAMOS NOSSA TRANSACTION...
+
+
+
+
+
+--> E SE ALGO __ DER ERRADO__ DURANTE 
+
+
+A TRANSACTION,
+
+
+
+PODEMOS RODAR "ROLLBACK WORK",
+
+
+PARA REVERTER OS EFEITOS... ------> NO CASO,
+
+
+FAREMOS ISSO DENTRO DO CATCH BLOCK,
+
+PARA QUE, CASO QUALQUER ERRO OCORRA, 
+
+
+REVERTAMOS PARA 1 STATE ANTERIOR à EXECUCAO DO STATEMENT (antes de qualquer 
+insert, portanto)...
+
+
+
+
+
+
+
+EX:
+
+
+
+
+    snowflake.execute({
+        sqlText: "BEGIN WORK;"  //ESTA LINHA.
+    });
+
+
+   try{
+         for (var col_num = 0; col_num < result_set2.getColumnCount(); col_num = col_num + 1) {
+         
+         var my_sql_command4 = "insert into Table_fill_rate values (:1 , :2 ) "
+      
+         var statement4 = snowflake.createStatement( {sqlText: my_sql_command4,binds: [table_as_json.key1[col_num].ColumnName,table_as_json.key1[col_num].column_value]} );
+      
+          statement4.execute();
+         
+         }
+
+   } 
+   catch (err) {
+    
+    snowflake.execute({
+        sqlText: "ROLLBACK WORK;"
+    });
+
+    throw "Failed: " + err;
+   }
+
+
+
+
+
+
+---------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+OK... AÍ VAMOS EM FRENTE E CRIAMOS ESSA PROCEDURE,
+
+
+
+PARA A ENXERGAR EM AÇÃO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> PARA TESTAR ESSE ERROR HANDLING,
+
+O PROFESSOR CHAMA ESSA PROCEDURE,
+
+E AÍ 
+
+
+A ABORTA NO MEIO DA EXECUCAO 
+
+
+
+
+
+
+
+
+
+-> SE TUDO DER CERTO com esse FORCE de error com o abort,
+
+NAO VEREMOS NENHUMA ENTRY NA NOSSA TABLE... (ou insert total,
+ou nenhum insert at all)...
+
+
+
+
+
+
+
+
+
+
+
+
+--> O PROFESSOR RODA ISSO E ABORTA,
+
+E ENTAO NAO VE NENHUMA ENTRY NA TABLE...
+
+
+
+
+
+
+
+
+-> QUER DIZER QUE NOSSO REQUIREMENT FOI SATISFEITO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ISSO FEITO,
+
+
+O PROFESSOR VOLTA AO CÓDIGO DA PROCEDURE E 
+
+
+
+__REMOVE__ ESSES 2 TRANSACTIONAL STATEMENTS (
+    o "BEGIN WORK" e o "ROLLBACK WORK"...
+),
+
+
+
+e aí 
+
+recria e re-roda a procedure...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> FICAMOS COM RECORDS NA TABLE...
+
+
+
+
+
+(insert parcial...) ---> quer dizer que aqueles transaction 
+
+statements 
+
+
+realmente funcionam...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS ENTAO GANHAMOS UM OUTRO ERROR,
+
+
+ERROR DE 
+
+
+
+"STORED PROCEDURE EXECUTION ERROR: SCOPED TRANSACTION STARTED IN 
+STORED PROCEDURE IS INCOMPLETE AND IT WAS ROLLED BACK"....
+
+
+
+
+
+
+
+
+
+
+
+--> ISSO ACONTECEU/acontece 
+
+
+
+PQ ___ NAO ADICIONAMOS NENHUM CÓDIGO PARA "COMMIT THE CHANGES"...
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE, SE ALGO DÁ ERRADO, 
+
+
+RODAMOS O ROLLBACK, SIM,
+
+
+
+MAS SE TUDO DÁ CERTO,
+
+
+
+TEMOS DE EXECUTAR O "COMMIT WORK" para commitar essas mudanças 
+
+
+e terminar nosso statement...
+
+
+
+
+
+
+
+
+
+
+
+
+O PROFESSOR TENTA ESCREVER ASSIM:
+
+
+
+
+
+    snowflake.execute({
+        sqlText: "BEGIN WORK;"  //ESTA LINHA.
+    });
+
+
+   try{
+         for (var col_num = 0; col_num < result_set2.getColumnCount(); col_num = col_num + 1) {
+         
+         var my_sql_command4 = "insert into Table_fill_rate values (:1 , :2 ) "
+      
+         var statement4 = snowflake.createStatement( {sqlText: my_sql_command4,binds: [table_as_json.key1[col_num].ColumnName,table_as_json.key1[col_num].column_value]} );
+      
+          statement4.execute();
+         
+         }
+
+         snowflake.createStatement( ////EIS O CÓDIGO EM QUESTAO.
+            {
+                sqlText: "COMMIT WORK"
+            }
+         ).execute(); 
+
+   } 
+   catch (err) {
+    
+    snowflake.execute({
+        sqlText: "ROLLBACK WORK;"
+    });
+
+    throw "Failed: " + err;
+   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+TIPO AQUI:
+
+
+
+
+
+
+
+         for (var col_num = 0; col_num < result_set2.getColumnCount(); col_num = col_num + 1) {
+         
+         var my_sql_command4 = "insert into Table_fill_rate values (:1 , :2 ) "
+      
+         var statement4 = snowflake.createStatement( {sqlText: my_sql_command4,binds: [table_as_json.key1[col_num].ColumnName,table_as_json.key1[col_num].column_value]} );
+      
+          statement4.execute();
+         
+         }
+
+         snowflake.createStatement( ////EIS O CÓDIGO EM QUESTAO.
+            {
+                sqlText: "COMMIT WORK"
+            }
+         ).execute(); 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> É CLARO QUE RODAMOS ESSE  COMMIT __ APENAS__ 
+
+DEPOIS DO FOR LOOP ACABAR,
+
+DO LADO DE FORA DO FOR LOOP,
+
+
+PQ SE DEIXARMOS DENTRO DO FOR LOOP,
+
+ELE VAI COMMITAR PARA CADA RECORD QUE INSIRO NA TABLE (
+    ficaríamos com o mesmo cenário/problema de antes,
+
+
+    de "seu work nao foi commitado""...
+)
+
+
+
+
+
+
+
+
+
+
+--> OK.... 
+
+
+
+
+
+RODAMOS A PROCEDURE NOVAMENTE... --> E AGORA 
+
+NAO VEMOS NENHUM RECORD NA TABLE, QUANDO ABORTAMOS 
+
+A EXECUCAO....
+
+
+
+
+
+
+
+
+
+AGORA SABEMOS COMO:
+
+
+
+
+
+
+
+1) START TRANSACTION (inside of procedure), com "BEGIN WORK"
+
+
+
+2) ROLLBACK WORK (inside of procedure), com "ROLLBACK WORK" 
+
+
+(TIPICAMENTE EXECUTADO DENTRO DE CATCH BLOCKS)
+
+
+
+3) "COMMIT WORK" (inside of procedure), QUE VAI APLICAR NOSSA CHANGES NA TABLE
+
+(e que deve ser executado NO LADO DE FORA DE FOR LOOPS, após for loops...)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ISSO TUDO VAI NOS AJUDAR A AVOID 
+
+A REALIZACAO DE PARTIAL ENTRIES 
+
+
+NAS NOSSAS TABLES,
+
+
+NOS MOMENTOS EM QUE NOSSAS PROCEDURES 
+
+SAO ABORTADAS/ACABAM COM ERRORS IN BETWEEN....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+O CÓDIGO COMPLETO FICOU ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE TABLE error_log (error_code string, error_state string, error_message string, stack_trace string);
+
+CREATE or replace PROCEDURE do_log(MSG STRING)
+    RETURNS STRING
+    LANGUAGE JAVASCRIPT
+    EXECUTE AS CALLER
+    AS $$
+
+    
+ 
+    // See if we should log - checks for session variable do_log = true.
+    try {
+       var stmt = snowflake.createStatement( { sqlText: `select $do_log` } ).execute();
+    } catch (ERROR){
+       return ''; //swallow the error, variable not set so don't log
+    }
+    stmt.next();
+    if (stmt.getColumnValue(1)==true){ //if the value is anything other than true, don't log
+       try {
+           snowflake.createStatement( { sqlText: `create temp table identifier ($log_table) if not exists (ts number, msg string)`} ).execute();
+           snowflake.createStatement( { sqlText: `insert into identifier ($log_table) values (:1, :2)`, binds:[Date.now(), MSG] } ).execute();
+       } catch (ERROR){
+           throw ERROR;
+       }
+    }
+ $$
+;
+
+
+
+
+
+create or replace procedure column_fill_rate(TABLE_NAME varchar)
+  returns VARIANT --NOT NULL
+  language javascript
+  EXECUTE AS CALLER
+  as     
+  $$  
+
+     var accumulated_log_messages = '';
+
+     function log(msg) {
+        snowflake.createStatement( { sqlText: `call do_log(:1)`, binds:[msg] } ).execute();
+        }
+  
+  // Input check
+  
+    var input_pattern = "select rlike('" +TABLE_NAME +"','[a-zA-Z0-9_]+')"
+    var statement0 = snowflake.createStatement( {sqlText: input_pattern} );
+    //return input_pattern;
+    var result_set0 = statement0.execute();
+    result_set0.next();
+    
+    reg_status = result_set0.getColumnValue(1)
+
+    accumulated_log_messages += 'regular expression result: '+reg_status+ '\n';
+    //return reg_status;
+    
+  
+    if (reg_status == false){
+     throw  TABLE_NAME +" is not a table "}
+  
+  
+  try {
+    var my_sql_command = "select COUNT(*) CNT from "+ TABLE_NAME +";"
+    var statement1 = snowflake.createStatement( {sqlText: my_sql_command} );
+    var result_set1 = statement1.execute();
+    result_set1.next();
+   
+     } 
+   catch (err) 
+     {
+     
+     snowflake.execute({
+      sqlText: `insert into error_log VALUES (?,?,?,?)`
+      ,binds: [err.code, err.state, err.message, err.stackTraceTxt]
+      });
+ 
+      throw err.message;
+
+     }
+
+    
+
+     var cnt = result_set1.getColumnValue(1);
+     if (cnt == 0){
+     throw  TABLE_NAME +" is empty "} 
+     
+     accumulated_log_messages += 'count of records: '+cnt+ '\n';
+     
+
+    try { 
+    var my_sql_command2 = "select * from "+ TABLE_NAME +" LIMIT 10 ;"
+    var statement2 = snowflake.createStatement( {sqlText: my_sql_command2} );
+    var result_set2 = statement2.execute();
+    }
+    
+    catch (err)
+    
+    {
+    
+    snowflake.execute({
+      sqlText: `insert into error_log VALUES (?,?,?,?)`
+      ,binds: [err.code, err.state, err.message, err.stackTraceTxt]
+      });
+
+    throw "Failed: when trying to get schema of the table" ; 
+    
+    }
+
+
+
+    
+    accumulated_log_messages += 'column type of result set 2: '+result_set2.getColumnType(1)+ '\n';
+    //return result_set2.getColumnType(1);
+    var array_of_rows = [];
+    
+    
+    var row_num = 0;
+    row_as_json = {};
+    
+    var column_name;
+    
+      while (result_set2.next())  {
+        // Put each row in a variable of type JSON.
+         
+        // For each column in the row...
+        for (var col_num = 0; col_num < result_set2.getColumnCount(); col_num = col_num + 1) {
+          var col_name =result_set2.getColumnName(col_num+1);
+          
+          
+         
+         var my_sql_command3 = "select round(count(*)/"+cnt+",2) RW_CNT from "+ TABLE_NAME +" where "+col_name+" IS NOT NULL;"
+         
+         //accumulated_log_messages += 'count of records: '+cnt;
+         // return cnt;
+         var statement3 = snowflake.createStatement( {sqlText: my_sql_command3} );
+      
+           result_set3 = statement3.execute();
+          
+           result_set3.next();
+           var col_value = result_set3.getColumnValue(1);
+          
+           row_as_json = { ColumnName : col_name ,column_value : col_value}
+          
+           array_of_rows.push(row_as_json)
+          }
+          
+        }   
+       
+      accumulated_log_messages += 'array of records: '+array_of_rows+ '\n'; 
+      // return array_of_rows
+        
+      table_as_json = { "key1" : array_of_rows };
+      
+      //return  table_as_json;
+      
+       snowflake.execute( {sqlText: "BEGIN WORK;"} );        
+
+       try{
+         for (var col_num = 0; col_num < result_set2.getColumnCount(); col_num = col_num + 1) {
+         
+         var my_sql_command4 = "insert into Table_fill_rate values (:1 , :2 ) "
+      
+         var statement4 = snowflake.createStatement( {sqlText: my_sql_command4,binds: [table_as_json.key1[col_num].ColumnName,table_as_json.key1[col_num].column_value]} );
+      
+          statement4.execute();
+
+        snowflake.execute( {sqlText: "COMMIT WORK;"} );
+         
+         }
+       }
+    catch (err)
+    {
+    snowflake.execute( {sqlText: "ROLLBACK WORK;"} );
+    
+    throw "Failed: " + err;
+    
+    }
+
+   finally {
+
+           if (accumulated_log_messages != '') {
+        log(accumulated_log_messages)
+        }
+}
+
+
+
+ 
+  // return table_as_json; 
+  $$
+  ;

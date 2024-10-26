@@ -1,0 +1,720 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+AGORA VEREMOS 
+
+
+
+
+E APRENDEREMOS 
+
+
+
+
+A __ AUTOMATICAMENTE REFRESHAR 
+
+
+AS EXTERNAL TABLES 
+
+
+
+SEMPRE QUE 
+1 NOVA FILE É ADICIONADA, UPDATADA OU DELETADA 
+
+
+
+DA 
+
+S3 BUCKET LOCATION....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ISSO PQ, SE VC PRESTOU ATENÇÃO NAS ÚLTIMAS AULAS,
+
+
+
+SEMPRE__ QUE NÓS ADICIONARMOS/UPDATARMOS/DELETARMOS 
+
+1 FILE 
+
+
+LÁ NA NOSSA EXTERNAL TABLE (que, na verdade, é 
+
+a location do s3, nosso bucket),
+
+
+
+
+
+
+NÓS SOMOS FORÇADOS A 
+
+
+EXECUTAR
+ 
+
+
+
+ O 
+
+
+ STATEMNET 
+
+ DE 
+
+
+ "ALTER EXTERNAL TABLE emp_ext_table REFRESH";
+
+
+
+
+ PARA __ CONSEGUIR REFRESHAR A 
+
+
+METADATA DA EXTERNAL TABLE,
+E, COM ISSO,
+
+A EXTERNAL TABLE EM SI...
+
+
+
+
+
+
+
+
+
+
+
+
+-------> ENTRETANTO,
+
+
+EM UM CENÁRIO DA VIIDA REAL,
+
+
+
+
+NAO É POSSÍVEL QUE VC 
+
+
+
+FIQUE RODANDO REFRESH 
+
+TODA VEZ QUE 
+
+ALGUÉM ADICIONAR 1 NOVA FILE AO SEU BUCKET..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA RESOLVER ESSE PROBLEMA,
+
+
+TEMOS QUE DEPENDER
+
+
+DE 
+
+
+1 DOS SERVICES DO AWS,
+
+
+
+
+OU O 
+
+"SQS QUEUE",
+
+
+
+OU O "SNS TOPIC"...
+
+
+
+
+
+
+
+SIMPLE QUEUE SERVICE,
+
+
+
+
+SIMPLE NOTIFICATION SERVICE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> VEREMOS, NESSA AULA,
+
+COMO CONFIGURAR O SQS,
+
+
+
+
+e nao 
+
+o 
+
+sns topic... ( o professor vai colocar 1 link aos docs do sns topic)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SQS QUEUE --> COMO PODE SER CONFIGURADO...
+
+
+
+
+-----------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+PARA ISSO, 
+
+
+
+
+
+ESCREVEMOS ASSIM:
+
+
+
+
+
+
+
+------------------------- AUTO REFRESH ----------------
+
+
+ALTER EXTERNAL TABLE emp_ext_table REFRESH;
+
+SHOW EXTERNAL TABLES;
+
+CREATE OR REPLACE EXTERNAL TABLE emp_ext_table
+(
+    FILE_NAME_PART VARCHAR AS SUBSTR(metadata$filename, 5, 11),
+    FIRST_NAME STRING AS (value:c1::string),
+    LAST_NAME STRING(20) as (value:c2::string),
+    EMAIL STRING AS (value:c3::string)
+)
+PARTITION BY (FILE_NAME_PART)
+WITH LOCATION=@demo_db.public.EXAMPLE_S3_STAGE
+FILE_FORMAT=(
+    TYPE=CSV
+)
+AUTO_REFRESH=TRUE;
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> como vc pode ver, o "auto_refresh" está 
+
+definido como TRUE...
+
+
+
+
+
+
+
+
+--> MESMO QUE VC NAO UTILIZE ESSA PROPRIEDADE 
+
+DE 
+
+"auto_refresh=true",
+
+
+
+
+O DEFAULT JÁ É "auto_refresh=true"...
+
+
+
+
+
+
+
+
+
+
+--> MAS É CLARO QUE SÓ ISSO NAO BASTA...
+
+
+
+
+
+
+--> PARA HABILITAR O SQS 
+
+
+COM ESSA NOSSA TABLE/SNOWFLAKE,
+
+
+
+TEMOS QUE 
+
+
+CONFIGURAR NOSSO BUCKET,
+
+O BUCKET QUE ESTÁ SENDO USADO COM 
+
+
+O SNOWFLAKE.... (com essa external table)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+- VAMOS ATÉ O BUCKET,
+
+E DEPOIS VAMOS ATÉ "PROPERTIES"...
+
+
+
+
+
+
+
+
+
+--> DENTRO DE PROPERTIES, CLICAMOS EM "EVENT NOTIFICATIONS, CREATE"...
+
+
+
+
+
+
+
+
+
+
+
+
+--> VAMOS CRIAR 1 NOVA EVENT NOTIFICATION...
+
+
+
+
+
+
+
+
+
+
+
+-> dentro das opcoes,
+
+escolhemos:
+
+
+
+
+
+
+
+OBJECT CREATION:
+
+
+
+(X) ALL OBJECT CREATE EVENTS 
+
+
+
+(X) ALL OBJECT REMOVAL EVENTS
+
+
+
+
+
+
+
+
+
+
+
+--> DEOPIS COLOCAMOS:
+
+
+
+
+
+
+
+
+
+DESTINATION:
+
+
+
+() LAMBDA FUNCTION 
+
+
+() SNS TOPIC 
+
+
+(X) SQS QUEUE 
+
+
+
+
+
+
+
+
+
+
+
+
+
+SPECIFY SQS QUEUE:
+
+
+() CHOOSE FROM YOUR SQS QUEUES 
+
+(X) ENTER SQS QUEUE ARN
+
+
+
+
+
+
+
+
+
+
+--> certo... --> ESSA QUEUE, SEU ARN,
+
+GANHAREMOS DO 
+
+
+
+SNOWFLAKE EM SI... --> (SNOWFLAKE-MANAGED QUEUE)...
+
+
+
+
+--> PARA ENCONTRARMOS O ARN DESSA QUEUE,
+
+
+DEVEMOS 
+
+
+
+RODAR 
+
+
+
+
+SHOW EXTERNAL TABLES;,
+
+
+
+
+DENTRO DISSO,
+TEMOS A COLUMN DE 
+
+
+"notification_channel" --> AÍ TEMOS O ARN da queue....
+
+
+
+
+
+
+
+--> BASICAMENTE, O QUE VAI ACONTECER É QUE 
+
+O AWS VAI ENVIAR A NOTIFICATION A ESSA QUEUE MANAGEADA 
+
+PELO SNOWFLAKE,
+
+QUE AÍ 
+
+
+VAI ENTREGAR A MESSAGE/NOTIFICATION DE QUE 
+
+
+A NOSSA EXTERNAL TABLE FOI ATUALIZADA,
+
+A NOSSA PRÓPRIA TABLE
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SPECIFY SQS QUEUE:
+
+
+() CHOOSE FROM YOUR SQS QUEUES 
+
+(X) ENTER SQS QUEUE ARN
+
+
+SQS 
+
+QUEUE: <arn_string_retrieved_from_snowflake_show_external_tables_command>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+COM ISSO, AGORA SE ADICIONARMOS UMA NOVA FILE,
+
+
+
+
+
+A NOTIFICATION SOBRE ESSE ADD/REMOVE 
+
+
+VAI CHEGAR À EXTERNAL TABLE EM SI,
+
+QUE VAI SER AUTOMATICALLY REFRESHED....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> O PROFESSOR UPLOADA MAIS 1 FILE,
+
+PARA LEVANTAR 1 NOTIFICATION NA NOSSA 
+
+METADATA INFORMATION TABLE...
+
+
+
+
+
+
+
+
+
+
+
+
+--> ENXERGAMOS 29 RECORDS, ANTES...
+
+
+
+
+
+
+
+
+
+
+--> AÍ O PROFESSOR ADICIONA MAIS 1 FILE,
+
+
+para raisar a notification...
+
+
+
+
+
+
+
+-> DEMORA 1 POUCO PARA A FILE SER REGISTERED...
+
+
+
+
+
+
+-> DEMORA 30-40 SEGUNDOS...
+
+
+
+--> agora enxergamos 34 records...
+
+
+
+
+
+
+
+
+
+
+--> TUDO ISSO ACABOU REFRESHED POR CONTA DO SQS SERVICE,
+
+
+DESSA CONFIGURATION QUE FIZEMOS...
+
+
+
+
+
+
+
+
+
+
+
+
+--> e parece que existe apenas 1 única sqs queue 
+
+
+por bucket... --> e essa mesma queue 
+
+
+do snowflake 
+
+
+é usada para todos os buckets usados na sua 
+
+conta...
+
+
+
+
+
+https://docs.snowflake.com/en/user-guide/tables-external-s3
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... É ASSIM QUE PODEMOS REFRESHAR EXTERNAL TABLES 
+
+AUTOMATICAMENTE,
+
+USANDO SQS QUEUE...

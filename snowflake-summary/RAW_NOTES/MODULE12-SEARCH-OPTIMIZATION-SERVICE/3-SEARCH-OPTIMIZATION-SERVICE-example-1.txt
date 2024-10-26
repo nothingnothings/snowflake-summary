@@ -1,0 +1,476 @@
+
+
+
+
+DEVEMOS TENTAR COMPREENDER MAIS SOBRE O SNOWFLAKE SEARCH OPTIMIZATION 
+SERVICE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> ANTES DE COMECARMOS O DEMO,
+
+
+PRECISAMOS 
+
+
+
+
+VER A PARTE DA PREPARACAO....
+
+
+
+
+
+
+
+
+
+
+--> TEMOS ESTA QUERY:
+
+
+
+
+
+
+CREATE DATABASE DEMO_DB;
+
+-- Create table -- table with 6 billion rows.
+CREATE TABLE DEMO_DB.PUBLIC.LINEITEM_SOS
+AS
+SELECT * FROM
+SNOWFLAKE_SAMPLE_DATA.TPCH_SF1000.LINEITEM;
+
+-- Clone table structure and data (zero-copy-clone)
+CREATE TABLE DEMO_DB.PUBLIC.LINEITEM_NO_SOS CLONE DEMO_DB.PUBLIC.LINEITEM_SOS;
+
+-- update few records in huge table.
+UPDATE DEMO_DB.PUBLIC.LINEITEM_SOS 
+SET L_COMMENT='GOOD PRODUCTS'
+WHERE l_orderkey = '4509487233';
+
+UPDATE DEMO_DB.PUBLIC.LINEITEM_NO_SOS 
+SET L_COMMENT='GOOD PRODUCTS'
+WHERE l_orderkey = '4509487233';
+
+-- add search optimization on certain columns - this CREATED/USES EXTRA STORAGE, SO BE CAREFUL! (185gb table gets 30gb extra storage, for these 2 columns with SOS)
+ALTER TABLE DEMO_DB.PUBLIC.LINEITEM_SOS ADD SEARCH OPTIMIZATION ON EQUALITY(L_COMMENT);
+
+ALTER TABLE DEMO_DB.PUBLIC.LINEITEM_SOS ADD SEARCH OPTIMIZATION ON EQUALITY(l_orderkey);
+
+show tables;
+
+
+-- shows the difference with search optimization enabled 
+
+-- takes 3 seconds, roughly
+select * from DEMO_DB.PUBLIC.lINEITEM_SOS where L_orderkey = '4509487233' 
+
+select * from DEMO_DB.PUBLIC.lINEITEM_SOS where l_COMMENT = 'GOOD PRODUCTS' 
+
+-- takes 43 seconds, roughly
+select * from DEMO_DB.PUBLIC.lINEITEM_NO_SOS where L_orderkey = '4509487233'
+
+select * from DEMO_DB.PUBLIC.lINEITEM_NO_SOS where L_COMMENT = 'GOOD PRODUCTS'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... O PROFESSOR CRIA 2 TABLES,
+
+
+UMA COM OPTIMIZATION SERVICE,
+
+E OUTRA SEM...
+
+
+
+
+
+
+
+
+--> clone --> copia 1 table de 1 table para a outra...
+
+
+
+
+
+
+--> PARA 2 RECORDS, vamos atualizar o value para 
+
+"GOOD PRODUCTS"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> DEPOIS DISSO, DEPOIS DE UPDATAR ESSAS 2 COLUMN,
+
+
+
+o professor 
+
+
+
+RODA OS 2 STATEMENT, PARA ADICIONAR SEARCH 
+
+OPTIMIZATION SERVICE PARA AS 2 COOLUMNS 
+
+DESSA TABLE...
+
+
+
+
+
+
+
+
+
+
+---> SE RODAMOS "SHOW TABLES",
+
+
+PODEMOS VER QUE 
+
+TEMOS 1 COLUMN DE 
+
+
+"search_optimization", tida como "ON"...
+
+
+
+
+---> aí "search_optimization_progress" ---> 100...
+
+
+
+
+
+
+--> depois "search_optimization_bytes" --> COM ISSO,
+
+
+
+O SNOWFLAKE CRIA 1 STORAGE SEPARADA,
+
+
+
+USADA PARA _ MANTER __ A SEARCH OPTIMIZATION PARA 
+
+ESSAS 2 COLUMNS...
+
+
+
+
+
+
+
+
+
+
+30gb, basicamente...
+
+
+
+
+
+
+
+
+
+--> DEPOIS DISSO TUDO, O PROFESSOR 
+
+
+TENTA 
+
+FAZER SELECT/SEARCH 
+
+
+
+
+
+DE 2 
+
+ITEMS,
+
+
+NA TABLE QUE 
+
+
+POSSUI 
+
+
+search optimization service 
+
+
+
+na column apropriada,
+
+
+
+
+
+e depois na que nao tem isso...
+
+
+
+
+
+
+
+
+
+
+
+--> NA TABLE COM SOS aplicado,
+
+
+NOSSA QUERY DEMOROU 3.3 segundos...
+
+
+(apenas 3 partitions foram escaneadas,
+por isso o result foi bem mais rápido, graças 
+
+ao search optimization service)
+
+
+
+
+
+
+--> NA TABLE SEM SOS,
+
+
+
+A QUERY DEMOROU 46 segundos....
+
+
+
+
+
+
+
+
+nessa query, foram escaneadas 9 mil partitions,
+
+por isso o tempo foi bem maior...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... AGORA DEVEMOS CHECAR 
+
+
+
+
+
+COMO ESSE OPTIMIZATION SERVICE 
+
+SE COMPORTA QUANDO QUERIAMOS POR 1 STRING VALUE...
+
+
+
+
+
+
+
+
+
+
+--> COM STRING VALUES,
+
+
+
+
+A TABLE COM SEARCH OPTIMIZATION SERVICE 
+
+
+RETORNOU RESULTADOS 
+
+
+
+EM 1.6 SEGUNDOS (super rápido, apenas 4 partitions foram escaneadas)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> JÁ A TABLE 
+
+
+SEM SEARCH OPTIMIZATION SERVICE 
+
+NA COLUNA 
+
+
+DEMOROU 1min e 4 segundos (
+
+    demora bem mais, com FILTERS DE TIPO STRING...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+COM ISSO, CONCLUÍMOS QUE QUANDO APLICAMOS 
+
+O SEARCH OPTIMIZATION SERVICE EM 1 TABLE,
+
+
+OS RESULTS VOLTAM SUPER RÁPIDO,
+
+
+E ISSO SÓ ACONTECE PQ 
+
+O 
+
+SNOWFLAKE 
+
+
+ESTÁ MANTENDO UMA __ SEPARATE ___ 
+
+STORAGE __ PARA ESSA TABLE/COLUMN 
+
+
+NO BACKGROUND (
+
+    isso fica óbvio quando visualizamos 
+
+    aqueles "search_optimization_bytes",
+
+    que totalizam 30GB...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+QUER DIZER QUE ELE ARMAZENOU 30GB de data no background,
+
+tudo para conseguir 
+
+enablar esse service de optimization 
+
+
+nessas 2 columns,
+
+nessa table...
+
+
+
+
+
+
+
+
+
+
+
+
+--> ESSE 30GB de storage é adicional aos 156 GB 
+dessa table...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ok... 
+
+
+NAS PRÓXIMAS LICOES,
+
+ANALISAREMOS 
+
+ESSE OPTIMIZATION SERVICE,
+
+COM A AJUDA DE MAIS ALGUNS SCENARIOS....
+
+
+
+

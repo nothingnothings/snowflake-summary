@@ -1,0 +1,1295 @@
+
+
+
+
+
+
+
+DEVEMOS TENTAR realizar 
+A TAREFA ASSIGNADA A NÓS..
+
+
+
+
+
+
+
+
+
+
+PRIMEIRAMENTE, O PROFESSOR CRIA ESTA TABLE:
+
+
+
+
+
+CREATE OR REPLACE TABLE DEMO_DB.PUBLIC.EMP_BASIC_1 (
+    FIRST_NAME STRING,
+    LAST_NAME STRING,
+    EMAIL STRING,
+    STREETADDRESS STRING,
+    CITY STRING,
+    START_DATE DATE
+);
+
+
+
+
+
+
+
+
+
+-> essas columns existem no arquivo csv que estamos 
+querendo carregar...
+
+
+
+
+
+
+
+
+
+-> A PRÓXIMA ATIVIDADE É 
+
+
+___ O UPLOAD__ DAS FILES_ À STAGING AREA 
+
+
+DA TABLE (table staging area)....
+
+
+
+
+
+
+
+
+
+
+---> COMO JÁ SABEMOS, 
+
+QUANDO CRIAMOS 1 TABLE,
+
+ A TABLE JÁ VEM COM SUA PRÓPRIA STAGING 
+
+ AREA,
+ BUILT-IN...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ -- COMO TEMOS APENAS 1 ÚNICA FILE SENDO PROVIDENCIADA,
+
+
+ VAMOS USAR O SNOWFLAKE INTERNAL TABLE STAGING AREA...
+
+
+
+
+
+
+
+
+
+
+ -> POR ISSO VAMOS UPLOADAR ESSA FILE/FILES 
+
+ A ESSA SNOWFLAKE TABLE,
+
+
+ DENTRO DA STAGING AREA DESSA SNOWFLAKE TABLE....
+
+
+
+
+
+
+
+
+
+
+ -> PARA ISSO,
+
+ O PROFESSOR ESCREVE:
+
+
+
+ PUT FILE:///root/Snowflake/Data/Employee/employees0*.csv
+ @DEMO_DB.PUBLIC.$EMP_BASIC_1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ COM ISSO, EXECUTANDO ESSE COMANDO,
+
+
+ RECEBEMOS 1 ERROR...
+
+
+
+
+
+
+
+
+
+
+
+ QUER DIZER QUE ESSE COMANDO DE "PUT"
+
+ NAO É SUPORTADO,
+
+ DENTRO 
+
+ DO WEB CONSOLE DO SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+
+
+ --> A "INTERNAL STAGING AREA" 
+
+ QUE É UMA "TABLE STAGING AREA"
+
+
+ é sempre representada por 
+
+ "@%"...
+
+
+
+
+
+
+
+ COMO VISTO AQUI:
+
+
+ @demo_db.public.$emp_basic_1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK, QUER DIZER QUE ESSE COMANDO NAO PODE SER EXECUTADO 
+
+DE DENTRO DO SNOWFLAKE WEB CONSOLE...
+
+
+
+
+
+
+
+PRECISAMOS O EXECUTAR DE DENTRO DA SNOWCLI...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> O PROFESSOR ENTRA NA VIRTUAL MACHINE (gitpod),
+
+
+MAS EU N QUERO FAZER ISSO,
+
+
+
+QUERO FAZER DE MEU TERMINAL MESMO...
+
+
+
+
+
+
+
+
+
+ABRO O SNOWCLI NO TERMINAL,
+
+
+E AÍ 
+
+
+
+
+VOU RODAR ESSE PUT COM TODA AS FILES 
+
+
+de "employees0*"..
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... MAS ANTES DISSO LOGAMOS NO SNOWFLAKE CLI,
+
+na nossa conta snowflake..
+
+
+
+
+
+
+
+
+
+
+
+
+--> certo... agora estamos loggados...
+
+
+
+
+
+
+AGORA PRECISAMOS RODAR AQUELE COMANDO DE 
+
+
+
+""
+
+ PUT FILE:///root/Snowflake/Data/Employee/employees0*.csv
+ @DEMO_DB.PUBLIC.%EMP_BASIC_1;
+
+
+
+
+''
+
+
+
+
+
+
+
+
+ENTRETANTO, ANTES DE RODAR ESSE STATEMENT,
+
+DEVEMOS 
+
+
+ENTRAR NA DATABASE DE DEMO_DB,
+
+
+
+COM O COMANDO "USE DATABASE DEMO_DB"..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CERTO...
+
+
+
+
+agora estou nessa database...
+
+
+
+
+
+
+
+
+
+--> AGORA DEVEMOS RODAR ESSE COMANDO DE PUT...
+
+
+
+
+
+
+MEU COMANDO FICOU ASSIM:
+
+
+
+
+
+put file://data-to-be-loaded/employees01.csv  
+        @DEMO_DB.PUBLIC.%EMP_BASIC;
+
+
+
+
+
+
+
+
+
+
+
+
+OK... ISSO COPIOU O ARQUIVO employees01.csv 
+
+PARA DENTRO DE NOSSA TABLE...
+
+
+
+
+
+
+
+
+
+
+
+-> OS ARQUIVOS CSV ESTAVAM UNCOMPRESSED,
+
+CLARO....
+
+
+
+
+
+
+
+
+
+
+
+--> MAS A PRIMEIRA COISA QUE O 
+
+SNOWSQL FAZ É 
+
+
+COMPRIMIR ESSES ARQUIVOS,
+
+
+TRANSFORMAR EM GZ... ---> depois de os comprimir,
+
+
+
+
+
+ELE UPLOADOU TODOS ESSES ARQUIVOS 
+
+
+AO SNOWFLAKE INTERNAL TABLE STAGING AREA...
+
+
+
+
+
+
+
+
+
+
+
+
+--> ok... 
+
+
+
+"STATUS UPLOADED"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> NO SNOWFLAKE, PODEMOS RODAR 1 SELECT NA TABLE,
+
+PARA 
+
+
+VER 
+
+
+
+SE TEMOS ESSES ROWS DENTRO DA NOSSA TABLE...
+
+
+
+
+
+
+
+
+
+
+
+
+--> NAO TEREMOS NENHUM ROW NA TABLE... MAS PQ?
+
+
+
+
+
+
+
+
+É PQ __ UPLOADAMOS ESSES ROWS/DATA 
+
+
+
+LÁ PARA A STAGING AREA DA TABLE,
+
+E NAO PARA A TABLE EM SI...
+
+
+
+
+
+
+
+
+
+
+QUER DIZER QUE 
+
+TODAS AS FILES AINDA 
+
+
+ESTAO 
+
+
+EM 1 FORMATO "RAW"...
+
+
+
+
+
+
+
+
+
+--> PODEMOS CONSTATAR QUE 
+
+
+ESSES ARQUIVOS ESTAO EM UM FORMATO RAW,
+
+
+
+BASTA 
+
+
+RODAR, LÁ NO SNOWSQL,
+
+O COMANDO:
+
+
+
+
+
+
+ls @%emp_basic;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... ENCONTRAMOS TODAS AS FILES EXISTENTES 
+
+NA STAGING AREA DA TABLE (
+    pq, na table em si,
+
+    nenhum row/data 
+
+    dessas files terá sido 
+
+    uploadado...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... O PRÓXIMO PASSO É PEGAR 
+
+ESSAS FILES, QUE ESTAO NA "TABLE STAGING AREA",
+
+
+INTERNA, 
+
+
+
+
+E COPIAR SUA DATA PARA DENTRO 
+
+
+DA ACTUAL SNOWFLAKE TABLE DE "emp_basic"....
+
+
+
+
+
+
+
+
+
+
+
+MAS COMO FAZEMOS ISSO?
+
+
+
+
+
+
+
+
+
+
+BEM, PRIMEIRAMENTE PRECISAMOS DE UM COMANDO DE COPY,
+
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+
+COPY INTO demo_db.public.emp_basic 
+FROM @DEMO_DB.PUBLIC.%EMP_BASIC
+FILE_FORMAT=(
+    TYPE=CSV,
+    FIELD_OPTIONALLY_ENCLOSED_BY='"'
+)
+PATTERN='.*employees0[1-5].csv.gz'
+ON_ERROR='skip_file';
+
+
+
+
+
+
+
+
+
+
+COM ESSE COMANDO, ACONTECE:
+
+
+
+1) O SELECT __ DE DATA __ 
+
+DA STAGING AREA DE "@DEMO_DB.PUBLIC.%EMP_BASIC",
+
+ou seja,
+
+de essa MESMA TABLE, de sua staging area, no caso....
+
+
+
+
+2) O COPY DESSA DATA, DESSES ARQUIVOS CSV (agora na staging area)
+PARA DENTRO DE NOSSA ACTUAL SNOWFLAKE TABLE..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... FUNCIONOU... OS ROWS FORAM COPIADOS 
+PARA DENTRO 
+
+DESSA TABLE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+TERMINAMOS ESSA ACTIVITY...
+
+
+
+
+
+
+
+
+
+
+
+
+MAS HÁ ALGUMAS COISAS COM QUE 
+
+DEVEMOS TER CUIDADO...
+
+
+
+
+
+
+
+COISAS:
+
+
+
+
+
+1) AQUELE "FILE_FORMAT",
+
+que foi escrito __INLINE__...
+
+(
+
+    FILE_FORMAT=(
+        type=csv,
+        field_optionally_enclosed_by='"'
+    )
+)
+
+
+
+
+
+--> ISSO NAO É BOM, NAO É UMA BEST-PRACTICE...
+
+
+
+ISSO NAO É CORRETO.... PQ NAO É CORRETO?
+
+
+
+
+
+PQ SE VC ESTIVER AUTOMATIZANDO ESSE PROCESSO,
+
+
+
+
+SE VC USAR ESSA SINTAXE DE INLINE
+
+
+DO FILE_FORMAT,
+
+VC ESTARÁ REPETINDO ESSA PARTE 
+
+
+DE "FILE_FORMAT"
+
+
+
+EM _ TODOS OS COPY __ COMMANDS --> MUITA REPETICAO 
+DE CÓDIGO...
+
+
+
+
+
+
+
+
+--> É POR ISSO QUE É IMPORTANTE USAR OS 
+
+OBJECTS,
+
+PARA EVITAR REPETICAO DE CÓDIGO...
+
+
+
+
+
+
+
+
+
+
+
+
+NO SNOWFLAKE, JÁ SABEMOS QUE PODEMOS USAR 
+
+
+
+O 
+
+OBJECT DE "FILE_FORMAT"...
+
+
+
+
+
+
+
+FAZEMOS ISSO ASSIM:
+
+
+
+
+
+
+
+CREATE OR REPLACE FILE FORMAT CONTROL_DB.FILE_FORMATS.MY_CSV_FORMAT 
+TYPE=CSV
+FIELD_OPTIONALLY_ENCLOSED_BY='"'
+FIELD_DELIMITER=','
+NULL_IF=('NULL', 'null')
+EMPTY_FIELD_AS_NULL=TRUE
+compression=gzip;
+
+
+
+
+
+
+
+
+
+
+
+
+OK, TODAS ESSAS PROPERTIES PODEM SER DEFINIDAS 
+
+
+
+DENTRO DESSE OBJECT...
+
+
+
+
+
+
+
+
+
+QUER DIZER QUE É UMA BEST PRACTICE SEMPRE USAR 
+
+O FILE_FORMAT OBJECT...
+
+
+
+
+
+
+--> AGORA VAMOS REEXECUTAR AQUELE COMANDO DE COPY,
+
+MAS USANDO 
+
+
+O FILE_FORMAT OBJECT...
+
+
+
+
+
+
+
+
+
+EX:
+
+
+
+
+
+
+
+
+CREATE OR REPLACE FILE FORMAT
+DEMO_DB.FILE_FORMATS.MY_CSV_FORMAT 
+TYPE=CSV
+FIELD_OPTIONALLY_ENCLOSED_BY='"'
+FIELD_DELIMITER=','
+NULL_IF=('NULL', 'null')
+EMPTY_FIELD_AS_NULL=TRUE
+compression=gzip
+
+
+
+
+
+
+
+
+
+COPY INTO DEMO_DB.PUBLIC.EMP_BASIC
+FROM @DEMO_DB.PUBLIC.%EMP_BASIC 
+FILE_FORMAT=(
+    FORMAT_NAME=DEMO_DB.FILE_FORMATS.MY_CSV_FORMAT
+)
+PATTERN='.*employees0[1-5].csv.gz'
+ON_ERROR='SKIP_FILE';
+
+
+
+
+
+
+
+
+------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... SUCESSO....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> O FILE FORMAT É VANTAJOSO PQ 
+
+
+NAO INTERESSA QUAL COPY COMMAND VC TEM,
+
+
+SE O FILE FORMAT ORIGINAL MUDA,
+
+TODOS OS COPY COMMANDS QUE O UTILIZAM 
+
+
+VAO SENTIR OS EFEITOS DA ALTERACAO...
+
+
+
+
+
+
+
+
+
+
+se rodamos o comando mais uma vez,
+
+
+
+
+
+O COMANDO DE COPY,
+
+
+
+FICAMOS COM '0 FILES PROCESSED'...
+
+
+
+
+
+
+
+MAS PQ ISSO ACONTECEU?
+
+
+
+
+
+
+
+
+
+É PQ O SNOWFLAKE TEM UMA MECANICA QUE EVITA 
+
+O UPLOAD DE FILES 
+
+
+REPETIDAS...
+
+
+
+
+
+
+
+
+
+--> MAS PODEMOS DAR BYPASS NESSE COMPORTAMENTO,
+
+
+
+COM A OPTION DE "FORCE"...
+
+
+
+
+
+
+
+
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+
+COPY INTO <table_name>
+FROM @externalStage
+FILES=('<file_name>', '<file_name2>')
+FILE_FORMAT=(
+    FORMAT_NAME=xxxx
+)
+FORCE = TRUE | FALSE;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+COMO O SNOWFLAKE CHECA ISSO?
+
+
+
+
+
+
+
+ELE COMPARA OS md5 HASH VALUES dos arquivos... ---> 
+
+
+SE OS HASHES FOREM IDENTICOS,
+
+
+
+ele nao vai copiar...
+
+
+
+
+
+
+
+
+
+
+
+
+
+O SNOWFLAKE FAZ ISSO PARA EVITAR 
+
+O COPY DE DUPLICATE RECORDS 
+
+NAS SUAS TABLES...
+
+
+
+
+
+
+
+
+
+
+------> MAS É CLARO QUE NAO PODEMOS 
+
+
+MANTER 
+
+ESSA "TABLE STAGING AREA"
+
+
+PARA SEMPRE.... 
+
+
+
+
+NAO PODEMOS MANTER 
+
+
+
+ELA PARA SEMPRE, 
+APENAS PARA O SAKE DE "NOT COPY THE DATA"...
+
+
+
+
+
+
+
+
+
+
+--> PQ IMAGINE SE VC TEM 
+
+1 FILE DE 10, 15, 30GB 
+
+QUE 
+
+
+FICA LÁ NA TABLE STAGING AREA...
+
+
+
+
+
+
+
+
+
+--> ISSO VAI ESTAR OCUPANDO STORAGE,
+
+BLOB STORAGE...
+
+
+
+
+
+
+
+
+--> E CADA VEZ QUE VC RODAR O COPY COMMAND,
+
+
+
+
+
+O SNOWFLAKE TERÁ DE COMPARAR O HASH 
+
+
+VALUE 
+
+DAS FILES QUE 
+VC 
+
+
+ESTÁ 
+
+
+INSERINDO
+
+
+
+___ COM _ AS FILES__ QUE JÁ FORAM USADAS/JÁ 
+FOI EXTRAÍDA A DATA...
+
+
+
+
+
+
+
+--> ISSO PQ ESSA COMPARACAO ENTRE HASHES 
+
+VAI 
+
+
+DEFINITIVAMENTE IMPACTAR A PERFORMANCE...
+
+
+
+
+
+
+
+
+
+-> FAZEMOS ISSO PARA REMOVER TODAS AS 
+
+FILES QUE ESTAVAM ARMAZENADAS DENTRO 
+
+
+
+DO TABLE STAGE, DESSE INTERNAL STAGE AÍ...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK....  APRENDEMOS UM MONTE DE COISAS:
+
+
+
+1) COMO USAR O FILE FORMAT 
+
+
+
+2) COMO FAZER LOGIN 
+
+
+
+3) COMO EXECUTAR O COMANDO DE "PUT" PARA UPLOADAR 
+
+DATA A UMA STAGING AREA DE 1 TABLE
+
+
+
+
+4) COMO LISTAR AS FILES DA STAGING AREA DE 1 GIVEN 
+TABLE (com 'ls')
+
+
+
+
+
+
+5) como REMOVER AS FILES DA STAGING AREA DE 1 GIVEN 
+TABLE, DEPOIS DE SEU USO (com "rm")...
+
+
+
+
+
+
+
+
+ok...

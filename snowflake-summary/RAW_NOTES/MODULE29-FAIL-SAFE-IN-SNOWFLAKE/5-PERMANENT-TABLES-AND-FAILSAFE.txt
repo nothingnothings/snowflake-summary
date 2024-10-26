@@ -1,0 +1,637 @@
+
+
+
+
+
+
+
+
+
+AGORA VEREMOS COMO O FAILSAFE PODE ACABAR COSTLY 
+
+SE NAO ESTAMOS 
+
+SEGUINDO A STANDARD PRACTICE ENQUANTO CRIAMOS TABLES (STAGING
+tables 
+
+devem ser transient)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+ALTER DATABASE READER_SALES SET DATA_RETENTION_TIME_IN_DAYS=0;
+
+
+CREATE OR REPLACE TABLE READER_SALES.PUBLIC.CUSTOMERS 
+AS 
+SELECT * FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1000.CUSTOMER;
+
+
+
+
+SHOW TABLES;
+
+
+DROP TABLE READER_SALES.PUBLIC.CUSTOMER;
+
+
+
+
+
+
+
+
+
+
+
+
+
+PARA PROPÓSITO DE DEMO,
+
+O PROFESSOR SETTOU O DATA_RETENTION_TIME_IN_DAYS
+
+
+
+COMO 0...
+
+
+
+
+
+
+
+
+
+
+SE DEFINIMOS O RETENTION_TIME COMO 0,
+
+
+E SE ENTAO DROPPAMOS 1 TABLE,
+
+
+A TABLE VAI IMEDIATAMENTE ENTRAR 
+
+
+
+NA FAILSAFE ZONE...
+
+
+
+
+
+
+
+
+
+
+
+
+--> ESSA TABLE DE CUSTOMER TEM 10.2GB DE ESPAÇO...
+
+
+
+
+
+
+
+--> SE VAMOS ATÉ O STORAGE,
+E AÍ NO FAILSAFE,
+
+
+
+PODEMOS VER O VOLUME DE DATA NA FAILSAFE ZONE...
+
+
+
+
+
+
+
+
+
+
+--> OK, E QUAL O VOLUME?
+
+
+
+
+
+
+
+
+--> DEMORA 1 POUCO PARA OS STATS SEREM REFLETIDOS 
+
+NO DASHBOARD...
+
+
+
+
+
+
+
+
+
+temos esta query:
+
+
+
+
+
+
+
+
+SELECT 
+*
+FROM SALES.INFORMATION_SCHEMA.TABLE_STORAGE_METRICS;
+
+
+
+
+
+
+
+--> ACTIVE_BYTES ESTAO COMO 0,
+
+
+E FAILSAFE_BYTES 
+
+ESTAO 
+
+
+
+COM 10.2gb...
+
+
+
+
+
+
+
+
+
+
+
+---> ISSO QUER DIZER QUE A TABLE ENTROU NA FAILSAFE ZONE....
+
+
+
+
+
+
+
+
+
+
+
+PARA SABER SE NOSSA TABLE ENTROU NA FAILSAFE ZONE,
+
+TEMOS 
+
+
+"TABLE_ENTERED_FAILSAFE"..
+
+
+
+
+
+
+
+(mostra a data em que
+
+a date entrou 
+
+na failsafe zone...
+
+
+
+)
+
+
+
+
+
+
+
+
+--> O QUE O PROFESSOR QUER EXPLICAR:
+
+
+
+
+
+
+-> SE VC N SEGUIR AS DIRETRIZES 
+
+DE CRIACAO 
+
+
+
+DE TABLE,
+
+
+
+SE VC CRIAR 1 TABLE SEM PENSAR,
+ELA 
+
+SERÁ 
+
+UMA 
+
+
+PERMANENT TABLE... ------> O PROBLEMA DISSO É QUE 
+
+SE VC 
+
+DROPPAR ESSA TABLE,
+
+OU SE RODAR QUALQUER MODIFICACAO NELA,
+
+
+
+QUANDO O TEMPO DE DATA RETENTION PERIOD PARA 
+ESSA TABLE ACABAR,
+
+
+COMO 1 DIA,
+POR EXEMPLO...--> QUANDO ESSE DIA ACABAR,
+
+
+DESSE MOMENTO EM DIANTE,
+
+A TABLE ENTRARÁ 
+
+NA FAIL SAFE ZONE... 
+
+
+
+
+
+
+
+
+
+
+
+
+
+NO NOSSO CASO,
+
+DIGAMOS QUE DROPPAMOS NOSSA TABLE...
+
+
+
+
+--> UMA VEZ QUE O DATA RETENTION PERIOD ACABAR,
+
+
+
+ESSA DROPPED TABLE VAI 
+
+ENTRAR IMEDIATAMENTE NA FAILSAFE ZONE,
+
+
+E VAI OCUPAR 
+
+
+10.2 GB -------_> E O SNOWFLAKE VAI TE COBRAR 
+
+ESSA STORAGE..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... AÍ, POR ALGUMA RAZAO,
+
+
+VC 
+
+
+RECRIOU 
+
+ESSA TABLE 
+
+
+
+COM 
+
+
+
+
+
+
+
+"""
+
+CREATE OR REPLACE TABLE READER_SALES.PUBLIC.CUSTOMER 
+AS 
+SELECT * FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1000.CUSTOMER;
+
+
+
+""""
+
+
+
+
+
+
+
+
+OU SEJA,
+
+
+
+VC ESTÁ CRIANDO A TABLE COMO PERMANENT MAIS UMA VEZ....
+
+
+
+
+
+
+
+
+
+
+
+--> aí teremos active bytes como 10.2GB,
+
+pq ela está como active... ---------> E ESSA TABLE 
+
+NAO ESTÁ/ESTARÁ 
+
+NA FAILSAFE ZONE... -----------> MAS DIGAMOS QUE 
+
+
+
+VC NOVAMENTE 
+
+PENSOU 
+
+
+""ESSA TABLE ESTÁ ERRADA, PRECISO DROPPAR DE NOVO"" --> quando 
+
+
+isso acontecer,
+
+
+sua table vai cair na failsafe zone MAIS UMA VEZ....
+
+
+
+
+
+
+
+
+
+
+
+--> VAMOS FICAR COM ACTIVE BYTES ZERADOS DE NOVO,
+
+
+E AÍ 
+
+FICAREMOS COM FAILSAFE_BYTES...
+
+
+
+
+
+
+--> E SE ELE ENTRAR NO FAILSAFE,
+
+
+
+QUANTO 
+
+
+VC FICARÁ DE FAILSAFE STORAGE?
+
+
+
+
+
+
+
+
+SERÁ 20.4 GB (
+
+    pq 
+
+    droppamos 
+
+    nossa table 
+
+    2x,
+
+
+    nosso retention period é 0,
+
+
+    entrou no failsafe zone direto... --> QUER DIZER QUE 
+
+    NOSSA FAILSAFE ZONE STORAGE AGORA DUPLICOU...
+
+
+)
+
+
+
+
+
+podemos checar isso com a view de TABLE_STORAGE_METRICS...
+
+
+
+
+
+
+E ESSES STORAGE BYTES, DE FAIL SAFE,
+
+
+SERAO MANTIDOS NO SNOWFLAKE POR 7 DIAS,
+
+
+
+E O SNOWFLAKE VAI TE COBRAR POR ISSO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... É POR ISSO QUE PRECISAMOS USAR TRANSIENT 
+
+TABLES,
+
+
+USÁ-LAS 
+
+PARA 
+
+
+
+CRIAR STAGING TABLES/DEVELOPMENT TABLES...
+
+
+
+
+
+
+
+
+
+
+
+
+--> PQ DURANTE DEVELOPMENT ACTIVITIES 
+
+VC 
+
+VAI 
+
+
+CRIAR E DROPPAR 
+
+ESSA TABLE MÚLTIPLAS VEZES....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> TAMBÉM TEMOS "TIME_TRAVEL_BYTES" --> updates 
+
+e deletes, inserts,
+
+isso 
+
+tudo aumenta a quantidade de 
+
+
+TIME_TRAVEL_BYTES...
+
+
+
+
+
+
+
+--> isso tudo é contado,
+
+
+e ENTRA TAMBÉM NO FAIL SAFE ZONE,
+
+QUANDO SEU RETENTION PERIOD ACABA...
+
+
+
+
+
+
+--> OK... DURANTE 
+
+
+DEV ACTIVITIES,
+
+USE 
+
+
+TRANSIENT DATABASES,
+
+
+
+E TRABALHE DENTRO DESSA TRANSIENT DATABASE,
+
+
+PARA QUE ASSIM QUE SEU DATA RETENTION PERIOD ACABAR,
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> SEMPRE QUE VC CRIAR QUALQUER TABLE,
+
+
+
+
+
+SEMPRE TENTE ADICIONAR A KEYWORD "TRANSIENT",
+
+a nao ser que seja production...
+
+
+
+
+
+
+
+
+
+
+ok... failsafe é bom APENAS Para PRODUCTION TABLES...
+
+
+
+
+
+
+

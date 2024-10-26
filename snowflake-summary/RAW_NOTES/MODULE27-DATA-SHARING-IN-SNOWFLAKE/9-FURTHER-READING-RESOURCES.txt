@@ -1,0 +1,104 @@
+Further reading Resources
+Please go through below snowflake documentation for more understanding,
+
+
+
+
+https://docs.snowflake.com/en/user-guide/data-sharing-intro.html
+
+
+
+
+
+
+
+
+/***************************************************************************************************/
+
+Example for creating shared object,
+
+
+
+The following example illustrates the entire provider process as described above.
+
+Note that this example assumes:
+
+
+
+A database named sales_db exists with 
+a schema named aggregates_eula and a table named aggregate_1
+
+
+
+
+
+
+
+
+The database, schema, and table will be shared with 
+two accounts named 
+xy12345 and yz23456.
+
+
+
+
+
+
+
+
+use role accountadmin;
+ 
+create share sales_s;
+ 
+grant usage on database sales_db to share sales_s;
+grant usage on schema sales_db.aggregates_eula to share sales_s;
+grant select on table sales_db.aggregates_eula.aggregate_1 to share sales_s;
+ 
+show grants to share sales_s;
+ 
+alter share sales_s add accounts=xy12345, yz23456;
+ 
+show grants of share sales_s;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/***************************************************************************************************/
+
+-- Command to create reader account,
+
+
+
+create managed account reader_acct1
+    admin_name = user1 , admin_password = 'Sdfed43da!44' ,
+    type = reader;
+Please go through, below link for more information.
+
+
+
+
+https://docs.snowflake.com/en/sql-reference/sql/create-managed-account.html
+
+
+
+
+
+
+
+/***************************************************************************************************/
+
+Command to create shared database in reader account,
+
+CREATE DATABASE reader_sales FROM SHARE gia91570.sales_s;
+

@@ -1,0 +1,507 @@
+
+
+
+
+
+
+
+
+
+
+
+NESSA LECTURE,
+VEREMOS COMO FUNCIONA O TIME TRAVEL..
+
+
+
+
+
+
+
+ANTES DISSO,
+
+DEVEMOS REVER ALGUMAS DAS PROPRIEDADES 
+
+
+DO S3 BLOB STORAGE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+S3 BLOB STORAGE...
+
+
+
+
+
+
+
+
+S3 --> É UMA BLOB STORAGE, COM 
+
+UMA RELATIVAMENTE SIMPLES 
+
+INTERFACE 
+
+
+HTTPS-BASED, de PUT/GET/DELETE...
+
+
+
+
+
+
+
+
+
+
+** OBJECTS/FILES _ SÓ PODEM _ SER OVERWRITTADOS 
+
+COMPLETAMENTE, NO S3... ----> ISSO QUER DIZER QUE 
+
+NAO É POSSÍVEL NEM MESMO 
+
+FAZER "APPEND" AO FINAL DE 1 ARQUIVO...
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE FILES SAO ARMAZENADOS "iNTEIROS",
+
+SAO CONSTANTEMENTE DROPPADOS E RECRIADOS,
+quando inserimos 
+
+files atualizados...
+
+
+
+
+
+
+
+
+--> ENTRETANTO,
+
+
+O S3 SUPORTA REQUESTS DE TIPO "GET" PARA 
+
+
+__PARTES__ (ranges) DE FILES...
+
+
+
+
+
+
+
+
+
+--> POR CONTA DESSAS PROPRIEDADES,
+
+
+CADA_ OPERATION QUE VC 
+
+REALIZAR, EM SNOWFLAKE DATABASES,
+
+
+RESULTARÁ 
+
+
+
+EM ___ NOVAS FILES___... 
+
+
+
+
+
+
+
+--> E O SNOWFLAKE INTELIGENTEMENTE 
+
+
+MANTÉM__ A METADATA __ DESSAS NOVAS FILES
+
+QUE ENTAO 
+
+SAO ADICIONADAS E DELETADAS,
+
+
+
+TUDO PARA QUE VC CONSIGA 
+
+FAZER "TRAVEL BACK" 
+
+
+PARA A "VERSAO MAIS ANTIGA DA SUA FILE/FILES",
+
+
+
+sempre que 
+
+for necessário...
+
+
+
+
+
+
+
+
+
+
+
+
+--------------------------------------
+
+
+
+
+
+
+
+SUPONHA QUE TEMOS 1 TABLE...
+
+
+
+
+
+--> TEMOS VÁRIOS TIMES...
+
+
+
+
+-> inserimos várias files, em cada time/tempo..
+
+
+
+            TABLE FILE VERSIONS (immutable files)
+
+TIME 1   --->    A A A A A
+
+
+TIME 2   --->    A A A A A
+
+
+TIME 3   --->    A A A A A
+
+
+TIME 4   --->    A A A A A
+
+
+TIME 5   --->    A A A A A
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> mas digamos que, depois de certo tempo,
+
+
+DELETAMOS 
+ALGUMAS Das files:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+TIME 1   --->    A A A A A
+
+
+TIME 2   --->    A A A A A
+
+
+TIME 3   --->    
+
+
+TIME 4   --->    A A A A A
+
+
+TIME 5   --->    A A A A A
+
+
+
+
+
+
+
+
+----------------------
+
+
+
+
+
+
+
+
+
+OK... DELETAMOS ESSAS FILES..
+
+
+
+
+
+
+
+--> DEPOIS QUE DELETAMOS ESSAS POUCAS FILES,
+
+O QUE VAI ACONTECER NO BACKEND DO SNOWFLAKE 
+
+É A 
+
+SIMPLES REMOCAO 
+
+DOS 
+
+"mETADATA POINTERS"
+
+
+a essas files 
+específicas,
+
+
+tipo assim:
+
+
+
+
+
+
+
+TIME 1   --->    A A A A A
+
+
+TIME 2   --->    A A A A A
+
+
+TIME 3   
+
+
+TIME 4   --->    A A A A A
+
+
+TIME 5   --->    A A A A A
+
+
+
+
+
+
+
+
+
+
+
+
+
+AGORA, QUANDO QUERIARMOS ESSA TABLE,
+
+NAO VEREMOS MAIS ESSAS FILES...
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS E SE VC QUISESSE VIAJAR ATÉ O TIME 3 
+
+E VISUALIZAR 
+
+
+
+ESSAS FILES NA SUA TABLE?
+
+
+
+
+
+
+
+
+
+
+
+BEM, AÍ O 
+
+QUE O SNOWFLAKE VAI FAZER É REATTACHAR 
+
+
+A METADATA/POINTER DESSAS FILES,
+
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+
+TIME 1   --->    A A A A A
+
+
+TIME 2   --->    A A A A A
+
+
+TIME 3   --->    A A A A A
+
+
+TIME 4   --->    A A A A A
+
+
+TIME 5   --->    A A A A A
+
+
+
+
+
+
+------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+o que a metadata faz é 
+
+ENTREGAR OS POINTERS A ESSAS FILES,
+
+
+
+àS FILES COM NOVAS VERSIONS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> SE VC QUER VIAJAR 
+
+PARA VERSIONS MAIS VELHAS,
+
+A 
+
+METADATA VAI APONTAR 
+
+A
+ ELAS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA CADA OPERATION QUE REALIZAMOS NAS 
+
+
+
+TABLES,
+
+
+O SNOWFLAKE VAI ARMAZENAR METADATA INFO NA 
+
+
+METADATA STORAGE....
+
+
+
+
+
+
+
+
+A 
+
+
+TIME TRAVEL FEATURE APENAS É POSSÍVEL POR CONTA 
+
+
+
+DA MANEIRA 
+
+PELA QUAL O SNOWFLAKE MANAGEIA A METADATA...
+
+
+
+
+
+
+
+
+
+
+
+

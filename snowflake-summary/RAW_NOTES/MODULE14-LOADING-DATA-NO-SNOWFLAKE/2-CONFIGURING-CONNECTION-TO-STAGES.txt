@@ -1,0 +1,334 @@
+
+
+
+
+
+
+
+
+
+
+--> NESSA LECTURE, DISCUTIREMOS:
+
+
+
+
+
+
+
+
+
+1) COMO CONFIGURAR STAGES COM 
+
+SNOWFLAKE DATABASES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> VEREMOS COMO CONFIGURAR EXTERNAL STAGING AREA 
+
+COM O SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+
+JÁ SABEMOS QUE EXTERNAL STAGING AREAS PODEM SER 
+
+AWS, GCS E AZURE...
+
+
+
+
+
+
+
+
+
+
+
+--> NESSA STAGING AREA,
+
+
+ARMAZENAMOS AS RAW FILES (csvs, parquet data, json data)
+
+
+
+ANTES DE AS CARREGARMOS 
+
+
+NA SNOWFLAKE DATABASE...
+
+
+
+
+
+
+
+
+-> PARA CONSEGUIRMOS 
+
+
+fazer 1 connection com essa 
+
+STAGING AREA,
+
+PRECISAMOS DE 1 STAGING OBJECT...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS O PROBLEMA DE STAGING OBJECTS É QUE,
+
+NATIVAMENTE,
+
+
+A CONNECTION COM A EXTERNAL STAGING AREA 
+
+
+__NAO _ sERÁ SECURE_..
+
+
+
+
+
+
+
+
+
+
+
+
+--> SE QUEREMOS CRIAR 1 SECURE CONNECTION COM A STAGING 
+
+AREA,
+
+
+DEVEMOS 
+
+
+USAR O 
+
+
+
+"INTEGRATION OBJECT"...
+
+
+
+
+
+
+
+
+
+STAGE 
+
+
+E 
+
+
+
+
+INTEGRATION   OBJECT...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+STAGE --> É UM OBJECT COM PROPERTIES QUE 
+DESCREVEM 
+
+
+""COMO CARREGAR DATA LÁ DA EXTERNAL STAGING AREA""...
+
+(estudaremos essas properties nas próximas aulas)...
+
+
+
+
+
+
+
+FILE FORMAT --> TEM PROPERTIES COMO 
+
+"file_delimiter",
+
+"type",
+
+"skip_header",
+
+etc....
+
+
+
+
+--> PODEMOS CONFIGURAR ESSAS FILE PROPERTIES ANTES 
+
+DE 
+
+CARREGAR DATA PARA DENTRO DA TABLE SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> COMBINADOS, TODOS ESSES OBJECTS SERAO USADOS 
+
+PELO 
+
+COMANDO DE "COPY",
+
+
+PARA CARREGAR DATA PARA DENTRO DO SNOWFLAKE....
+
+
+
+
+
+-----------------------------
+
+
+
+
+
+
+
+
+
+
+certo... MAS AGORA VEREMOS COMO PODEMOS 
+
+CONFIGURAR O "INTERNAL STAGING AREA"
+
+
+
+
+COM A DATABASE SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+
+--> TODOS OS COMPONENTS E PROCESSOS 
+
+CONTINUAM OS MESMOS, AINDA QUE 
+
+
+A STAGING AREA SEJA __ INTERNA, AGORA...
+
+
+
+
+
+
+
+
+
+--> MAS, SE VC ESTÁ USANDO INTERNAL STAGING AREA,
+
+
+
+
+O __ INTEGRATION OBJECT __ NAO É 
+
+
+NECESSÁRIO (
+
+justamente pq nossa staging area INTERNA, esse tipo aí,
+
+será/é manageada 
+
+
+PELO SNOWFLAKE EM SI...
+)
+
+
+
+
+
+
+
+
+--> MESMO SEM INTEGRATION OBJECT,
+
+O USO DE INTERNAL STAGING 
+
+
+É SEGURO,
+
+PQ A CONNECTION É MANAGEADA PELO SNOWFLAKE...
+
+
+
+
+
+
+(
+    quer dizer que temos que CUIDAR,
+
+    cuidar com esse INTEGRATION OBJECT...
+)
+
+
+
+
+
+
+--> agora veremos a próxima aula...
+
+
+
+
+
+

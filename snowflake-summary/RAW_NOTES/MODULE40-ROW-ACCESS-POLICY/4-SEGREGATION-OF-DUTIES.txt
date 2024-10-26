@@ -1,0 +1,822 @@
+
+
+
+
+
+
+
+
+
+
+
+COMO JÁ DISCUTIMOS NAS ÚLTIMAS AULAS,
+
+SABEMOS 
+
+QUE:
+
+
+
+
+
+
+1) O MANAGE DE VIEWS PODE SER DIFÍCIL,
+
+
+SE QUEREMOS APLICAR RULES PARECIDAS 
+
+
+COM AQUELAS DEFINIDAS COM ROW ACCESS POLICIES...
+
+
+
+
+
+
+
+
+2) DISCUTIMOS SOBRE A "SEGREGATION OF DUTIES",
+
+
+QUE É FACILITADA 
+
+
+PELAS ROW ACCESS POLICIES...
+
+
+
+
+
+--------------------------
+
+
+
+
+
+
+
+
+AGORA FALAREMOS SOBRE A SEGREGATION OF DUTIES....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                COM O USO DE 
+                "SYSADMIN",
+
+                CRIAREMOS AS DATABASES:
+
+
+
+
+
+
+CLAIMS                                  GOVERNANCE
+
+
+
+
+
+
+
+
+
+
+
+
+--> DEBAIXO  DE "CLAIMS",
+
+
+
+CRIAMOS 1 SCHEMA DE NOME "PHARMACY"...
+
+
+
+
+
+
+
+
+-> DEBAIXO DE "GOVERNANCE",
+
+
+CRIAMOS 1 SCHEMA DE NOME 
+
+"ROW ACCESS POLICY"...
+
+
+
+
+
+
+
+
+
+--> no schema de "pharmacy",
+
+
+teremos A TABLE DE "PATIENT"....
+
+
+
+
+
+-> no schema de "row access policy",
+
+
+
+TEREMOS TABLE _POLICIES.... (como a usada com a table 
+de 
+"patient")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+EX:
+
+
+
+
+
+
+
+
+
+
+
+                COM O USO DE 
+                "SYSADMIN",
+
+                CRIAREMOS AS DATABASES:
+
+
+
+
+
+(Db)                                       (db)
+CLAIMS                                  GOVERNANCE
+
+
+
+(schema)                                    (SCHEMA)
+PHARMACY                                ROW ACCESS POLICY
+
+
+
+(Table)                                     (table policies)
+PATIENT                                     POLICIES
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK, MAS COMO FICA ESSA ESTRUTURA,
+
+
+
+DE UMA PERSPECTIVA DE "ROLES"?
+
+
+
+
+
+
+
+
+
+
+
+
+-> COM O "SECURITYADMIN",
+
+
+criaremos 2 roles:
+
+
+
+
+
+
+
+
+
+1) ETL_DEV 
+
+
+(
+    responsável 
+    pelo CREATE DA TABLE 
+
+    de 'patient',
+    E PELO 
+
+    LOAD DA DATA NO INTERIOR DELA...
+)
+
+
+
+
+
+2) POLICY_ADMIN
+
+
+
+(
+    responsável pelo manage do row access policy 
+    NA TABLE DE 
+
+    "pATIENT"...
+)
+
+
+
+
+
+
+
+
+
+--> a próxima coisa que faremos, no caso,
+
+
+É 
+
+
+COLOCAR ESSES 2 ROLES SOB A GUARDA DO "SECURITYADMIN" 
+                                        (
+                                            vai ter todos 
+
+                                            os privileges dos 2...
+                                        )
+
+
+
+
+
+--> DEPOIS DISSO,
+
+
+
+ENTREGAMOS USAGES E permissions:
+
+
+
+
+
+
+1) GRANT USAGE ON DATABASE CLAIMS TO ROLE ETL_DEV;
+
+
+
+2) GRANT USAGE ON SCHEMA PHARMACY TO ROLE ETL_DEV;
+
+
+
+3) GRANT ALL ON TABLE PATIENT TO ROLE ETL_DEV;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> FAZEMOS A MESMA COISA,
+
+MAS PARA O POLICY_ADMIN, COM A DATABASE DE GOVERNANCE:
+
+
+
+
+1) GRANT USAGE ON DATABASE GOVERNANCE TO ROLE POLICY_ADMIN
+
+
+
+2) GRANT USAGE ON SCHEMA ROW_ACCESS_POLICY TO ROLE POLICY_ADMIN;
+
+
+
+
+3) talvez uma permission para criar e editar policies...
+
+
+
+
+
+
+4) O POLICY_ADMIN DEVE TER 
+
+PERMISSION PARA _ _ATTACHEAR __ AS POLICIES, CRIADAS 
+
+POR ELE,
+
+à TABLE DE PATIENT....
+
+
+(
+    permission para alterar a table de 
+    "Patient"
+
+    e adicionar a policy que 
+
+    ele criar no schema de "row access policy"...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+---> PARA SATISFAZER ESSES REQUISITOS,
+
+
+
+
+
+
+O PROFESSOR FARÁ COM QUE 
+
+
+""TODOS OS PRIVILEGES QUE O ETL_dEV TEM,
+
+O POLICY_ADMIN TERÁ TAMBÉM""...
+
+
+
+
+
+
+
+
+
+
+
+
+-> quer dizer que o policy_admin 
+
+
+É HIERARQUICAMENTE 
+
+SUPERIOR AO ETL_DEV...
+
+
+
+
+(
+    pq ele tem 
+
+    "all privileges on table patient" + "ability to create and apply row access policies"
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AGORA VAMOS ATÉ O SNOWFLAKE WEB CONSOLE,
+
+
+E ESCREVEMOS 
+
+
+O CÓDIGO:
+
+
+
+
+
+
+
+
+
+---------- SEGREGATION OF DUTIES ------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+USE ROLE POLICY_ADMIN;
+
+
+
+
+
+
+
+
+CREATE OR REPLACE ROW ACCESS POLICY
+GOVERNANCE.ROW_ACCESS_POLICY.PATIENT_POLICY AS (ICDCODE VARCHAR)
+RETURNS BOOLEAN -> 
+CASE
+    WHEN CURRENT_ROLE()='SYSADMIN' THEN TRUE
+    ELSE
+        CASE 
+            WHEN ICDCODE='F70' THEN FALSE
+            ELSE TRUE 
+        END
+END;
+
+
+
+
+
+
+
+ALTER TABLE CLAIMS.PHARMACY.PATIENT 
+ADD ROW ACCESS POLICY GOVERNANCE.ROW_ACCESS_POLICY.PATIENT 
+ON (icdcode);
+
+
+--ALTER TABLE CLAIMS.PHARMACY.PATIENT 
+--ADD ROW ACCESS POLICY GOVERNANCE.ROW_ACCESS_POLICY.PATIENT 
+--ON (icdcode);
+
+--ALTER TABLE CLAIMS.PHARMACY.PATIENT 
+--DROP ROW ACCESS POLICY GOVERNANCE.ROW_ACCESS_POLICY.PATIENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- change to another role...
+USE ROLE ETL_DEV;
+
+
+
+SELECT * FROM CLAIMS.PHARMACY.PATIENT;
+
+
+
+
+
+
+
+
+
+
+
+
+--> VEREMOS QUE A POLICY TERÁ SIDO APLICADA....
+
+
+
+
+
+
+
+--> POR ISSO VEREMOS APENAS 9 RECORDS NA TABLE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+COM ISSO,
+
+COM ESSE SETUP,
+
+O ETL_dEV 
+
+NAO TEM QUE SE IMPORTAR/PREOCUPAR 
+
+COM O APPLY DE POLICIES,
+MANAGE DE POLICIES,
+
+ETC...
+
+
+
+
+
+
+
+
+
+
+
+
+--> O TRABALHO DO ETL_dEV É APENAS 
+
+CARREGAR DATA NA TABLE 
+
+E APLICAR TRANSFORMATIONS...
+
+
+
+
+
+
+
+
+
+
+
+--> JÁ O TRABALHO DO 
+
+ROLE DE "POLICY_ADMIN"
+
+
+
+É O DE APENAS APLICAR ROW ACCESS POLICIES 
+
+
+
+NAS TABLES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> TENTAMOS MAIS 1 COISA... ----> 
+
+
+
+
+
+
+
+
+
+ESTAMOS NO ROLE DE "ETL_DEV"...
+
+
+
+
+
+
+
+
+
+
+
+--> TENTAMOS DROPPAR A POLICY 
+
+
+
+DE "GOVERNANCE.ROW_ACCESS_POLICY.PATIENT_POLICY"....
+
+
+
+
+
+
+
+
+
+
+
+--> GRAÇAS AO NOSSO SETUP, O ETL_DEV
+
+RECEBE UM ERRO:
+
+
+
+"Database 'GOVERNANCE' does not exist or 
+is not authorized"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ISSO ACONTECEU PQ O ETL_DEV,
+CORRETAMENTE,
+
+NAO TEM NENHUMA PERMISSION 
+À database 
+
+
+de "governance",
+
+que é justamente 
+
+
+a database que contém o schema de 
+
+"row access policy",
+
+
+
+que é onde OS OBJECTS  DE 
+
+"rOW ACCESS POLICIES"
+se encontram
+
+
+(
+    e que estao bloqueando esse acesso...
+)
+
+
+
+
+
+
+
+
+
+OU SEJA,
+
+O POLICY ADMIN TEM CONTROLE COMPLETO 
+
+
+SOBRE AS POLICIES APLICADAS 
+
+
+
+NESSA TABLE DE "PATIENT"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... AGORA TROCAMOS DE VOLTA AO 
+
+ROLE DE "POLICY_ADMIN",
+
+
+
+E ENTAO RODAMOS 
+
+
+
+"ALTER TABLE CLAIMS.PHARMACY.PATIENT 
+DROP DOW ACCESS POLICY GOVERNANCE.ROW_ACCESS_POLICY.PATIENT_POLICY;"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ISSO É POSSÍVEL PQ ELE FOI O ROLE QUE CRIOU 
+
+
+
+OS POLICIES E OS ATTACHEOU,
+
+
+E SÓ ELE TEM ACESSO 
+
+à DATABASE DE "GOVERNANCE" (o ETL DEV nao tem)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--. E TODAS ESSAS ROW ACCESS POLICIES VIVERAO 
+
+
+DENTRO DESSE SCHEMA DE "ROW ACCESS POLICY",
+
+
+facilitando o manage de objects...
+
+
+
+

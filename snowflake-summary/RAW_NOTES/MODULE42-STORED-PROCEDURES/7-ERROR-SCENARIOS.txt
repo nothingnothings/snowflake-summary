@@ -1,0 +1,703 @@
+
+
+
+
+
+
+
+
+
+AGORA DEVEMOS GO AHEAD E VER COMO NOSSA PROCEDURE VAI HANDLAR 
+OS ERROR SCENARIOS....
+
+
+
+ALGUNS DOS POSSÍVEIS ERROR SCENARIOS SAO:
+
+
+
+
+
+
+
+
+1) WHAT IF MY TABLE IS ____EMPTY____...
+
+
+
+
+
+
+
+
+2) WHAT IF COLUMN __ VALUE __ OF TABLE IS __ NULL?
+
+(1 column_value é completamente nulo, por exemplo)....
+
+
+
+
+
+3) WHAT IF THE TABLE PASSED AS ARGUMENT DOES NOT EXIST?
+
+
+
+
+
+
+
+
+4) WHAT IF THE COLUMN DATA TYPE IS "VARIANT" OR "JSON"?
+
+
+(
+    se em 1 table eu tiver 1 column de type "VARIANT",
+
+    essa column deve, de alguma forma, SER IGNORADA... esse é o melhor 
+    behavior... nao quero rodar/verificar nenhum fill rate para 
+    essa column....
+)
+
+
+
+
+
+5) WHAT IF MY PROCEDURE FAILS IN BETWEEN DUE TO SOME 
+EXTERNAL REASON?
+
+
+(external reason, such as "THE PROCEDURE GOT ABORTED IN BETWEEN")
+
+
+
+(
+    in this case, WE SHOULD NOT BE SEEING A TABLE 
+
+    PARTIALLY FILLED WITH "FILL_RATE" RECORDS... that is 
+    the best behavior... 
+)
+
+
+(
+    OU TODAS AS COLUMNS DEVEM SER INSERIDAS, COMO ROWS,
+
+    OU NADA DEVE SER INSERIDO...
+)
+
+
+
+
+
+
+
+
+
+DEVEMOS VER COMO NOSSA PROCEDURE DEVE BEHAVE,
+
+PARA CADA 1 DESSES CENÁRIOS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+PEGAMOS O PRIMEIRO CASO,
+
+"WHAT IF MY TABLE IS EMPTY?"
+
+
+
+
+
+
+
+
+
+
+-- what if my table is empty --
+
+
+-- create empty table
+CREATE OR REPLACE TABLE CUSTOMER_2 (
+    COLUMN_NAME VARCHAR,
+    COLUMN_FILL_RATE VARCHAR
+);
+
+
+
+-- call procedure on empty table.
+
+CALL COLUMN_FILL_RATE('CUSTOMER_2');
+
+
+
+
+
+
+
+
+
+
+
+
+
+QUAL É O RESULTADO?
+
+
+
+
+
+
+
+--> É UM ERROR:
+
+
+
+
+"Cannot read property 'ColumnName' of UNDEFINED in 
+COLUMN_FILL_RATE at xxxx"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+O QUE ACONTECEU, EXATAMENTE?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+BEM, REVEJA O CÓDIGO DA PROCEDURE:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+create or replace procedure column_fill_rate(TABLE_NAME varchar)
+  returns VARIANT NOT NULL
+  language javascript
+  as     
+  $$  
+    var my_sql_command = "select COUNT(*) CNT from "+ TABLE_NAME +";"
+    var statement1 = snowflake.createStatement( {sqlText: my_sql_command} );
+    var result_set1 = statement1.execute();
+    result_set1.next();
+    
+    var my_sql_command2 = "select * from "+ TABLE_NAME +" LIMIT 10 ;"
+    var statement2 = snowflake.createStatement( {sqlText: my_sql_command2} );
+    var result_set2 = statement2.execute();
+    
+    var cnt = result_set1.getColumnValue(1);
+    var array_of_rows = [];
+    
+    
+    var row_num = 0;
+    row_as_json = {};
+    
+    var column_name;
+    
+      while (result_set2.next())  {
+        // Put each row in a variable of type JSON.
+         
+        // For each column in the row...
+        for (var col_num = 0; col_num < result_set2.getColumnCount(); col_num = col_num + 1) {
+          var col_name =result_set2.getColumnName(col_num+1);
+          
+         var my_sql_command3 = "select round(count(*)/"+cnt+",2) RW_CNT from "+ TABLE_NAME +" where "+col_name+" IS NOT NULL;"
+         
+         // return cnt;
+         var statement3 = snowflake.createStatement( {sqlText: my_sql_command3} );
+      
+           result_set3 = statement3.execute();
+          
+           result_set3.next();
+           var col_value = result_set3.getColumnValue(1);
+          
+           row_as_json = { ColumnName : col_name ,column_value : col_value}
+          
+           array_of_rows.push(row_as_json)
+          }
+          
+        }   
+        
+      table_as_json = { "key1" : array_of_rows };
+      
+         for (var col_num = 0; col_num < result_set2.getColumnCount(); col_num = col_num + 1) {
+         
+         var my_sql_command4 = "insert into Table_fill_rate values (:1 , :2 ) "
+      
+         var statement4 = snowflake.createStatement( {sqlText: my_sql_command4,binds: [table_as_json.key1[col_num].ColumnName,table_as_json.key1[col_num].column_value]} );
+      
+         statement4.execute();
+         
+         }
+ 
+  return table_as_json; 
+  $$
+  ;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-_> O PROBLEMA ACONTECEU NO my_sql_command_2:
+
+
+
+
+
+
+var my_sql_command2 = "select * from "+ TABLE_NAME +" LIMIT 10 ;"
+
+
+
+
+
+
+
+
+
+--> COMO ESSE my_sql_command_2
+
+
+ESTÁ NOS DANDO 1 OBJECT VAZIO,
+
+
+SEM NENHUMA ENTRY,
+
+
+
+
+
+
+
+ISSO NEM MESMO ENTREGA 
+1 RESULT SET...
+
+
+
+
+
+
+
+
+
+quer dizer que "result_set2'
+
+FICOU COM 
+
+1 EMPTY OBJECT,
+
+
+
+pq o código era este:
+
+
+
+
+
+
+
+
+var result_set2 = statement2.execute();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> Como estamos com um EMPTY OBJECT,
+
+
+nao há como rodar for loops em cima disso..
+
+
+
+
+POR ISSO FICAMOS COM 1 ERROR...
+
+
+
+
+
+
+(lá no statement4)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> IDEALMENTE,
+DEVEMOS 
+
+ADICIONAR ERROR HANDLING PARA QUE 
+
+ELE "GRACEFULLY EXITS", em caso de 
+"NO RECORDS ARE IN THE TABLE"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK...
+
+
+
+
+MAS E __ SE _ 1 COLUMN INTEIRA 
+
+
+DE 
+
+
+NOSSA TABLE 
+
+
+
+ESTIVER COMO "NULL"?
+
+
+
+
+
+
+
+
+
+
+O PROFESSOR DEFINE TODOS OS VALUES DE "C_aDDRESS"
+
+COMO NULL...
+
+
+
+
+
+
+
+--> ISSO NAO DÁ NENHUM THROW DE ERRO,
+
+
+O QUE QUER DIZER QUE 
+
+NOSSA PROCEDURE CONSEGUE HANDLAR ESSE CENÁRIO..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+3) MAS E SE TENTAMOS PASSAR 
+
+1 TABLE QUE __ NAO EXISTE__?
+
+
+
+
+
+
+
+
+
+tipo assim:
+
+
+
+
+
+-- What if you pass table which does not exist? --
+
+
+CALL COLUMN_FILL_RATE('EXAMPLE_TABLE)';
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ok... se fazemos isso...
+
+
+
+
+
+
+
+-- A PROCEDURE DÁ FAILED... E ENTAO NOS DIZ QUE 
+
+
+
+""OBJECT IS NOT AUTHORIZED"" 
+
+
+
+
+
+
+
+
+
+
+
+
+OBJECT IS NOT AUTHORIZED --> PODE SER OU 
+
+
+""VC NAO TEM AUTORIZACAO"",
+
+
+
+OU ""A TABLE NAO EXISTE""...
+
+
+
+
+
+
+
+
+
+
+MAS O IDEAL, NO CASO,
+
+É QUE 
+
+
+
+
+A PROCEDURE 
+
+
+FALHE GRACEFULLY,
+
+
+E A MENSAGEM DE ERROR/RAZAO DO ERRO 
+
+
+DEVE SER LOGGADA EM 1 TABLE SEPARADA (temos que codar isso)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+4) E SE MINHA PROCEDURE FALHA "IN BETWEEN",
+
+
+TALVEZ POR ALGUMA OUTRA RAZAO?
+
+
+
+
+
+
+--> NESSE CASO,
+
+
+VOU QUERER QUE 
+
+MINHA TABLE NAO SEJA 
+
+PREENCHIDA COM NENHUM RECORD,
+
+
+
+PQ A TRANSACTION DEVE OU 
+"SUCCEED COMPLETELY"
+
+OU "FAIL COMPLETELY"...
+
+
+
+
+
+
+
+
+
+--> O professor testa... 
+
+
+
+
+
+--> ELE PERCEBE QUE A TABLE FOI PARCIALMENTE 
+
+PREENCHIDA, O QUE NAO É BOM... -----> QUEREMOS 
+
+
+
+QUE 
+
+ESSES RECORDS NAO SEJAM CARREGADOS NA TABLE,
+
+EM CASO DE ERROR (
+
+    a transaction deve ou completar totalmente,
+
+    ou nao completar nada, deve acontecer 
+
+    1 rollback... esse é o behavior 
+
+    ideal...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> TODOS ESSES ERROR SCENARIOS DEVEM SER HANDLADOS,
+
+
+PARA QUE 
+
+MINHA 
+
+PROCEDURE FIQUE RESILENT CONTRA TODOS ELES...
+
+
+
+
+
+
+
+
+
+
+-> NA PRÓXIMA AULA, VEREMOS
+
+
+COMO HANDLAR TODOS ESSES ERROR SCENARIOS,
+
+USANDO OUTROS CONCEPTS DE 
+
+PROCEDURE,
+
+
+NO SNOWFLAKE...

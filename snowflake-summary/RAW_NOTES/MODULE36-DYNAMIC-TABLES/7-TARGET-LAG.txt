@@ -1,0 +1,394 @@
+
+
+
+
+
+
+
+
+
+TARGET_LAG...
+
+
+
+
+
+
+
+
+
+-_> É A PROPRIEDADE VISTA AQUI:
+
+
+
+CREATE OR REPLACE DYNAMIC TABLE DEMO_DB.PUBLIC.CALL_CENTER_DYNAMIC
+    TARGET_LAG='1 MINUTE'
+    WAREHOUSE=COMPUTE_WH
+    AS 
+SELECT * FROM DEMO_DB.PUBLIC.CALL_CENTER;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ESSA PROPRIEDADE AJUDA A REFRESHAR ESSA DYNAMIC TABLE,
+
+
+A CADA X MINUTOS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DEVEMOS TENTAR ENTENDER ISSO COM 
+
+
+1 DIAGRAMA:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DYNAMIC TABLE:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[DYNAMIC TABLE] --> CLOUD SERVICE LAYER -----> SNOWFLAKE TABLE ..
+
+
+
+
+
+
+
+
+
+
+
+--> a CADA 1 MINUTO,
+
+
+
+A DYNAMIC TABLE/SNOWFLAKE VAI DISPARAR 
+
+1 REQUEST CONTRA 
+
+O CLOUD SERVICES 
+
+LAYER,
+
+
+PARA QUE ELE CHEQUE A METADATA..
+
+
+
+
+
+
+
+    SE FOR MARCADO 
+    QUE 
+
+    A TABLE SNOWFLAKE ORIGINAL FOI ALTERADa,
+
+
+
+    SE HOUVE CHANGES,
+
+
+    O CLOUD SERVICES LAYER 
+
+
+    VAI _ IR ATÉ A SNOWFLAKE TABLE,
+
+    PARA FETCHEAR A REQUIRED TABLE,
+
+    QUE 
+
+
+
+    SERÁ RETORNADA/APLICADA 
+
+
+    NA 
+
+
+    DYNAMIC TABLE (que iniciou esse processo)...
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE NOSSA TABLE VAI SER REFRESHADA 
+
+DE 
+
+MINUTO EM MINUTO,
+
+
+SE ACONTECER ALGUMA CHANGE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK.... A CADA 1 MINUTO,
+
+
+A QUERY DE "CHECK" VAI SER FIRED...
+
+
+
+
+
+
+
+
+
+--> PODEMOS VER TAMBÉM AS PREVIOUS RUNS...
+
+
+
+
+
+--> mtas delas ficaram com "sem change",
+
+pq realmente nada aconteceu...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK, MAS O QUE ACONTECE NO BACKGROUND?
+
+
+
+
+
+
+
+
+--> BEM, NAO ACONTECE O QUERY 
+
+DE 
+
+DATA ALGUMA... ------> O SNOWFLAKE ESTA'
+USANDO 
+
+APENAS O METADATA RESULT ARMAZENADO NO CLOUD 
+
+SERVICES LAYER (
+
+
+    NENHUM COMPUTE RESOURCE É ACTUALLY 
+
+    UTILIZADO...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> nos docs,
+
+
+
+visualizamos 
+
+
+QUE O "TARGET LAG"
+
+
+PODE SER ESPECIFICADO DE 2 FORMAS....
+
+
+
+
+
+
+FORMAS:
+
+
+1) TARGET_LAG= xx seconds, days, minutes, hours etc..
+
+
+
+
+
+2) DOWNSTREAM --> 
+
+
+
+é escrito 
+
+com "TARGET_LAG=DOWNSTREAM" -->  ISSO INDICA QUE 
+
+A __ DYNAMIC TABLE DEVE SER REFRESHADA 
+
+
+"ON DEMAND" 
+
+QUANDO OUTRAS DYNAMIC TABLES DEPENDENTES 
+
+DELA PRECISAREM REFRESH...
+
+
+
+
+
+
+
+
+
+
+
+
+----------> certo... MAS ALGO QUE É IMPOSSÍVEL DE FAZER,
+
+COM DYNAMIC TABLES,
+
+É DEFINIR QUE ELAS DEVEM SER REFRESHADAS 
+
+
+""A CERTO PONTO EM 1 DIA""... (como 
+
+com 1 cronjob)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> QUANDO USAMOS DYNAMIC TABLES,
+
+SÓ PODEMOS COLOCAR 2 days, 1 minute,
+
+30 minutes,
+
+etc...
+
+
+
+
+
+
+
+
+--> VEREMOS "DOWNSTREAM" em futuras lessons...
+
+
+
+
+

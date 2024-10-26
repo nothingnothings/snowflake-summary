@@ -1,0 +1,990 @@
+
+
+
+
+
+
+
+
+
+
+
+
+--> AGORA TEMOS OUTRO CENÁRIO:
+
+
+
+
+
+
+
+
+
+
+1) COMPANY TEM 1 MONTE DE LEGACY DATA...
+
+
+NAO QUERIAM MOVER ESSA DATA PARA DENTRO DO SNOWFLAKE...
+
+
+
+
+
+
+2) MAS ELES ACEITAM 
+
+CRIAR TABLES "EXTERNAS" NO SNOWFLAKE,
+
+PARA SEREM QUERIADAS SEMPRE QUE FOR NECESSÁRIO...
+
+
+
+
+
+
+SUA 
+
+TAREFA 
+
+É __ CHECAR ESSA POSSIBILIDADE,
+
+
+
+
+SE PODEMOS 
+ARMAZENAR A DATA NO S3 
+
+E ENTAO QUERIAR A DATA DO SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+--> VOCE TEM QUE SUBMITTAR AS POSSIBILIDADES 
+
+A SUA COMPANHIA...
+
+
+
+
+
+
+
+
+
+--> NO SNOWFLAKE,
+
+
+JÁ CRIAMOS 1 INTEGRATION OBJECT,
+
+E FIZEMOS 1 CONNECTION 
+
+
+ENTRE O AWS E O SNOWFLAKE...
+
+
+
+
+
+
+
+
+--> AGORA DEVEMOS UPLOADAR DATA NAQUELE FOLDER 
+
+E ENTAO TENTAR QUERIAR A DATA NO SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+
+--> TENTAREMOS ACESSAR ESSA DATA DE DENTRO DO SNOWFLAKE...
+
+
+
+
+
+
+
+--> TEMOS O BUCKET...
+
+
+
+VAMOS COLOCAR 5 CSVs de employees nesse folder...
+
+
+
+
+
+
+
+
+
+
+
+-> O PROFESSOR TAMBÉM CRIA 1 NOVO FILE FORMAT, COM 
+
+ESTA SINTAXE:
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE FILE FORMAT DEMO_DB.FILE_FORMATS.MY_CSV_FORMAT 
+    TYPE=CSV
+    FIELD_DELIMITER=','
+    SKIP_HEADER=1
+    NULL_IF=('NULL', 'null')
+    EMPTY_FIELD_AS_NULL=TRUE;
+
+
+
+
+
+
+DESC FILE FORMAT MY_CSV_FORMAT
+
+
+
+
+CREATE OR REPLACE STAGE demo_db.external_stages.my_s3_stage 
+    STORAGE_INTEGRATION=S3_INTEGRATION
+    URL='s3://snowflakecrest/emp'
+    FILE_FORMAT=(
+        FORMAT_NAME=MY_CSV_FORMAT
+    )
+
+
+
+
+
+
+
+
+-- QUERY DATA DIRECTLY:
+
+SELECT 
+T.$1 AS first_name,
+T.$2 AS last_name,
+T.$3 AS email
+FROM @DEMO_DB.PUBLIC.S3_EXTERNAL_STAGE/CSV/ AS T;
+
+
+
+
+
+
+TIPO ASSIM:
+
+
+
+SELECT 
+T.$1 AS first_name,
+T.$2 AS last_name,
+T.$3 AS email
+FROM @DEMO_DB.PUBLIC.S3_EXTERNAL_STAGE AS T;
+
+
+
+
+----------------------------------
+
+
+
+
+
+
+
+
+
+
+OK, 
+
+MAS COMO DIABOS ESSA DATA É TRATADA 
+
+PELO SNOWFLAKE,
+
+COMO ELA FICA LÁ NO "QUERY PLAN"?
+
+
+
+
+
+
+
+
+
+AS STEPS EXECUTADAS FORAM:
+
+
+
+1) EXTERNALSCAN...
+
+
+aí ele retornou 20 records, da staging area...
+
+
+(mas nao vemos mais nenhuma outra 
+stat metric, nessa window... nenhuma 
+outra stat metric como vimos quando 
+
+queriamos snowflake tables)....
+
+
+
+
+QUER DIZER QUE QUANDO QUERIAMOS UMA "EXTERNAL STAGING AREA",
+
+nao conseguimos visualizar nenhum 
+
+dos stats que vizualizamos quando 
+
+queriamos tables normais do snowflake...
+
+
+
+
+
+
+
+
+QUER DIZER QUE 
+
+NAO VAMOS PODER "LEVERAGE"
+
+
+ALGUMAS DAS MAIN FEATURES DO SNOWFLAKE 
+
+SE ESTIVERMOS 
+
+QUERIANDO 
+DIRETAMENTE DA EXTERNAL STAGING AREA (s3 ou qualquer 
+outra blob storage),
+
+COMO FAZEMOS AQUI...
+
+
+
+
+
+
+ainda assim, conseguimos queriar a data 
+
+que está dentro do s3 storage...
+
+
+
+
+
+
+
+
+
+
+
+
+o professor vai além,
+
+
+
+FILTRA A DATA DIRETAMENTE 
+
+DO BUCKET,
+
+TIPO ASSIM:
+
+
+
+
+
+
+-- FILTER DATA DIRECTLY 
+
+
+SELECT
+T.$1 AS first_name,
+T.$2 AS last_name,
+T.$3 AS email 
+FROM @demo_db.public.S3_EXTERNAL_STAGE AS T 
+WHERE T.$1 IN ('Di', 'Carson', 'Dana');
+
+
+
+
+
+
+
+
+
+
+
+
+------------
+
+
+
+
+
+
+
+TAMBÉM PODEMOS USAR JOINS, TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+-- YOu can write join conditions:
+
+
+SELECT 
+T.$1 AS first_name,
+T.$2 AS last_name,
+T.$3 AS email
+FROM @demo_db.public.S3_EXTERNAL_STAGE/ AS T
+INNER JOIN @demo_db.public.S3_EXTERNAL_STAGE AS D
+ON T.$1=D.$1;
+
+
+
+
+
+
+
+
+
+
+PODEMOS FAZER ISSO, SIM... PODEMOS 
+
+JOINAR 
+
+
+
+2 FILES TOGETHER... 
+
+
+
+
+
+
+
+
+
+
+--> AQUI, NO CASO, ESTAMOS FAZENDO 1 SELF-JOIN...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PODEMOS TAMBÉM CRIAR VIEWS EM CIMA DESSA DATA..
+
+
+
+
+
+
+
+
+--> TIPO ASSIM:
+
+
+
+
+
+
+-- You can also create views:
+CREATE OR REPLACE VIEW DEMO_DB.PUBLIC.QUERY_FROM_S3 
+AS 
+SELECT
+T.$1 AS first_name,
+T.$2 AS last_name,
+T.$3 AS email 
+FROM @demo_db.external_stages.S3_EXTERNAL_STAGE;
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK..
+
+
+
+
+
+
+
+
+
+essa view é uma "action table" (nao 
+sei o que ele disse, veremos na próxima section)..
+
+
+
+
+
+
+
+
+
+
+
+MAS O QUE INTERESSA É QUE PODEMOS CRIAR VIEWS 
+
+
+COM BASE NO QUE TEMOS 
+
+
+
+NO AWS S3...
+
+
+
+
+
+
+
+
+--> TAMBÉM PODEMOS CRIAR 1 TABLE,
+
+
+
+a partir de arquivos no s3,
+
+com esta sintaxe:
+
+
+
+
+
+
+
+
+
+
+
+-- You can also create tables:
+CREATE OR REPLACE TABLE demo_db.public.query_from_s3_table
+AS 
+SELECT
+T.$1 AS first_name,
+T.$2 AS last_name,
+T.$3 AS email
+FROM @demo_db.external_stages.S3_EXTERNAL_STAGE/ AS T;
+
+
+
+
+
+
+
+
+
+
+
+QUANDO VC CRIA 1 TABLE,
+
+
+VC 
+
+VAI 
+
+COPIAR 
+
+TODA A DATA DO S3 
+PARA 
+
+
+DENTRO 
+
+
+DA SNOWFLAKE TABLE...
+
+
+
+
+
+
+
+
+
+
+
+
+MAS VC DEVE LEMBRAR:
+
+
+SE VC TIVER 1 VIEW,
+
+
+
+SE NOVA DATA FOR ADICIONADA 
+
+
+AO SEU BUCKET S3,
+
+
+ESSA VIEW SERÁ REFRESHADA,
+
+NO FUTURO,
+
+SE ELA FOR QUERIADA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ENTRETANTO, NO CASO DE TABLES,
+
+
+ARQUIVOS ADICIONADOS A BUCKETS 
+
+NAO VAO REFRESHAR 
+
+
+SUAS TABLES CORRESPONDENTES NO SNOWFLAKE,
+
+
+AS TABLES QUE FORAM CRIADAS A PARTIR DELES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... AÍ CRIAMOS ESSA TABLE...
+
+
+
+
+
+
+
+
+
+
+PODEMOS TAMBÉM RODAR FILTERS EM CIMA DA NOSSA 
+TABLE,
+
+
+COISA COMUM:
+
+
+
+
+
+
+
+
+
+SELECT * FROM demo_db.public.query_from_s3_table
+WHERE first_name='Ivett';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... COMO PARTE DA TASK ATRIBUÍDA A NÓS,
+
+
+PODEMOS
+
+
+
+FAZER TUDO ISSO... --> PODEMOS:
+
+
+
+
+
+1) CRIAR VIEW EM CIMA DA DATA 
+
+EXISTENTE LÁ NO S3..
+
+
+
+
+
+
+
+
+2) PODEMOS RODAR TODOS ESSES TIPOS DE QUERIES...
+
+
+
+
+
+
+
+
+
+
+--> NEM SEMPRE É NECESSÁRIO COPIAR 
+
+TODA A DATA 
+
+
+QUE ESTÁ NO AWS S3 PARA DENTRO 
+
+
+DO SNOWFLAKE... --------> MAS SE VC 
+
+
+N FIZER ISSO,
+
+NAO PODE 
+
+LEVERAGE 
+
+
+TODAS AS FEATURES DO SNOWFLAKE,
+
+
+COMO MICROPARTITIONS,
+
+
+TABLE SCANS,
+
+
+CACHING,
+
+
+E ETC... --> ESSAS COISAS NAO PODERAO SER LEVERAGED,
+
+
+MAS VC 
+
+AINDA PODERÁ FAZER 
+
+QUERY DA DATA QUE ESTÁ SITTING NO AWS S3...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+MAS, NESSE USE-CASE, É FINE USAR O SNOWFLAKE 
+
+PARA APENAS QUERIAR A DATA QUE RESIDE NO S3,
+
+
+JUSTAMENTE PQ A DATA 
+
+É 'LEGACY DATA',
+
+
+
+E NAO É QUERIADA COM TANTA FREQUENCIA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+QUER DIZER QUE EM VEZ DE 
+
+
+__ COPIAR ESSA DATA E ENTAO 
+
+PAGAR O CUSTO DE STORAGE 
+
+(tanto para o storage do s3 como o do snowflake),
+
+
+
+ÀS VEZES É FINE MANTER O STORAGE EM SI 
+
+LÁ NA AWS,
+
+E AÍ 
+
+APENAS USAR O SNOWFLAKE (compute power)
+
+PARA QUERIAR 
+
+
+ESSA DATA DO S3,
+
+POR MEIO DE SELECTS E VIEWS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+MAS ANTES DE ACABARMOS ESSA LECTURE,
+
+
+TEMOS MAIS 1 DETALHE/PONTO..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> DIGAMOS QUE 
+
+
+
+RECRIAMOS O NOSSO STAGE,
+
+MAS COM 1 BUCKET E FOLDER DIFERENTES....
+
+
+
+
+
+
+
+
+
+
+
+
+--> COM ISSO, GANHAREMOS 1 ERROR:
+
+
+
+"LOCATION XXXX IS NOT ALLOWED BY 
+INTEGRATION S3_INTEGRATION. PLEASE USE 
+DESC INTEGRATION TO CHECK OUT ALLOWED AND 
+BLOCKED LOCATIONS""....
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE ESSA QUERY NOS DÁ 
+
+
+A PROPRIEDADE DE "LOCATION",
+
+
+QUE NOS DIZ 
+
+
+
+QUAIS LINKS SAO PERMITTED...
+
+
+
+
+
+
+
+
+
+--> SE VC QUER ADICIONAR MAIS 
+
+
+LOCATIONS, VC 
+
+PRECISA 
+
+
+
+DAR 1 ALTER NO INTEGRATION OBJECT,
+
+E AÍ 
+
+
+COLOCAR 
+
+
+MAIS URLS EM 
+
+
+"STORAGE_ALLOWED_LOCATIONS"...
+
+
+
+
+
+
+
+
+
+-> COM ISSO,
+
+NOS É DADA UMA SECURITY RESTRICTION,
+
+
+PQ SÓ PODEMOS QUERIAR 
+
+
+LOCATIONS ESPECÍFICAS DO S3,
+
+
+
+JUSTAMENTE POR CONTA DESSA 
+
+RESTRICAO 
+
+
+DO INTEGRATION OBJECT....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ISSO QUER DIZER QUE DEVELOPERS NAO PODEM 
+SIMPLESMENTE 
+
+CRIAR AS STAGING AREAS 
+
+E JÁ ACESSAR TODOS OS FOLDERS/BUCKETS 
+
+EXISTENTES NO S3...
+
+
+
+
+
+
+
+
+
+
+--> RESUMO DAS LICOES APRENDIDAS:
+
+
+
+
+
+
+1) PODEMOS QUERIAR DATA DO AWS S3 DIRETAMENTE 
+DO SNOWFLAKE...
+
+
+
+2) VC PODE FILTRAR E CRIAR VIEWS EM CIMA DESSA DATA....
+
+
+
+
+3) O INTEGRATION OBJECT RESTRINGE AWS S3 PATHS,
+
+AS LOCATIONS...
+
+
+
+
+
+4) VIMOS A IIMPORTANCIA DE QUERIAR DATA 
+
+DO S3...

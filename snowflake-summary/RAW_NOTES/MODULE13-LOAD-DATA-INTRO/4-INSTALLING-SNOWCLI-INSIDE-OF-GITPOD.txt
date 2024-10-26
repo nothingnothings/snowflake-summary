@@ -1,0 +1,328 @@
+
+
+
+
+
+ESTAMOS COM 1 JANELA 
+
+
+DO VSCODE CONECTADA
+
+
+AO GITPOD...
+
+
+
+
+
+
+-----> QUEREMOS INSTALAR O SNOWCLI DENTRO 
+DO GITPOD, PARA QUE CONSIGAMOS NOS 
+
+CONECTAR 
+
+
+
+AO SNOWFLAKE....
+
+
+
+
+
+
+
+
+
+--> PROFESSOR COLOCA O COMANDO DE DOWNLOAD DO SNOWCLI...
+
+
+
+
+
+curl -O https://sfc-repo.snowflakecomputing.com/snowsql/bootstrap/1.2/linux_x86_64/snowsql-1.2.9-linux_x86_64.bash
+
+
+
+
+
+
+
+
+
+
+
+
+
+TAMBÉM TEMOS ESTE COMANDO (usado para INSTALAR o snowcli, esse 
+download aí):
+
+
+
+
+ SNOWSQL_DEST=~/bin SNOWSQL_LOGIN_SHELL=~/.profile bash snowsql-1.2.9-linux_x86_64.bash
+
+
+
+
+
+
+
+ ----------
+
+
+
+
+
+
+
+
+
+ --> VIMOS QUE 1 BASH FILE FOI BAIXADA...
+
+
+
+
+
+
+
+
+ --> mas temos que 
+
+ rodar bash nome-do-arquivo.bash,
+
+
+ PARA 
+ INSTALAR ESSE SNOWCLI...
+
+
+
+
+
+
+QUANDO NOS É REQUISITADO O LOCAL EM QUE QUEREMOS 
+
+INSTALAR ESSE CLI,
+
+
+
+colocamos 
+
+'/workspace/snowflake-gitpod/snowcli/' 
+
+
+
+
+
+
+
+
+
+
+
+
+OK, MAS ISSO AINDA NAO ESTÁ FUNCIONANDO...
+
+
+
+
+PARA RODAR ESSA CLI,
+
+DEVEMOS ENTRAR DENTRO 
+
+DA PASTA 'snowcli'
+
+
+e entao 
+
+rodar snowsql...
+
+
+
+
+
+
+
+
+
+-> para isso, devemos 
+
+rodar 
+
+./snowsql (só assim podemos acessar essa cli)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ISSO NOS DÁ 1 LISTA DE OPTIONS QUE TEMOS PARA O SNOWSQL...
+
+
+
+
+
+
+
+
+
+
+
+
+--> O QUE TEMOS QUE FAZER, SE QUEREMOS 
+
+
+NOS CONECTAR AO SNOWFLAKE,
+
+É 
+
+
+
+
+./snowsql -a <account_name> -u <username>
+
+
+
+tipo assim:
+
+
+
+
+
+./snowsql -a uu18264.us-east-2.aws -u nothingnothings
+
+
+
+
+
+------------------------------
+
+
+
+
+
+
+
+
+
+
+
+OK, AGORA ESTAREMOS CONECTADOS AO SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ESTAMOS USANDO O GITPOD..
+
+
+
+
+
+TEMOS 10 HORAS GŔATIS COM O GITPOD...
+
+
+
+
+
+
+
+--> ASSIM QUE VC TERMINAR DE USAR O GITPOD,
+
+
+
+FECHE ESSE WORKSPACE...
+
+
+
+
+
+
+
+
+
+--> SE NOS CONECTAMOS AO LINKEDIN,
+
+podemos 
+
+
+estender o free time até 50 horas...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> podemos escrever os comandos diretamente 
+
+no terminal,
+
+
+pq estamos conectados ao snowflake...
+
+
+
+
+
+--> devemos usar o gitpod se estivermos com 
+
+
+issues instalando e conectando 
+
+o snowcli com nossa conta snowflake...
+
+
+
+
+
+
+
+
+In the following sections we will be using larger files to store in AWS S3 and copy that to snowflake.
+
+Right now AWS free tier account will allow to store 5 GB of data for free in AWS S3. If you are storing more data in AWS s3 you have to pay a very small amount.
+
+Please find the below tables for cost metrics
+
+
+
+
+
+
+
+
+
+
+
+Just make sure you delete your files from AWS s3 once you are done with your practice.
+
+
+
+
+
+

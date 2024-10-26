@@ -1,0 +1,849 @@
+
+
+
+
+NAS ÚLTIMAS AULAS,
+
+VIMOS:
+
+
+
+
+
+
+
+1) COMO CRIAR VIEW E QUERY S3 
+
+DATA,
+
+
+DENTRO DO SNOWFLAKE...
+
+
+
+(
+    com isso, 
+
+    aprendemos como criar essa view e queriar 
+    essa data...
+)
+
+
+
+
+
+
+
+
+
+2) ENTRETANTO, NO SNOWFLAKE TEMOS OUTRA 
+OPCAO,
+
+
+QUE É 
+
+
+""CREATE EXTERNAL TABLES"" --> COM ISSO,
+
+
+CRIAMOS EXPLICITAMENTE UMA "EXTERNAL TABLE",
+
+
+TABLE EXTERNA PARA A DATA DO S3....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> NESTA LECTURE,
+
+VEREMOS COMO CRIAR ESSAS EXTERNAL TABLES,
+
+
+DENTRO DO SNOWFLAKE,
+
+PARA QUERIAR DATA QUE FICA NO S3...
+
+
+
+
+
+(nunca tinha visto isso antes)...
+
+
+
+
+
+-----------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+A SINTAXE PARA CRIAR 1 EXTERNAL TABLE,
+
+DO SNOWFLAKE,
+
+
+
+É ASSIM:
+
+
+
+
+
+
+
+-------------- EXTERNAL TABLES IN SNOWFLAKE ------------------
+
+
+
+
+
+
+
+
+CREATE OR REPLACE EXTERNAL TABLE ext_table_example 
+WITH LOCATION = @DEMO_DB.EXTERNAL_STAGES.MY_S3_STAGE
+FILE_FORMAT=(
+    TYPE=CSV
+);
+
+
+
+
+
+
+
+
+DESC TABLE ext_table_example;
+
+
+
+
+SELECT * fROM ext_table;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> JÁ PODEMOS PERCEBER, IMEDIATAMENTE, AQUI,
+
+
+
+QUE AS EXTERNAL TABLES EXIGEM ESSE PARAMETRO 
+
+
+DE "WITH LOCATION",
+
+
+em que vamos inserir o STAGE EM QUE ESTAO 
+
+NOSSOS ARQUIVOS, NO S3...
+
+
+
+
+
+
+
+
+--> ANTERIORMENTE, criamos 1 integration object 
+
+
+e o integramos a 1 stage,
+
+que vamos usar nessa table....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE ANTES DE CRIAR A EXTERNAL TABLE,
+
+
+VC DEVE SE PREPARAR,
+
+
+DEVE JÁ TER AQUELE STAGE COM O INTEGRATION OBJECT 
+
+INTEGRADO...
+
+
+
+
+
+
+
+
+
+
+
+
+--> TAMBÉM PRECISAMOS DEFINIR O FILE FORMAT DESSA TABLE...
+
+
+
+
+
+
+
+
+
+--> OK... 
+
+
+
+ISSO VAI DEFINIR A EXTERNAL TABLE PARA NÓS...
+
+
+
+
+
+
+
+
+---> a table é criada...
+
+
+
+
+
+
+
+SE DESCREVEMOS ESSA TABLE, COM 
+
+"DESC TABLE ext_table_example",
+
+
+ficamos com:
+
+
+
+
+
+
+
+
+
+name: value 
+type: VARIANT 
+kind: column 
+null: y 
+default: null 
+
+
+
+
+
+
+
+
+
+
+
+
+e várias outras propriedades...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> O PROFESSOR NOS EXPLICA QUE 
+
+
+ESSA TABLE TERÁ APENAS 1 ÚNICA COLUMN,
+
+
+
+
+DE TYPE "VARIANT"...
+
+
+
+
+
+
+
+
+
+
+--> nao há primary key, nem nada....
+
+
+
+
+
+
+
+
+-> nenhuma policy, nada...
+
+
+
+
+
+
+
+
+
+--> AGORA TENTAMOS QUERIAR ESSA TABLE:
+
+
+
+
+
+SELECT * FROM DEMO_DB.PUBLIC.ext_table_example;
+
+
+
+
+
+
+
+
+
+
+
+
+
+FICA ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- Create external table (attached to s3 stage)
+CREATE OR REPLACE EXTERNAL TABLE ext_table_example
+WITH LOCATION=@DEMO_DB.PUBLIC.S3_EXTERNAL_STAGE
+FILE_FORMAT=(
+    TYPE=CSV
+);
+
+
+-- only 1 column, data type "VARIANT"
+DESC TABLE DEMO_DB.PUBLIC.EXT_TABLE_EXAMPLE;
+
+-- Value:
+-- {   "c1": "Nyssa",   "c2": "Dorgan",   "c3": "ndorgan5@sf_tuts.com",   "c4": "7 Tomscot Way",   "c5": "Pampas Chico",   "c6": "4/13/2017" }
+-- {   "c1": "Catherin",   "c2": "Devereu",   "c3": "cdevereu6@sf_tuts.co.au",   "c4": "535 Basil Terrace",   "c5": "Magapit",   "c6": "12/17/2016" }
+-- {   "c1": "Grazia",   "c2": "Glaserman",   "c3": "gglaserman7@sf_tuts.com",   "c4": "162 Debra Lane",   "c5": "Shiquanhe",   "c6": "6/6/2017" }
+SELECT * FROM DEMO_DB.PUBLIC.EXT_TABLE_EXAMPLE;
+
+
+
+
+
+
+
+-------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+QUER DIZER QUE 
+
+
+ESSA TABLE VAI CONTER APENAS 1 ÚNICA COLUMN,
+
+COM 1 VALUE, QUE SERÁ 
+
+
+DO DATA TYPE "VARIANT"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+E PODEMOS USAR ESSA TABLE PARA CRIAR
+
+NOVAS TABLES,
+
+
+
+BASTA USAR A SINTAXE DO SNOWFLAKE DE ACESSO 
+
+A ESSAS KEYS...
+
+
+
+
+
+tipo assim, acho:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- Create external table (attached to s3 stage)
+CREATE OR REPLACE EXTERNAL TABLE ext_table_example
+WITH LOCATION=@DEMO_DB.PUBLIC.S3_EXTERNAL_STAGE
+FILE_FORMAT=(
+    TYPE=CSV
+);
+
+
+-- only 1 column, data type "VARIANT"
+DESC TABLE DEMO_DB.PUBLIC.EXT_TABLE_EXAMPLE;
+
+-- Value:
+-- {   "c1": "Nyssa",   "c2": "Dorgan",   "c3": "ndorgan5@sf_tuts.com",   "c4": "7 Tomscot Way",   "c5": "Pampas Chico",   "c6": "4/13/2017" }
+-- {   "c1": "Catherin",   "c2": "Devereu",   "c3": "cdevereu6@sf_tuts.co.au",   "c4": "535 Basil Terrace",   "c5": "Magapit",   "c6": "12/17/2016" }
+-- {   "c1": "Grazia",   "c2": "Glaserman",   "c3": "gglaserman7@sf_tuts.com",   "c4": "162 Debra Lane",   "c5": "Shiquanhe",   "c6": "6/6/2017" }
+SELECT * FROM DEMO_DB.PUBLIC.EXT_TABLE_EXAMPLE;
+
+
+
+
+
+
+CREATE OR REPLACE TRANSIENT TABLE DEMO_DB.PUBLIC.FORMATTED_EXAMPLE
+AS 
+SELECT 
+VALUE:c1 AS first_name,
+VALUE:c2 AS last_name,
+VALUE:c3 AS email,
+VALUE:c4 AS streetaddress,
+VALUE:c5 AS country,
+VALUE:c6 AS created_date
+FROM DEMO_DB.PUBLIC.EXT_TABLE_EXAMPLE;
+
+
+
+SELECT * FROM FORMATTED_EXAMPLE;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... COM ESSA SINTAXE DE ":",
+
+PODEMOS 
+
+ACESSAR OS VALUES DENTRO 
+
+
+DO VARIANT DATA TYPE...
+
+
+
+
+
+
+
+
+
+
+--> PODEMOS TAMBÉM TRANSFORMAR ESSA DATA,
+
+COM TYPECASTING,
+
+TIPO ASSIM:
+
+
+
+
+
+
+CREATE OR REPLACE TRANSIENT TABLE DEMO_DB.PUBLIC.FORMATTED_EXAMPLE
+AS 
+SELECT 
+VALUE:c1::STRING AS first_name,
+VALUE:c2::STRING AS last_name,
+VALUE:c3::STRING AS email,
+VALUE:c4::STRING AS streetaddress,
+VALUE:c5::STRING AS country,
+VALUE:c6::DATE AS created_date
+FROM DEMO_DB.PUBLIC.EXT_TABLE_EXAMPLE;
+
+
+----------------------------
+
+
+
+
+
+
+É CLARO QUE PODEMOS DEFINIR NOSSOS PRÓPRIOS 
+
+COLUMN NAMES,
+
+NESSAS EXTERNAL TABLES QUE CRIAMOS...
+
+
+
+
+
+
+
+
+
+-> MAS A SINTAXE MUDA UM POUCO, QUANDO
+
+TRATA-SE
+DE 
+
+EXTERNAL TABLES:
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE EXTERNAL TABLE emp_ext_table 
+(
+    FIRST_NAME STRING AS (value:c1::string),
+    LAST_NAME STRING(20) AS (value:c2::string),
+    EMAIL STRING AS (value:c3::string)
+)
+WITH LOCATION=@DEMO_DB.PUBLIC.S3_EXTERNAL_STAGE
+FILE_FORMAT=(
+    TYPE=CSV
+);
+
+
+
+
+
+
+
+
+
+
+ COM ISSO, PODEMOS CRIAR A EXTERNAL TABLE ASSIM...
+
+
+
+
+
+
+--> OU SEJA, PODEMOS CRIAR A EXTERNAL TABLE
+
+
+__ E DEFINIR _ SUAS COLUMNS COMO NAO 
+
+SENDO NO FORMATO/DATA TYPE DE "VARIANT",
+
+
+
+e sim 
+
+
+
+COM 1 FORMATO PRÉ-DEFINIDO (com strings, 
+ints, dates, etc),
+
+
+
+e também atribuir nomes custom a essas columns....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ENTRETANTO, SE FAZEMOS ISSO,
+
+
+
+
+O RESULTADO DA TABLE É ESTE:
+
+
+
+
+
+{   "c1": "Di",   "c2": "McGowran",   "c3": "dmcgowrang@sf_tuts.com",   "c4": "1856 Maple Lane",   "c5": "Banjar Bengkelgede",   "c6": "2017-04-22" }	Di	McGowran	dmcgowrang@sf_tuts.com
+{   "c1": "Carson",   "c2": "Bedder",   "c3": "cbedderh@sf_tuts.co.au",   "c4": "71 Clyde Gallagher Place",   "c5": "Leninskoye",   "c6": "2017-03-29" }	Carson	Bedder	cbedderh@sf_tuts.co.au
+{   "c1": "Dana",   "c2": "Avory",   "c3": "davoryi@sf_tuts.com",   "c4": "2 Holy Cross Pass",   "c5": "Wenlin",   "c6": "2017-05-11" }	Dana	Avory	davoryi@sf_tuts.com
+
+
+
+
+
+
+
+
+
+
+
+
+
+QUER DIZER QUE 
+
+
+FICAMOS 
+
+
+
+
+
+
+COM:
+
+
+
+1) UMA COLUMN COM O VALUE DEFAULT DE "VALUE", com esse 
+variant data type...
+
+
+
+
+2) O RESTO DAS COLUMNS QUE CRIAMOS NESSA DEFINICAO,
+
+COMO "first_name", "last_name", "email", etc....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK, MAS VOCE DEVE ESTAR SE PERGUNTANDO,
+O QUE É ESSE DATA TYPE MALUCO?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> bem, na última lesson entendemos como podemos 
+
+queriar a data 
+
+que fica 
+
+
+no S3 LOCATION,
+
+diretamente,
+
+com a sintaxe de "T.$1", etc etc... --->
+
+ EM CIMA DO QUE APRENDEMOS NESSA AULA,
+ 
+ TENTAMOS CRIAR 1 VIEW, E TENTAMOS QUERIAR (e conseguimos)
+
+ A DATA ARMAZENADA NO S3, POR MEIO DESSA VIEW/SELECTS...
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+ --> ok, mas QUAL É A DIFERENCA 
+
+ ENTRE __ USAR _ UMA VIEW__ E USAR _ 
+
+ UMA EXTERNAL TABLE?
+
+
+ A EXTERNAL TABLE É MELHOR DO QUE A VIEW?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ --> TEMOS QUE DISCUTIR SOBRE ISSO, NA PRÓXIMA AULA...
+
+
+
+
+
+
+
+
+
+
+
+ --> MAS É ASSIM QUE CRIAMOS UMA EXTERNAL TABLE..
+
+
+
+
+
+
+
+
+
+
+
+
+ --> MAS AGORA TEMOS QUE ENTENDER O QUE É "VALUE",
+
+
+    E QUAL O SEU PROPÓSITO....
+
+
+
+
+
+
+
+    

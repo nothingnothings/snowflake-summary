@@ -1,0 +1,126 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+TÍNHAMOS ESTE EXEMPLO:
+
+
+
+
+
+
+
+
+SELECT 
+name, 
+country 
+FROM employee 
+WHERE date='11/2';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> EM CASOS TEMPO-REAL,
+
+
+
+COM SNOWFLAKE TABLES,
+
+EXISTIRÃO MILHARES DE MICRO-PARTITIONS..
+
+
+
+
+
+
+
+
+
+E ESSAS MICRO-PARTITIONS
+
+__vAO OVERLAPPAR 1 COM AS OUTRAS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> SE HÁ MAIS OVERLAP,
+
+
+
+O SNOWFLAKE TEM QUE SCANNEAR POR DENTRO 
+
+
+
+DE 
+
+TODAS ESSAS MICRO-PARTITIONS...
+
+
+
+
+
+
+
+
+
+
+
+--> O GRAU DE OVERLAP DE MICROPARTITION 
+
+É 
+
+
+REPRESENTADO POR "MICRO-PARTITION DEPTH",
+
+
+NO SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+
+CONSTANT MICRO PARTITION --> SAO PARTITIONS QUE 
+
+JÁ FORAM CLUSTERADAS... --> nao há como clusterar mais 
+
+do que isso...

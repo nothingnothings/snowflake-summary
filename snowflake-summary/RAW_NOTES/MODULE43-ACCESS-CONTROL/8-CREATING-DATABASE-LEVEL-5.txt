@@ -1,0 +1,998 @@
+
+
+
+
+
+
+
+AGORA FALAREMOS SOBRE O "GRANT"
+
+
+
+QUE CONFERIMOS AO ROLE "MY_ROLE"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+O CÓDIGO QUE TÍNHAMOS EXECUTADO É ESTE:
+
+
+
+
+
+
+
+
+
+
+
+
+--- Level 5 
+
+GRANT CREATE DATABASE ON ACCOUNT TO ROLE MY_ROLE;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> agora devemos discutir 
+
+sobre esse grant específico, que pode ser PERIGOSO,
+
+e sobre qual seria a melhor practice 
+
+
+a respeito dele...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+O PROFESSOR TROCA PARA O ROLE "MY_ROLE", ASSIM:
+
+
+
+
+
+
+
+
+
+
+USE ROLE MY_ROLE;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> COM ESSE ROLE, TROCAMOS PARA A DATABASE "MY_DB"...
+
+
+
+
+
+
+
+
+
+
+
+NESSA DATABASE, TENTAMOS CRIAR 1 SCHEMA,
+
+
+
+COM ESTE CÓDIGO:
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE SCHEMA MY_SCHEMA;
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> E CONSEGUIMOS...
+
+
+
+
+
+
+
+
+
+
+
+-> PRÓXIMA COISA QUE FAZEMOS É TENTAR CRIAR 1 
+FILE FORMAT, DENTRO DESSE SCHEMA..
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE FILE FORMAT EXAMPLE_FILE_FORMAT;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+TAMBÉM CONSIGO...
+
+
+
+
+
+
+
+
+
+
+
+STAGES, TABLES, FUNCTIONS, ETC:
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE STAGE MY_STAGE;
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE TABLE MY_TABLE(a varchar, b varchar);
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE FUNCTION RUN_TEST (A DOUBLE) 
+RETURNS STRING 
+LANGUAGE JAVASCRIPT 
+AS 
+$$
+
+  return A;
+
+$$;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+TAMBÉM CONSEGUIMOS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+E PROCEDURES?
+
+
+
+
+
+
+
+
+CREATE OR REPLACE PROCEDURE f(argument1 VARCHAR)
+RETURNS VARCHAR 
+LANGUAGE JAVASCRIPT 
+AS 
+$$ 
+
+var local_variable = argument1; //Incorrect 
+var local_variable = ARGUMENT1; //Correct
+
+$$;
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> TAMBÉM SOMOS CAPAZES DE FAZER ISSO...
+
+
+
+
+
+
+
+
+
+
+--> O QUE ISSO SIGNIFICA?
+
+
+
+
+
+
+
+
+
+
+
+
+
+""QUANDO VC ENTREGA O GRANT DE CREATE DATABASE 
+
+A 1 ROLE"",
+
+
+
+
+VC REALMENTE É CAPAZ DE CRIAR DATABASES,
+
+
+MAS TAMBÉM É CAPAZ DE 
+
+
+
+
+
+1) CREATE SCHEMA 
+
+
+
+2) CREATE TABLES 
+
+
+3) VIEWS 
+
+4) STAGES 
+
+
+5) PROCEDURES 
+
+
+
+6) UDFS 
+
+
+
+7) TODOS OS OUTROS SCHEMA-LEVEL OBJECTS, como file formats e etc...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+MAS O PROBLEMA, AQUI,
+
+
+
+É QUE QUANDO VC FAZ GRANT 
+
+DE ESSE "CREATE DATABASE"
+
+
+ao role,
+
+VC 
+
+
+NAO 
+
+
+
+
+CONSEGUE RESTRINGIR ESSE ROLE DE 
+
+CRIAR 
+
+
+DATABASES,
+
+SCHEMAS E SCHEMA-RELATED OBJECTS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> SIM, NÓS FORMAMOS, ANTERIORMENTE,
+
+UMA HIERARCHY,
+
+E O SYSADMIN VAI SER CAPAZ DE CONTROLAR ESSES OBJECTS... MAS 
+O PROBLEMA, AGORA,
+
+
+É QUE 
+CONFERIMOS ISSO TAMBÉM AO ROLE DE "MY_ROLE"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> APENAS O SYSADMIN DEVE TER CONTROLE COMPLETO SOBRE 
+
+A CRIACAO DESSES OBJECTS...
+
+
+
+
+
+
+
+
+
+
+
+---> VC NAO PODE RESTRINGIR 1 ROLE, COMO "MY_ROLE",
+
+
+DE CRIAR ESSES OBJECTS, se 
+
+rodar 
+
+o grant de 
+
+
+"GRANT CREATE DATABASE TO ROLE MY_ROLE;"
+
+
+
+
+
+
+
+
+
+-- ISSO VAI IMPACTAR 
+
+A SAÚDE 
+
+DE SEU SISTEMA DE DADOS,
+
+
+
+
+
+PQ ESSE MY_ROLE PODE ACABAR CRIANDO UM MONTE DE SCHEMAS 
+
+E OUTROS "SCHEMA-RELATED OBJECTS"
+
+
+DENTRO DESSES SCHEMAS...
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK, QUER DIZER QUE ESSE SERÁ O PRIMEIRO PROBLEMA....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+recapitulando, PROBLEMAS:
+
+
+
+
+
+
+
+
+
+
+1) O ROLE QUE GANHAR PERMISSION DE "CREATE DATABASE" 
+
+PODE CRIAR DB, SCHEMA E SCHEMA-RELATED OBJECTS 
+
+SEM QUALQUER TIPO DE RESTRIÇÃO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+AGORA O PROFESSOR TROCA PARA O SECURITYADMIN,
+
+
+E AÍ CRIA UM OUTRO ROLE,
+
+
+
+"my_role_2"...
+
+
+
+
+
+
+
+tipo assim:
+
+
+
+
+
+
+
+
+
+
+USE ROLE SECURITYADMIN;
+
+
+CREATE OR REPLACE ROLE MY_ROLE_2;
+
+
+
+
+
+
+
+
+
+
+
+
+--> ISSO FEITO, O PROFESSOR SETTA ESSE ROLE 
+
+
+
+
+AO USER DE "PRADEEP"..
+
+
+
+
+
+
+ex:
+
+
+USE ROLE SECURITYADMIN;
+
+
+CREATE OR REPLACE ROLE MY_ROLE_2;
+
+
+GRANT ROLE MY_ROLE_2 TO USER PRADEEP;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ok... depois disso,
+
+
+o professor troca para o role 
+
+de 
+
+"my_role",
+
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+USE ROLE MY_ROLE;
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... AGORA DIGAMOS QUE 
+
+
+""MY_ROLE_2 QUER ACESSAR A TABLE QUE RECÉM CRIAMOS"" (
+    
+
+    A TABLE "my_table", criada 
+
+    PELO "MY_ROLE" role...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> QUEM É O ROLE QUE DEVE ATRIBUIR O ACCESS A 
+
+
+ESSA TABLE, CRIADA PELO "MY_ROLE", AO ROLE "MY_ROLE_2"?
+
+
+
+
+
+
+
+
+
+
+
+---> IDEALMENTE, SERIA O SYSADMIN...
+
+
+
+
+---> ou o "SYSADMIN",
+
+
+OU O "SECURITYADMIN"....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ESSE SERIA O APPROACH IDEAL,
+
+
+MAS COMO VC 
+
+PROVIDENCIOU O GRANT DE "CREATE DATABASE" 
+
+
+
+AO ROLE 
+
+DE "MY_ROLE",
+
+
+
+
+
+AGORA ELE TAMBÉM SERÁ CAPAZ 
+
+
+DE ENTREGAR ACESSO A ESSA TABLE,
+
+AO ROLE "MY_ROLE_2"...
+
+
+
+
+
+
+
+
+
+
+
+-_> O PROFESSOR TESTA ISSO, COM ESTES CÓDIGOS:
+
+
+
+
+
+
+
+
+
+
+USE ROLE MY_ROLE;
+
+
+GRANT USAGE ON DATABASE MY_DB TO ROLE MY_ROLE_2;
+GRANT USAGE ON SCHEMA MY_DB.MY_SCHEMA TO ROLE MY_ROLE_2;
+GRANT SELECT ON TABLE MY_DB.MY_SCHEMA.MY_TABLE TO ROLE MY_ROLE_2;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ESSES 3 STATEMENTS FORAM EXECUTADOS COM O ROLE "MY_ROLE",
+
+SEM QUAISQUER ERRORS...
+
+
+
+
+
+
+
+
+
+
+
+OK... AGORA TROCAMOS PARA O ROLE 
+
+
+"MY_ROLE_2",
+
+
+E TENTAMOS ACESSAR ESSAS TABLES..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+RODAMOS ASSIM:
+
+
+
+
+
+
+
+USE ROLE MY_ROLE_2;
+
+
+
+
+SELECT * FROM MY_TABLE;
+
+
+
+
+
+
+
+
+
+
+
+
+
+SIM, SOMOS CAPAZES DE QUERIAR ESSA TABLE..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... RECAPITULANDO O PROBLEMA 
+
+
+
+""ESSA PERMISSION DE __ CONFERIR ACCESS A DATABASES,
+
+SCHEMAS E OBJECTS ___ DEVE __ EXISTIR 
+
+LÁ NOS ROLES DE SECURITYADMIN E SYSADMIN, E NAO 
+
+COM SUB-ROLES DE SYSADMIN""...
+
+
+
+
+
+
+
+
+
+
+
+-_> AQUI, O MY_ROLE 
+
+É CAPAZ 
+
+
+DE CONFERIR ACCESS A ESSES OBJECTS, A OUTROS ROLES....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+RECAPITULANDO OS PROBLEMAS:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1) O ROLE QUE GANHAR PERMISSION DE "CREATE DATABASE" 
+
+PODE CRIAR DB, SCHEMA E SCHEMA-RELATED OBJECTS 
+
+SEM QUALQUER TIPO DE RESTRIÇÃO...
+
+
+
+
+
+
+
+
+2) SEM QUALQUER RESTRIÇÃO, O ROLE QUE GANHA ESSA PERMISSION 
+DE "CREATE DATABASE" PODE __GRANT __ ACCESS __ A ESSES OBJECTS 
+
+___ A OUTROS __ ROLES __ DE SEU SISTEMA...
+
+
+
+
+
+
+
+
+
+
+
+
+OK... TEMOS QUE CONSERTAR ESSES 2 PROBLEMAS..
+
+
+
+
+
+
+
+
+VEREMOS ISSO NAS PRÓXIMAS AULAS...

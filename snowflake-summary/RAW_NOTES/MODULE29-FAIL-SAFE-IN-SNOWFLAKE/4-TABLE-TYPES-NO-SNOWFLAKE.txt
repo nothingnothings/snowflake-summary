@@ -1,0 +1,321 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... NESSA LECTURE,
+
+
+TENTAREMOS ENTENDER OS 3 DIFERENTES TABLE TYPES 
+
+NO SNOWFLAKE:
+
+
+
+
+
+
+
+1) PERMANENT
+
+
+CREATE TABLE EMP --------->  PERMANENT  --- RETENTION PERIOD (YES) --> FAIL SAFE (YES)
+
+
+2) TRANSIENT
+
+
+CREATE TRANSIENT TABLE EMP -------_> TRANSIENT --> RETENTION PERIOD (YES) --> FAIL SAFE (NO) 
+
+
+
+3) TEMPORARY...
+
+
+CREATE TEMPORARY TABLE EMP ---------> TEMPORARY --> RETENTION PERIOD (NO) ------> FAIL SAFE (NO)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                    RETENTION PERIOD
+PERMANENT TABLE --> DE 1 A 90 DIAS... (pdemos definir como 0, também)...
+
+
+
+
+
+
+TRANSIENT TABLE --> retention period é de 1, mas podemos definir como 0...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> CERTO... SAO ESSES OS DIFERENTES TABLE TYPES....
+
+
+
+
+
+
+
+
+
+--> OK... --> MAS UMA COISA QUE VC DEVE SABER É QUE 
+
+
+
+
+
+ESSA SINTAXE DE CRIACAO 
+
+
+
+DE TABLE 
+
+
+
+EXISTE EM TODAS OUTROS DATABASE SYSTEMS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> CREATE TABLE EMP 
+
+
+
+
+
+
+
+CREATE TRANSIENT TABLE EMP 
+
+
+
+
+
+
+
+
+
+
+CREATE TEMPORARY TABLE EMP 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> FAILSAFE PODE SER COSTLY... --> PERMANENT TABLES PODEM SER 
+COSTLY...
+
+
+
+
+
+
+
+
+
+
+-->  PERMANENT TABLES PODEM 
+
+ACABAR CRIANDO BACKUPS DESNECESSÁRIOS...
+
+
+
+
+
+
+
+
+
+
+
+--> DEVEMOS SEMPRE CRIAR STAGING TABLES 
+
+
+
+COMO 
+
+
+
+TRANSIENT TABLES... --> A DATA EM STAGING TABLES 
+
+
+NAO É TAO IMPORTANTE..
+
+
+
+
+
+
+
+
+
+
+
+--> SE VC DEIXÁ-LAS COMO PERMANENT,
+
+ISSO VAI TE CUSTAR...
+
+
+
+
+
+
+
+
+--> NESSE CASO,
+
+VC SEMPRE DEVE USAR
+
+
+A CLAUSE 
+
+DE 
+
+"TRANSIENT"
+
+QUANDO VC TENTA CRIAR 1 TABLE,
+
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+
+CREATE TRANSIENT TABLE EMP;
+
+
+
+
+
+
+
+
+
+
+---> PQ, COM ISSO,
+
+VC AINDA TERÁ TIME TRAVEL,
+
+
+
+E SUA DATA NAO CAIRÁ 
+
+NA FAIL SAFE ZONE ---------------> ISSO É PERFEITO 
+
+
+PARA 
+
+TABLES QUE NAO 
+
+SAO TAO 
+
+
+IMPORTANTES,
+
+NA SUA DATABASE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AS TABLES TEMPORARY 
+
+EXISTEM APENAS DURANTE SUA 
+
+
+SESSION...
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... VEREMOS OS USE-CASES MAIS EM DETALHES NAS 
+
+PRÓXIMAS AULAS...
+
+
+
+
+
+
+
+
+OK.... ESSES SAO OS 3 DIFERENTES TABLE TYPES...
+
+
+
+

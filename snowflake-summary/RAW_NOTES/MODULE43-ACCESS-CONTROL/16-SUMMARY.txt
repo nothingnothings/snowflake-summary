@@ -1,0 +1,132 @@
+
+
+
+
+
+
+
+
+
+
+
+
+ACABAMOS COM A DISCUSSION SOBRE ACCESS CONTROL...
+
+
+
+
+
+
+
+
+DEVEMOS RESUMIR ALGUNS PONTOS:
+
+
+
+
+
+
+
+
+1) ___CREATING__ HIERARCHY AND DECIDING ON THE 
+PRIVILEGES 
+
+SHOULD BE THE __ FIRST__ THING __ YOU SHOULD BE 
+DOING _ BEFORE BEGINNING YOUR PROJECT.
+
+
+
+
+
+
+
+
+2) FAÇA BRAINSTORM,
+
+E PLANEJE O DESIGN BEM...
+
+
+
+
+
+
+
+3) GRANTS SIMPLES, COMO 
+
+"GRANT CREATE DATABASE TO ROLE <ROLE_NAME>" podem 
+
+
+MESS UP SEU SISTEMA CONSIDERAVELMENTE.
+
+
+(
+
+    VIMOS, ANTERIORMENTE,
+
+    OS DIFERENTES PROBLEMAS 
+
+    QUE 
+
+    PODEM SURGIR, AO CONFERIRMOS 
+
+    ESSA PERMISSION.... --------> E VIMOS COMO RESOLVER 
+    ESSES PROBLEMAS..
+)
+
+
+
+
+
+
+
+4) se voce nao levar o access control a sério,
+
+
+VAI FICAR DIFÍCIL "KEEP TRACK OF THINGS",
+PQ 
+
+
+SERÁ 
+
+DIFÍCIL SABER "QUEM FEZ QUAL ACTIVITY" ----> PARA O ADMIN,
+
+
+SERÁ MT DIFÍCIL GERENCIAR TUDO...
+
+
+
+
+
+
+5) se vc nao levar o access control a sério,
+
+
+SEU COST TAMBÉM SERÁ IMPACTADO... E TAMBÉM 
+
+A DISCIPLINA DO SEU PROJECT... --> VAI LEVAR A 
+
+OUTROS PROBLEMAS, COMO:
+
+
+
+            A) STORAGE DESNECESSÁRIA 
+
+            B) JUNK TABLES 
+
+            C) CRIACAO DESNECESSÁRIA DE WAREHOUSES...
+
+            D) MUITA DUPLICATION...
+
+
+
+
+
+
+6) SE VC N USAR ACCESS CONTROL,
+
+
+
+
+FICARÁ QUASE COMO ALGUÉM PERDIDO EM UMA FLORESTA (
+    parece que vc sabe o caminho, mas na verdade o desconhece.
+)

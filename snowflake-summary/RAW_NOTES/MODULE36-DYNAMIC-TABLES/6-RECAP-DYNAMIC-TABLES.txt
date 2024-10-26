@@ -1,0 +1,183 @@
+
+
+
+
+
+
+
+
+
+
+
+--> NESTA AULA,
+
+DEVEMOS RAPIDAMENTE REVISAR O QUE APRENDEMOS 
+
+DAS AULAS ANTERIORES...
+
+
+
+
+
+
+
+
+
+
+ENTENDEMOS:
+
+
+
+
+
+
+
+
+1) UMA DYNAMIC TABLE NAO É NADA MAIS DO QUE 
+
+
+UM "MATERIALIZED QUERY RESULT",
+
+
+mantido pelo SNOWFLAKE... 
+
+
+(
+    É UMA TABLE 
+
+    ACTUALLY DERIVADA 
+    DA QUERY QUE RODAMOS 
+
+    EM CIMA DA SOURCE TABLE...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+https://www.chaosgenius.io/blog/snowflake-dynamic-tables/
+
+
+
+
+
+
+
+         Streams and Tasks       Dynamic Tables
+
+Approach   Imperative           Declarative
+
+Execution   User-defined        Automated based on specified data freshness
+Schedule 
+
+
+Supported   Procedural code with         SQL with joins, aggregations, window functions other SQL functions but not stored procedures, tasks, UDFs, and external functions.
+Operations   tasks, UDFs, external 
+                    functions, etc
+
+
+
+Incremental Refresh     Manual using        Automated based on data freshness
+                       tasks and streams
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1) UMA DYNAMIC TABLE NAO É NADA MAIS DO QUE 
+
+
+UM "MATERIALIZED QUERY RESULT",
+
+
+mantido pelo SNOWFLAKE... 
+
+
+(
+    É UMA TABLE 
+
+    ACTUALLY DERIVADA 
+    DA QUERY QUE RODAMOS 
+
+    EM CIMA DA SOURCE TABLE...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+2) O SNOWFLAKE TAKES CARE OF INSERT, UPDATES E DELETES 
+
+NA FINAL DYNAMIC TABLE...
+
+
+(por isso, nao podemos actually rodar 
+updates, inserts e deletes em cima dessa table, diretamente)
+
+
+
+
+
+OK, FAZ SENTIDO... --> GANHAMOS UM ERROR SE TENTAMOS FAZER ISSO,
+PQ A RESPONSABILIDADE DESSES INSERTS, UPDATES E DELETES RECAIU 
+NO SNOWFLAKE...
+
+
+
+3) NÓS RODAMOS SELECTS EM CIMA DA DYNAMIC TABLE...
+(única coisa que podemos fazer)...
+
+
+
+
+
+
+
+
+
+
+4) O RESULT SET/CACHE É 
+
+REFRESHADO __ COM _ BASE 
+
+NO "TARGET_LAG" QUE VC PROVIDENCIOU,
+
+
+
+ELE REFRESHA A CADA TIME QUE VC COLOCOU..
+
+
+
+
+
+
+
+

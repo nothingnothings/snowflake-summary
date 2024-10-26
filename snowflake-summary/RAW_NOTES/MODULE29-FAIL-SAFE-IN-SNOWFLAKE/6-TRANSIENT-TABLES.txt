@@ -1,0 +1,144 @@
+
+
+
+
+
+
+
+
+
+
+
+
+NA LECTURE ANTERIOR,
+
+VIMOS QUE QUANDO CRIAMOS 1 PERMANENT TABLE 
+
+E A DROPPAMOS,
+
+
+
+
+COMO TÍNHAMOS DEFINIDO O DATA_RETENTION_TIME_IN_DAYS 
+
+COMO 0,
+
+
+
+
+
+A DATA CAIU IMEDIATAMENTE NA FAIL_SAFE ZONE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NESSA LECTURE, O QUE O PROFESSOR VAI PROVAR:
+
+
+
+
+
+
+
+
+1) A TRANSIENT TABLE NAO ENTRA NA FAILSAFE ZONE... (ECONOMIZANDO 
+STORAGE BYTES)....
+
+
+
+
+
+
+
+
+
+ELE RODA 
+
+A QUERY PARA VER A STORAGE GASTA:
+
+
+
+
+
+
+
+
+
+SELECT 
+*
+FROM SALES.INFORMATION_SCHEMA.TABLE_STORAGE_METRICS;
+
+
+
+
+
+
+
+
+
+--> quer dizer que, realmente,
+
+se estamos fazendo dev work,
+
+
+devemos usar transient tables...
+
+
+
+
+
+
+
+
+
+
+SEMPRE USE PERMANENT TABLES 
+
+
+
+
+COM DATA QUE NAO PODE SER REPRODUZIDA FACILMENTE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> COM STAGING AREAS,
+
+É SEMPRE RECOMENDADO USAR 
+
+
+
+TRANSIENT TABLES OU TRANSIENT DATABASES EM SI...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK...

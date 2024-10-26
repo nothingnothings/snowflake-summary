@@ -1,0 +1,1927 @@
+
+
+
+
+NESSA AULA, TENTAREMOS ENTENDER "BIND VARIABLES"
+
+
+
+NAS NOSSAS SNOWFLAKE PROCEDURES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+O PROFESSOR EXPLICA QUE 
+
+
+ESTAMOS NOS AFASTANDO DO USE-CASE DE 
+
+
+
+""INSERTING FILL-RATE FOR EACH COLUMN INTO A TABLE""...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PRIMEIRO, TENTAREMOS ENTENDER 
+
+
+
+O CONCEITO DE "BIND VARIABLES",
+
+
+PARA ENTAO APLICARMOS ESSE 
+
+
+CONCEITO 
+
+
+
+NO NOSSO USE-CASE...
+
+
+
+
+
+
+
+
+
+
+
+
+NA ÚLTIMA AULA,
+
+
+
+SELECIONAMOS 10 RECORDS DE 1 TABLE (com uso de LIMIT),
+
+
+e entao 
+
+
+RETORNAMOS 1 JSON OBJECT,
+
+
+COM ESTE FORMATO:
+
+
+
+
+{
+  "key1": [
+    {
+      "ColumnName": "C_CUSTKEY",
+      "column_value": 30001
+    },
+    {
+      "ColumnName": "C_NAME",
+      "column_value": "Customer#000030001"
+    },
+    {
+      "ColumnName": "C_ADDRESS",
+      "column_value": "Ui1b,3Q71CiLTJn4MbVp,,YCZARIaNTelfst"
+    },
+    {
+      "ColumnName": "C_NATIONKEY",
+      "column_value": 4
+    },
+    {
+      "ColumnName": "C_PHONE",
+      "column_value": "14-526-204-4500"
+    },
+    {
+      "ColumnName": "C_ACCTBAL",
+      "column_value": 8.848469999999999e+03
+    },
+    {
+      "ColumnName": "C_MKTSEGMENT",
+      "column_value": "MACHINERY"
+    },
+    {
+      "ColumnName": "C_COMMENT",
+      "column_value": "frays wake blithely enticingly ironic asymptote"
+    },
+    {
+      "ColumnName": "C_CUSTKEY",
+      "column_value": 30002
+    },
+    {
+      "ColumnName": "C_NAME",
+      "column_value": "Customer#000030002"
+    },
+    {
+      "ColumnName": "C_ADDRESS",
+      "column_value": "UVBoMtILkQu1J3v"
+    },
+    {
+      "ColumnName": "C_NATIONKEY",
+      "column_value": 11
+    },
+    {
+      "ColumnName": "C_PHONE",
+      "column_value": "21-340-653-9800"
+    },
+    {
+      "ColumnName": "C_ACCTBAL",
+      "column_value": 5.221810000000000e+03
+    },
+    {
+      "ColumnName": "C_MKTSEGMENT",
+      "column_value": "MACHINERY"
+    },
+    {
+      "ColumnName": "C_COMMENT",
+      "column_value": "he slyly ironic pinto beans wake slyly above the fluffily careful warthogs. even dependenci"
+    },
+    {
+      "ColumnName": "C_CUSTKEY",
+      "column_value": 30003
+    },
+    {
+      "ColumnName": "C_NAME",
+      "column_value": "Customer#000030003"
+    },
+    {
+      "ColumnName": "C_ADDRESS",
+      "column_value": "CuGi9fwKn8JdR"
+    },
+    {
+      "ColumnName": "C_NATIONKEY",
+      "column_value": 21
+    },
+    {
+      "ColumnName": "C_PHONE",
+      "column_value": "31-757-493-7525"
+    },
+    {
+      "ColumnName": "C_ACCTBAL",
+      "column_value": 3.014890000000000e+03
+    },
+    {
+      "ColumnName": "C_MKTSEGMENT",
+      "column_value": "BUILDING"
+    },
+    {
+      "ColumnName": "C_COMMENT",
+      "column_value": "e furiously alongside of the requests. evenly even theodolites are quickly blithely i"
+    },
+    {
+      "ColumnName": "C_CUSTKEY",
+      "column_value": 30004
+    },
+    {
+      "ColumnName": "C_NAME",
+      "column_value": "Customer#000030004"
+    },
+    {
+      "ColumnName": "C_ADDRESS",
+      "column_value": "tkR93ReOnf9zYeO"
+    },
+    {
+      "ColumnName": "C_NATIONKEY",
+      "column_value": 23
+    },
+    {
+      "ColumnName": "C_PHONE",
+      "column_value": "33-870-136-4375"
+    },
+    {
+      "ColumnName": "C_ACCTBAL",
+      "column_value": 3.308550000000000e+03
+    },
+    {
+      "ColumnName": "C_MKTSEGMENT",
+      "column_value": "AUTOMOBILE"
+    },
+    {
+      "ColumnName": "C_COMMENT",
+      "column_value": "ssly bold deposits. final req"
+    },
+    {
+      "ColumnName": "C_CUSTKEY",
+      "column_value": 30005
+    },
+    {
+      "ColumnName": "C_NAME",
+      "column_value": "Customer#000030005"
+    },
+    {
+      "ColumnName": "C_ADDRESS",
+      "column_value": "pvq4uDoD8pEwpAE01aesCtbD9WU8qmlsvoFav5"
+    },
+    {
+      "ColumnName": "C_NATIONKEY",
+      "column_value": 9
+    },
+    {
+      "ColumnName": "C_PHONE",
+      "column_value": "19-144-468-5416"
+    },
+    {
+      "ColumnName": "C_ACCTBAL",
+      "column_value": -2.785400000000000e+02
+    },
+    {
+      "ColumnName": "C_MKTSEGMENT",
+      "column_value": "MACHINERY"
+    },
+    {
+      "ColumnName": "C_COMMENT",
+      "column_value": "ructions behind the pinto beans x-ra"
+    },
+    {
+      "ColumnName": "C_CUSTKEY",
+      "column_value": 30006
+    },
+    {
+      "ColumnName": "C_NAME",
+      "column_value": "Customer#000030006"
+    },
+    {
+      "ColumnName": "C_ADDRESS",
+      "column_value": "eFynZc,XeoKmPMZ"
+    },
+    {
+      "ColumnName": "C_NATIONKEY",
+      "column_value": 18
+    },
+    {
+      "ColumnName": "C_PHONE",
+      "column_value": "28-754-658-5648"
+    },
+    {
+      "ColumnName": "C_ACCTBAL",
+      "column_value": 2.427850000000000e+03
+    },
+    {
+      "ColumnName": "C_MKTSEGMENT",
+      "column_value": "HOUSEHOLD"
+    },
+    {
+      "ColumnName": "C_COMMENT",
+      "column_value": " haggle after the furiously regular dependencies. blithely final requests haggle fin"
+    },
+    {
+      "ColumnName": "C_CUSTKEY",
+      "column_value": 30007
+    },
+    {
+      "ColumnName": "C_NAME",
+      "column_value": "Customer#000030007"
+    },
+    {
+      "ColumnName": "C_ADDRESS",
+      "column_value": "H,Q8PvzCrZor"
+    },
+    {
+      "ColumnName": "C_NATIONKEY",
+      "column_value": 5
+    },
+    {
+      "ColumnName": "C_PHONE",
+      "column_value": "15-383-236-6110"
+    },
+    {
+      "ColumnName": "C_ACCTBAL",
+      "column_value": 3.912670000000000e+03
+    },
+    {
+      "ColumnName": "C_MKTSEGMENT",
+      "column_value": "FURNITURE"
+    },
+    {
+      "ColumnName": "C_COMMENT",
+      "column_value": " nod fluffily final requests. regular, unusual acc"
+    },
+    {
+      "ColumnName": "C_CUSTKEY",
+      "column_value": 30008
+    },
+    {
+      "ColumnName": "C_NAME",
+      "column_value": "Customer#000030008"
+    },
+    {
+      "ColumnName": "C_ADDRESS",
+      "column_value": "ZCVPLnDjfo9r8Hr0eeoyXxWY6gr9sMUDiKmNTH7"
+    },
+    {
+      "ColumnName": "C_NATIONKEY",
+      "column_value": 5
+    },
+    {
+      "ColumnName": "C_PHONE",
+      "column_value": "15-325-560-7160"
+    },
+    {
+      "ColumnName": "C_ACCTBAL",
+      "column_value": 2.482600000000000e+02
+    },
+    {
+      "ColumnName": "C_MKTSEGMENT",
+      "column_value": "MACHINERY"
+    },
+    {
+      "ColumnName": "C_COMMENT",
+      "column_value": "carefully final requests detect carefully. quickly silent theodolites inside the special accounts kindle c"
+    },
+    {
+      "ColumnName": "C_CUSTKEY",
+      "column_value": 30009
+    },
+    {
+      "ColumnName": "C_NAME",
+      "column_value": "Customer#000030009"
+    },
+    {
+      "ColumnName": "C_ADDRESS",
+      "column_value": "aEeWtUSm2IyKH46TiP1X,C8c1ygVHpa2aSwV"
+    },
+    {
+      "ColumnName": "C_NATIONKEY",
+      "column_value": 12
+    },
+    {
+      "ColumnName": "C_PHONE",
+      "column_value": "22-682-831-9594"
+    },
+    {
+      "ColumnName": "C_ACCTBAL",
+      "column_value": 1.471930000000000e+03
+    },
+    {
+      "ColumnName": "C_MKTSEGMENT",
+      "column_value": "FURNITURE"
+    },
+    {
+      "ColumnName": "C_COMMENT",
+      "column_value": "ly bold packages about the slyly even pinto beans are fluffily theodolites. carefully bold foxes sol"
+    },
+    {
+      "ColumnName": "C_CUSTKEY",
+      "column_value": 30010
+    },
+    {
+      "ColumnName": "C_NAME",
+      "column_value": "Customer#000030010"
+    },
+    {
+      "ColumnName": "C_ADDRESS",
+      "column_value": "m1XDhjp3FlJQBxmEFxujEp3rQj82"
+    },
+    {
+      "ColumnName": "C_NATIONKEY",
+      "column_value": 21
+    },
+    {
+      "ColumnName": "C_PHONE",
+      "column_value": "31-529-816-9872"
+    },
+    {
+      "ColumnName": "C_ACCTBAL",
+      "column_value": 8.599709999999999e+03
+    },
+    {
+      "ColumnName": "C_MKTSEGMENT",
+      "column_value": "BUILDING"
+    },
+    {
+      "ColumnName": "C_COMMENT",
+      "column_value": ". accounts cajole after the slyly ironic foxes. fluffy instructions kindle about the asymptotes."
+    }
+  ]
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+------> AGORA, EM VEZ DE 
+
+RETORNARMOS 1 JSON OBJECT DE 10 RECORDS,
+
+
+
+
+DEVEMOS 
+
+
+FAZER _o  INSERT_ DE ESSE "RETURNED OBJECT"
+
+PARA 
+
+DENTRO 
+
+
+DE 1 TABLE EM SI... E É CLARO QUE 
+
+FAREMOS 
+
+ESSE INSERT_ __ DE DENTRO __ DA STORED PROCEDURE 
+
+EM SI... ( e nao com 1 insert statement separado)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA ISSO,
+
+PROVAVELMENTE PRECISAREMOS DE 2 SQL STATEMENTS,
+
+
+DENTRO DA PROCEDURE...
+
+
+
+
+
+
+1) Um statement para CRIAR O RESULT SET 
+
+(com 'select')
+
+
+
+2) OUTRO STATEMENT PARA INSERIR O RESULT SET 
+
+NA TABLE...
+
+
+
+(com 'INSERT')...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+A PROCEDURE EM SI É ESTA:
+
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE PROCEDURE COLUMN_FILL_RATE_BIND_VAR(TABLE_NAME VARCHAR)
+    RETURNS VARIANT NOT NULL
+    LANGUAGE JAVASCRIPT
+    AS 
+
+    $$ 
+
+
+    var array_of_rows= [];
+    var row_as_json = {};
+
+
+
+    var my_sql_command = "SELECT * FROM " + TABLE_NAME + " LIMIT 10;"
+    var statement1 = snowflake.createStatement(
+        {
+            sqlText: my_sql_command
+        }
+    );
+    var result_set1 = statement1.execute();
+
+
+    var my_sql_command_2 = 'INSERT INTO CUSTOMER_TRANSPOSED VALUES(:1, :2)";
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... ENTRETANTO, AQUI, DE CARA,
+
+
+
+
+JÁ 
+
+
+VEMOS 1 DIFERENÇA... É O ":1" E ":2"...
+
+
+
+
+
+
+
+
+ISSO SIGNIFICA "PRIMEIRO E SEGUNDO PARAMETERS DA NOSSA PROCEDURE"...
+
+
+
+
+
+
+
+
+
+--> MAS O PROBLEMA É QUE NOSSA PROCEDURE TEM APENAS 
+
+
+1 ÚNICO ARGUMENTO, "TABLE_NAME"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+BEM, A NOSSA PROCEDURE CONTINUA ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE PROCEDURE COLUMN_FILL_RATE_BIND_VAR(TABLE_NAME VARCHAR)
+    RETURNS VARIANT NOT NULL
+    LANGUAGE JAVASCRIPT
+    AS 
+
+    $$ 
+
+
+    var array_of_rows= [];
+    var row_as_json = {};
+
+
+
+    var my_sql_command = "SELECT * FROM " + TABLE_NAME + " LIMIT 10;"
+    var statement1 = snowflake.createStatement(
+        {
+            sqlText: my_sql_command
+        }
+    );
+    var result_set1 = statement1.execute();
+
+
+    var my_sql_command_2 = 'INSERT INTO CUSTOMER_TRANSPOSED VALUES(:1, :2)";
+
+
+    while (result_set1.next()) {
+
+        // Put each row in a variable of type JSON.
+
+        // For each column in the row...
+
+
+        for (var col_num = 0; col_num < result_set1.getColumnCount(); col_num = col_num + 1) {
+
+                var col_name=result_set1.getColumnName(col_num + 1);
+                var col_value=result_set1.getColumnValue(col_num + 1);
+
+
+
+        if (col_name === 'C_NAME') {
+            col_value='JOHN'
+        } else {
+            col_value
+        }
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    --> É CLARO QUE USAREMOS ESSE COMANDO DE "INSERT"...
+
+
+
+
+
+
+
+
+
+--> VAMOS INSERIR RECORDS 
+
+NESSA TABLE DE 
+
+"CUSTOMER_TRANSPOSED",
+
+
+
+QUE SERÁ 
+
+UMA TABLE COM 2 COLUMNS,
+
+
+
+1 COLUMN DE 
+
+"NAME"
+
+
+
+E OUTRA COLUMN DE "VALUE"...
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE ESTAMOS TENTANDO 
+
+INSERIR O JSON OBJECT QUE FOI RETORNADO,
+
+
+com esse formato de "columName, columnValue",
+
+
+
+
+PARA DENTRO 
+
+DESSA TABLE...
+
+
+
+
+
+
+
+
+NOSSA FUNCTION CONTINUA ASSIM:
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE PROCEDURE COLUMN_FILL_RATE_BIND_VAR(TABLE_NAME VARCHAR)
+    RETURNS STRING NOT NULL
+    LANGUAGE JAVASCRIPT
+    AS 
+
+    $$ 
+
+
+    var array_of_rows= [];
+    var row_as_json = {};
+
+
+
+    var my_sql_command = "SELECT * FROM " + TABLE_NAME + " LIMIT 10;"
+    var statement1 = snowflake.createStatement(
+        {
+            sqlText: my_sql_command
+        }
+    );
+    var result_set1 = statement1.execute();
+
+
+    var my_sql_command_2 = 'INSERT INTO CUSTOMER_TRANSPOSED VALUES(:1, :2)";
+
+
+    while (result_set1.next()) {
+
+        // Put each row in a variable of type JSON.
+
+        // For each column in the row...
+
+
+        for (var col_num = 0; col_num < result_set1.getColumnCount(); col_num = col_num + 1) {
+
+                var col_name=result_set1.getColumnName(col_num + 1);
+                var col_value=result_set1.getColumnValue(col_num + 1);
+
+
+
+        if (col_name === 'C_NAME') {
+            col_value='JOHN'
+        } else {
+            col_value
+        }
+
+
+        row_as_json = {
+            ColumnName: col_name,
+            column_value: col_value
+        };
+
+        array_of_rows.push(row_as_json);
+
+
+        snowflake.execute({ -- código DIFERENTE. em vez de retornar o result set/algum value, FAZEMOS UM INSERT EM 1 TABLE, POR MEIO DESSE EXECUTE...
+
+            sqlText: my_sql_command_2
+        }) 
+        }
+    }
+
+    return 'Rows inserted Successfully';
+
+
+        $$;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NESSA STORED PROCEDURE, FIZ ALGUMAS COISAS:
+
+
+
+
+
+
+
+
+1) TROQUEI O "RETURNS" PARA "STRING",
+
+
+pq vou retornar uma mensagem de sucesso...
+
+
+
+
+
+
+
+
+2) HÁ UMA CALL DE "EXECUTE", AO FINAL,
+
+QUE 
+
+VAI EXECUTAR AQUELE SEGUNDO STATEMENT SQL,
+
+
+QUE 
+
+VAI TENTAR INSERIR
+RECORDS 
+
+NA TABLE DE "CUSTOMER_TRANSPOSED"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-_> OK, MAS AQUI FICAMOS COM 1 PROBLEMA...
+
+
+
+
+
+
+--> O PROBLEMA É QUE 
+
+
+
+
+__ OS PARAMETERS/ARGUMENTS NAO ESTÃO SENDO PASSADOS 
+
+
+ADEQUADAMENTE AO 
+
+
+
+STATEMENT DE 
+
+
+""
+    var my_sql_command_2 = 'INSERT
+     INTO CUSTOMER_TRANSPOSED VALUES(:1, :2)";
+
+""
+
+
+
+
+
+
+
+
+
+
+
+
+--> PRECISAMOS DOS 2 PARAMETERS...
+
+
+
+
+
+
+
+
+
+
+
+
+COMO PODEMOS CONSEGUÍ-LOS?
+
+
+
+
+
+
+
+
+
+
+
+--> O PROFESSOR EXPLICA QUE 
+
+DEVEMOS 
+
+PASSAR O VALUE DESSES PARAMETERS 
+
+
+
+LÁ DENTRO 
+
+DO 
+
+
+"snowflake.execute()",
+
+
+
+EM UMA CHAVE 
+de 
+
+"binds: []"...
+
+
+
+
+
+
+
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+
+        snowflake.execute({ -- código DIFERENTE. em vez de retornar o result set/algum value, FAZEMOS UM INSERT EM 1 TABLE, POR MEIO DESSE EXECUTE...
+
+            sqlText: my_sql_command_2,
+            binds: [col_name, col_value]
+        }) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+COM ISSO, PEGAREMOS ESSES VALUES DINÂMICOS,
+
+
+
+
+extraídos 
+de cada 1 dos rows,
+
+
+
+
+
+e aí 
+
+
+INSERIREMOS 
+
+
+
+nos slots de 
+
+
+":1" e ":2",
+
+LÁ NA NOSSA QUERY SQL...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SNOWFLAKE.EXECUTE(
+    {
+        sqlText: my_sql_command_2,
+        binds: [col_name, col_val]
+    }
+)
+
+
+
+
+
+
+
+
+
+
+
+--> com isso, ESTAMOS BINDANDO ESSES VALUES...
+
+
+
+
+QUER DIZER QUE ":1" e ":2"
+
+
+SAO PLACEHOLDERS 
+
+
+
+PARA OS RESPECTIVE COLUMN VALUES DESSA TABLE DE "CUSTOMER_TRANSPOSED"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> E A TABLE DE "CUSTOMER_TRANSPOSED"
+
+terá este formato:
+
+
+
+
+
+
+
+
+
+
+CREATE TRANSIENT TABLE CUSTOMER_TRANSPOSED (
+    COLUMN_NAME VARCHAR,
+    COLUMN_VALUE VARCHAR
+);
+
+
+
+
+
+
+
+
+
+
+
+
+OU SEJA,
+
+2 COLUMNS...
+
+
+
+
+
+
+
+
+--> :1 e :2 sao placeholders para os values 
+
+que serao inseridos 
+
+
+nessas columns...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CÓDIGO COMPLETO:
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE PROCEDURE COLUMN_FILL_RATE_BIND_VAR(TABLE_NAME VARCHAR)
+    RETURNS STRING NOT NULL
+    LANGUAGE JAVASCRIPT
+    AS 
+
+    $$ 
+
+
+    var array_of_rows= [];
+    var row_as_json = {};
+
+
+
+    var my_sql_command = "SELECT * FROM " + TABLE_NAME + " LIMIT 10;"
+    var statement1 = snowflake.createStatement(
+        {
+            sqlText: my_sql_command
+        }
+    );
+    var result_set1 = statement1.execute();
+
+
+    var my_sql_command_2 = 'INSERT INTO CUSTOMER_TRANSPOSED VALUES(:1, :2)";
+
+
+    while (result_set1.next()) {
+
+        // Put each row in a variable of type JSON.
+
+        // For each column in the row...
+
+
+        for (var col_num = 0; col_num < result_set1.getColumnCount(); col_num = col_num + 1) {
+
+                var col_name=result_set1.getColumnName(col_num + 1);
+                var col_value=result_set1.getColumnValue(col_num + 1);
+
+
+
+        if (col_name === 'C_NAME') {
+            col_value='JOHN'
+        } else {
+            col_value
+        }
+
+
+        row_as_json = {
+            ColumnName: col_name,
+            column_value: col_value
+        };
+
+        array_of_rows.push(row_as_json);
+
+
+        snowflake.execute({ -- código DIFERENTE. em vez de retornar o result set/algum value, FAZEMOS UM INSERT EM 1 TABLE, POR MEIO DESSE EXECUTE...
+
+            sqlText: my_sql_command_2,
+            binds: [col_name, col_val]
+        }) 
+        }
+    }
+
+    return 'Rows inserted Successfully';
+
+
+        $$;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+É CLARO QUE ESSE "snowflake.execute()",
+
+
+nesse exemplo,
+
+
+está sendo executado 1 monte de vezes,
+
+
+1 vez para cada row...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+UMA OUTRA UTILIDADE DE ESSES BINDS AÍ 
+
+
+É QUE 
+
+ELES 
+
+NOS PROTEGEM 
+
+CONTRA "SQL INJECTION ATTACKS"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> A NOCAO BÁSICA QUE VC TEM QUE TER É:
+
+
+
+
+
+
+""NÓS VAMOS FAZER REUSE 
+
+DE ESSES COMANDOS EM MÚLTIPLOS LUGARES,
+
+
+
+COMO FUNCTIONS,
+
+
+
+
+E É AÍ QUE OS BINDS SAO ESPECIALMENTE ÚTEIS"" --> PQ
+
+
+
+
+
+
+AÍ PODEMOS SÓ PASSAR OS VALUES A
+
+
+
+ESSES "SLOTS"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> O PROFESSOR APONTA QUE EXISTE OUTRA MANEIRA DE 
+
+USAR ESSAS BIND VARIABLES.. --> 
+
+
+é tipo assim:
+
+
+
+
+
+
+
+
+{
+    sqlText: "INSERT INTO CUSTOMER_TRANSPOSED VALUES(?, ?)",
+    binds: [col_name, col_value]
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> mas a versao anterior, com ":1" e ":2"
+
+
+é melhor, mais eficiente,
+
+
+
+PQ O WHILE STATEMENT VAI FICAR ARMAZENADO 
+
+
+
+EM 1 VARIABLE,
+
+
+E PODERÁ 
+
+SER 
+
+
+EXECUTADO MÚLTIPLAS VEZES, PODERÁ SER REUTILIZADO...
+
+
+
+
+
+
+
+
+
+
+
+A DIFERENÇA É QUE, COM "?",
+
+
+NAO PODEMOS REFERENCIAR ESSES BINDS/PARAMETERS 
+
+
+DENTRO 
+
+
+
+DE NOSSO CÓDIGO BINDADO (
+
+
+    ou seja,
+
+
+
+    NESTE CÓDIGO AQUI:
+
+
+    "INSERT INTO CUSTOMER_TRANSPOSED VALUES(:1, :2)"... 
+
+
+
+
+
+
+
+    SE VC USAR "?" E "?",
+
+    seus parameters vao respeitar apenas a ORDEM 
+
+em que vc os escreveu,
+
+mas NAO PODERAO 
+
+SER REUTILIZADOS 
+
+
+NO SEU CÓDIGO.. quer dizer que 
+
+coisas como isto:
+
+    "INSERT INTO CUSTOMER_TRANSPOSED VALUES(:1, :2, :1)"... 
+
+
+
+
+
+SERAO IMPOSSÍVEIS/VOCE TERÁ DE PASSAR O PARAMETRO DE NOVO, se usou apenas "?"
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ok... rodamos esSA PROCEDURE,
+
+
+
+
+e aí checamos os results....
+
+
+
+
+
+
+
+
+
+
+--> O RESULT SERÁ QUE 
+
+
+
+
+OS RECORDS TERAO SIDO INSERIDOS 
+
+
+
+NA TABLE...
+
+
+
+
+
+
+
+-> ficaram 80 records, na table...
+
+
+
+
+
+
+
+
+CÓDIGO COMPLETO:
+
+
+
+
+
+CREATE OR REPLACE TABLE CUSTOMER_TRANSPOSED (
+    COLUMN_NAME STRING,
+    COLUMN_VALUE STRING
+);
+
+
+
+
+CREATE OR REPLACE PROCEDURE COLUMN_FILL_RATE_BIND_VAR(TABLE_NAME VARCHAR)
+    RETURNS STRING NOT NULL
+    LANGUAGE JAVASCRIPT
+    AS 
+
+    $$ 
+
+
+    var array_of_rows= [];
+    var row_as_json = {};
+
+
+
+    var my_sql_command = "SELECT * FROM " + TABLE_NAME + " LIMIT 10;"
+    var statement1 = snowflake.createStatement(
+        {
+            sqlText: my_sql_command
+        }
+    );
+    var result_set1 = statement1.execute();
+
+
+    var my_sql_command_2 = "INSERT INTO CUSTOMER_TRANSPOSED VALUES(:1, :2)";
+
+
+    while (result_set1.next()) {
+
+        // Put each row in a variable of type JSON.
+
+        // For each column in the row...
+
+
+        for (var col_num = 0; col_num < result_set1.getColumnCount(); col_num = col_num + 1) {
+
+                var col_name=result_set1.getColumnName(col_num + 1);
+                var col_value=result_set1.getColumnValue(col_num + 1);
+
+
+
+        if (col_name === 'C_NAME') {
+            col_value='JOHN'
+        } else {
+            col_value
+        }
+
+
+        row_as_json = {
+            ColumnName: col_name,
+            column_value: col_value
+        };
+
+        array_of_rows.push(row_as_json);
+
+
+        snowflake.execute({
+
+            sqlText: my_sql_command_2,
+            binds: [col_name, col_value]
+        }) 
+        }
+    }
+
+    return 'Rows inserted Successfully';
+
+
+        $$;
+
+
+
+
+
+
+
+CALL COLUMN_FILL_RATE_BIND_VAR('DEMO_DB.PUBLIC.CUSTOMER');
+
+
+
+
+SELECT * FROM DEMO_DB.PUBLIC.CUSTOMER_TRANSPOSED;
+
+
+
+
+
+
+O OUTPUT FICOU TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+COLUMN_NAME	COLUMN_VALUE
+C_CUSTKEY	60001
+C_NAME	JOHN
+C_ADDRESS	9Ii4zQn9cX
+C_NATIONKEY	14
+C_PHONE	24-678-784-9652
+C_ACCTBAL	9957.56
+C_MKTSEGMENT	HOUSEHOLD
+C_COMMENT	l theodolites boost slyly at the platelets: permanently ironic packages wake slyly pend
+C_CUSTKEY	60002
+C_NAME	JOHN
+C_ADDRESS	ThGBMjDwKzkoOxhz
+C_NATIONKEY	15
+C_PHONE	25-782-500-8435
+C_ACCTBAL	742.46
+C_MKTSEGMENT	BUILDING
+C_COMMENT	 beans. fluffily regular packages
+C_CUSTKEY	60003
+C_NAME	JOHN
+C_ADDRESS	Ed hbPtTXMTAsgGhCr4HuTzK,Md2
+C_NATIONKEY	16
+C_PHONE	26-859-847-7640
+C_ACCTBAL	2526.92
+C_MKTSEGMENT	BUILDING
+C_COMMENT	fully pending deposits sleep quickly. blithely unusual accounts across the blithely bold requests are quickly
+C_CUSTKEY	60004
+C_NAME	JOHN
+C_ADDRESS	NivCT2RVaavl,yUnKwBjDyMvB42WayXCnky
+C_NATIONKEY	10
+C_PHONE	20-573-674-7999
+C_ACCTBAL	7975.22
+C_MKTSEGMENT	AUTOMOBILE
+C_COMMENT	 furiously above the ironic packages. slyly brave ideas boost. final platelets detect according to the ironi
+C_CUSTKEY	60005
+C_NAME	JOHN
+C_ADDRESS	1F3KM3ccEXEtI, B22XmCMOWJMl
+C_NATIONKEY	12
+C_PHONE	22-741-208-1316
+C_ACCTBAL	2504.74
+C_MKTSEGMENT	MACHINERY
+C_COMMENT	express instructions sleep quickly. ironic braids cajole furiously fluffily p
+C_CUSTKEY	60006
+C_NAME	JOHN
+C_ADDRESS	3isiXW651fa8p 
+C_NATIONKEY	22
+C_PHONE	32-618-195-8029
+C_ACCTBAL	9051.4
+C_MKTSEGMENT	MACHINERY
+C_COMMENT	 carefully quickly even theodolites. boldly 
+C_CUSTKEY	60007
+C_NAME	JOHN
+C_ADDRESS	sp6KJmx,TiSWbMPvhkQwFwTuhSi4a5OLNImpcGI
+C_NATIONKEY	12
+C_PHONE	22-491-919-9470
+C_ACCTBAL	6017.17
+C_MKTSEGMENT	FURNITURE
+C_COMMENT	bold packages. regular sheaves mold. blit
+C_CUSTKEY	60008
+C_NAME	JOHN
+C_ADDRESS	3VteHZYOfbgQioA96tUeL0R7i
+C_NATIONKEY	2
+C_PHONE	12-693-562-7122
+C_ACCTBAL	5621.44
+C_MKTSEGMENT	AUTOMOBILE
+C_COMMENT	nal courts. carefully regular Tiresias lose quickly unusual packages. regular, bold i
+C_CUSTKEY	60009
+C_NAME	JOHN
+C_ADDRESS	S60sNpR6wnacPBLeOxjxhvehf
+C_NATIONKEY	9
+C_PHONE	19-578-776-2699
+C_ACCTBAL	9548.01
+C_MKTSEGMENT	FURNITURE
+C_COMMENT	efully even dependencies haggle furiously along the express packages. final requests boost
+C_CUSTKEY	60010
+C_NAME	JOHN
+C_ADDRESS	c4vEEaV1tdqLdw2oVuXp BN
+C_NATIONKEY	21
+C_PHONE	31-677-809-6961
+C_ACCTBAL	3497.91
+C_MKTSEGMENT	HOUSEHOLD
+C_COMMENT	fter the quickly silent requests. slyly special theodolites along the even, even requests boos
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... FUNCIONOU... 80 records...
+
+
+
+
+
+
+
+
+
+
+MAIS UMA COISA, ANTES DE FECHARMOS ESTA LECTURE:
+
+
+
+
+
+
+
+
+
+
+
+
+NA SINTAXE DE "snowflake.execute()":
+
+
+
+
+
+
+
+
+
+
+
+
+
+snowflake.execute(
+    {
+        sqlText: "INSERT INTO CUSTOMER_TRANSPOSED VALUES(?, ?),
+        binds: [col_name, col_value]
+    }
+)
+
+
+
+
+
+
+
+
+
+
+--> AQUI, PERCEBEMOS QUE 
+
+
+RODAMOS 
+
+"snowflake.execute()"
+
+
+diretamente,
+
+
+SEM 
+
+
+
+CHAMAR AQUELE 
+
+
+"createStatement()"
+
+
+
+ANTES... (e sem manter isso em outra variable)...
+
+
+
+
+
+
+
+
+--> quer dizer que agora nao usamos 
+
+
+"statement.execute1()"...
+
+
+
+
+
+
+
+
+
+
+
+
+OU SEJA,
+
+
+
+DEIXAMOS DE USAR A SINTAXE DE 
+
+
+
+var my_sql_command = 'SELECT * FROM' + TABLE_NAME + ' LIMIT 10';
+var statement1 = snowflake.createStatement({sqlText: my_sql_command});
+
+var result_set1 = statement1.execute();
+
+
+
+
+
+
+
+
+
+
+
+
+
+QUER DIZER QUE AGORA,
+
+COM ESSA SINTAXE DE EXECUTE,
+
+
+EXECUTAMOS AS 3 ETAPAS EM 1 ÚNICA ETAPA,
+
+
+
+
+COM ESTA SINTAXE:
+
+
+
+
+
+
+snowflake.execute(
+    {
+        sqlText: "INSERT INTO CUSTOMER_TRANSPOSED VALUES(?, ?),
+        binds: [col_name, col_value]
+    }
+)
+
+
+
+

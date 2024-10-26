@@ -1,0 +1,1362 @@
+
+
+O QUE É PERFORMANCE TUNING NO SNOWFLAKE?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> SEU OBJETIVO É DEIXAR A QUERY RODA MAIS RÁPIDO,
+
+E GANHAR O RESULTADO MAIS RÁPIDO...
+
+
+
+
+
+
+
+
+EM DATABASES TRADICIONAIS, NÓS:
+
+
+
+
+
+
+
+
+1) ADICIONAMOS INDEXES, PRIMARY KEYS 
+
+
+
+
+
+2) CRIAMOS TABLE PARTITIONS 
+
+
+
+
+
+
+3) ANALISAMOS QUERY EXECUTION PLAN...
+
+
+
+
+
+4) REMOVE UNECESSARY LARGE-TABLE FULL-TABLE SCANS 
+
+
+
+
+
+5) CACHE SMALL-TABLE FULL-TABLE SCANS 
+
+
+
+
+6) VERIFY OPTIMAL INDEX USAGE
+
+
+
+
+7) USING HINTS TO TUNE ORACLE SQL 
+
+
+
+8) SELF-ORDER THE TABLE JOINS....
+
+
+
+
+
+
+
+
+
+
+
+
+MAS COMO SNOWFLAKE DEVELOPER,
+
+
+DEVEMOS FAZER OUTRAS COISAS, PARA CONSEGUIR 
+
+O PERFORMANCE TUNING...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+O QUE TEMOS QUE FAZER???
+
+
+
+
+
+
+
+
+
+
+NADA....
+
+
+
+
+
+
+--> SNOWFLAKE QUERY OPTIMIZER 
+
+E O VIRTUAL WAREHOUSE LAYER,
+
+
+o seu design,
+
+
+vai cuidar de todas 
+
+suas optimizations...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK, ENTAO 
+
+
+QUAL É SUA TAREFA,
+
+COMO DEVELOPER?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+É USAR O SNOWFLAKE DE 1 MANEIRA 
+
+
+INTELIGENTE...
+
+
+
+
+
+
+
+SE VC USAR ESSA TOOL DE UMA MANEIRA 
+
+INTELIGENTE,
+
+
+ISSO VAI REDUZIR O PROCESSING COST,
+
+
+
+E VAI REDUZIR O STORAGE COST...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> VC DEVE PENSAR, ANTES DE VC RODAR QUAISQUER 
+
+QUERIES,
+
+
+E ANTES DE CRIAR QUAISQUER OBJECTS NO SNOWFLAKE....
+
+
+
+
+
+
+
+
+
+
+--> TODAS ACTIONS QUE VC REALIZAR 
+
+NO SNOWFLAKE 
+
+VAO 
+
+
+ACARRETAR COSTS... ------_> VC OU SUA COMPANY 
+
+
+VAI PAGAR A BILL 
+
+DO SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+
+
+--> VC PRECISA REDUZIR O COST,
+
+DE ALGUMA MANEIRA....
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> JÁ DO INÍCIO DESSE CURSO,
+
+
+DISCUTIMOS SOBRE COMO O SNOWFLAKE 
+
+FUNCIONA, UNDER THE HOOD..
+
+
+
+
+
+
+
+
+
+
+--> ISSO NOS AJUDA A USAR ESSA TOOL
+
+
+DE UMA MANEIRA BEM MAIS INTELIGENTE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUAIS DESSAS 2 QUERIES PERFORMA MELHOR:
+
+
+
+
+
+
+
+
+
+SELECT * FROM EMP;
+
+
+
+
+
+SELECT EMP_NAME, EMP_ADDR 
+FROM EMP;
+
+
+
+
+
+
+
+
+
+
+
+
+--> a de baixo performa melhor,
+
+
+menos data...
+
+
+
+
+
+
+
+
+
+
+-> MENOS COLUMNS,
+
+VC ESTÁ SE REFERINDO APENAS 
+
+ÀS COLUMNS NECESSÁRIAS...
+
+
+
+
+
+
+--> SE VC TEM 1 TABLE FILE COM TODAS AS COLUMNS,
+
+essa query vai go ahead 
+
+e pullar apenas 
+
+esses 2 column values 
+
+
+da table file...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> quer dizer que essa segunda query vai performar melhor...
+
+
+
+
+
+
+
+
+
+
+
+
+-> a primeira query puxa todas as table files/columns,
+
+
+
+e isso leva a pior performance...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OUTRO PONTO:
+
+
+
+
+
+
+
+** Sharing virtual warehouse 
+
+
+WHILE DEV ACTIVITIES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> COMO DEVELOPERS,
+
+SE COMPARTILHAMOS 
+
+VIRTUAL WAREHOUSE,
+
+
+
+TODOS OS DEVS 
+
+FAZEM LEVERAGE DO LOCAL DISK CACHE 
+
+DO VIRTUAL WAREHOUSE...
+
+
+
+
+
+
+
+
+QUER DIZER
+ 
+
+
+ QUE SE TODOS OS DEVS 
+
+
+
+ ESTAO 
+
+
+ TRABALHANDO EM 1 MESMO 
+
+
+
+ SET DE TABLES,
+
+
+
+
+
+
+TODOS ELES DEVEM USAR 1 MESMA WAREHOUSE,
+
+
+
+
+1 SHARED VIRTUAL WAREHOUSE,
+
+
+PARA 
+
+
+
+NOS BENEFICIARMOS 
+
+
+
+DO SAVING DE COSTS 
+
+
+
+POR MEIO DOS CACHED RESULT SETS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OUTRA MANEIRA DE MELHORAR PERFORMANCE:
+
+
+
+
+
+
+
+
+
+
+
+** ORDER YOUR DATA BY FILTERING COLUMNS 
+DURING DATA LOADING PROCESS..
+
+
+
+
+
+(
+
+    ou seja,
+
+    ORDENAR AS TABLES...
+)
+
+
+
+
+
+
+
+EM VEZ DE ADICIONAR 1 CLUSTERING 
+KEY EM 1 TABLE, ALGO QUE VAI TE DAR MAIS COSTS,
+
+
+
+
+
+VC __ DEVERIA _ ORDENAR __ A TABLE 
+
+
+POR AQUELAS CLUSTERING KEY COLUMNS 
+
+
+
+ENQUANTO VC CARREGA (insert into)
+
+
+A DATA NA TABLE... --> ISSO FARÁ COM QUE 
+
+AS MICRO PARTITIONS 
+
+
+SEJAM 
+
+
+ORDENADAS SIMILARMENTE 
+
+
+A MANEIRA QUE VC ORDENA QUANDO USA/APLICA CLUSTERING...
+
+
+
+
+
+
+
+
+
+--> OK, POR MEIO 
+
+DO ORDER DATA E DO LOAD DA DATA 
+
+NA TABLE,
+
+
+
+VC VAI SALVAR 
+
+
+
+CUSTOS 
+
+
+
+EM RELACAO À ORGANIZACAO DAS PARTITIONS NO BACKEND...
+
+
+
+
+
+
+
+
+
+
+
+
+--> AÍ, MESMO SE VC DECIDIR ADICIONAR CLUSTERING 
+
+
+NESSA TABLE,
+
+OS CUSTOS PARA REORGANIZAR 
+
+
+ESSAS PARTITIONS POR MEIO DO CLUSTERING SERAO BEM MAIS 
+
+BAIXOS,
+
+PQ 
+
+
+AS PARTITIONS TODAS JÁ ESTARAO MAIS OU MENOS ORGANIZADAS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> POR ISSO VC DEVE LOAD A DATA 
+
+
+
+_ DE FORMA ORDENADA,
+
+ORDENANDO PELAS 
+
+
+COLUMNS QUE VC USA MT EM FILTERS OU EM JOINS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ou seja,
+
+resumindo:
+
+
+
+
+
+
+
+""ORDER YOUR DATA (insert into statements,
+loading of data) BY COLUMNS USED FREQUENTLY 
+IN FILTERS AND IN JOINS,
+DURING DATA LOADING PROCESS""...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OUTRO PONTO:
+
+
+
+
+
+USE MULTI CLUSTER WAREHOUSE INSTEAD OF SPINNING UP 
+
+EXISTING CLUSTER TO BIGGER SIZE (
+    bem mais barato...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-------> O QUE ACONTECE É:
+
+
+
+DURANTE DEV ACTIVITIES,
+
+PODEMOS 
+
+TER COMECADO COM EXTRA LARGE WAREHOUSE... --> SE TIVERMOS MT 
+
+
+DEVS,
+
+
+as queries podem comecar a entrar em queues,
+
+
+
+por conta de sua quantidade excessiva...
+
+
+
+
+
+
+
+
+
+
+
+
+--> EM VEZ DE "SPIN UP OUTRA XL WAREHOUSE",
+
+
+vc deve habilitar o MULTI-CLUSTERING,
+
+
+
+para que cópias de sua warehouse sejam 
+
+
+criadas,
+
+
+
+em vez de criar 1 warehouse XL extra...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK, QUANDO AS QUERIES COMECAREM A AUMENTAR/ENTRAR 
+EM FILA,
+
+
+DEVEMOS AUMENTAR O LIMITE DE MAX CLUSTERS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+PROFESSOR BASICAMENTE RESUME QUE 
+
+
+
+
+SE PEDIREM PERFORMANCE TUNING NO SNOWFLAKE,
+
+
+O MAIN GOAL 
+
+SERÁ 
+
+
+
+
+
+MELHORAR A MANEIRA PELA QUAL VC 
+
+
+
+USA A FERRAMENTA SNOWFLAKE --> REDUZIR 
+
+
+
+
+OS PROCESSING E STORAGE COSTS,
+
+
+
+E AUMENTAR A QUERY PERFORMANCE..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> NAS PRÓXIMAS SECTIONS,
+
+VEREMOS 
+
+
+COMO __ REDUZIR O STORAGE COST... (table type)..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+------> EM SNOWFLAKE,
+
+
+PERFORMANCE TUNING É A MESMA COISA QUE COST TUNING...
+
+
+
+
+
+
+-------------------------------------------------
+
+
+
+
+
+
+
+NO SNOWFLAKE, ALGUMAS COISAS DE PERFORMANCE NAO EXISTEM:
+
+
+
+
+
+
+
+
+
+
+1) NAO EXISTEM INDEXES 
+
+
+
+
+
+2) NAO EXISTE PRIMARY KEY, FOREIGN KEY CONSTRAINT 
+
+
+
+
+
+
+3) NAO HÁ NECESSIDADE DE TRANSACTION MANAGEMENT
+
+
+
+
+
+4) NAO EXISTE "BUFFER POOL"
+
+
+
+
+
+5) VOCE NUNCA ENCONTRARÁ 
+
+
+"OUT OF MEMORY EXCEPTION"...
+
+
+
+
+
+
+
+
+
+---> voce pode pensar que viu 
+uma 
+constraint 
+
+na database snowflake,
+
+mas essa é uma DUMMY constraint...
+
+
+
+
+
+
+--> A ÚNICA CONSTRAINT EXISTENTE 
+
+
+NO SNOWFLAKE,
+
+QUE PODE SER APLICADA,
+
+É 
+
+A 
+
+CONSTRAINT 
+
+
+DE 
+
+
+"NOT NULL"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--------> ALÉM DISSO,
+
+
+NAO EXISTE NENHUMA 
+
+
+NECESSIDADE 
+
+DE TRANSACTION MANAGEMENT 
+
+NO SNOWFLAKE... (por isso 
+nao existe buffer pool)
+
+
+
+
+
+
+
+
+
+
+
+
+
+QUER DIZER QUE 
+
+
+NAO VEREMOS NENHUMA DAS PROPRIEDADES 
+
+DE 
+
+
+DATABASES CONVENCIONAIS NO SNOWFLAKE..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK, MAS __ SEM TODAS ESSAS PROPRIEDADES,
+
+
+
+COMO DIABOS O SNOWFLAKE 
+
+
+
+HANDLA/CONSEGUE RODAR 
+
+""ACID"" transactions?
+
+
+
+
+
+
+
+
+
+
+
+o que é "ACID"?
+
+
+
+
+
+
+
+
+
+
+--> sao propriedades de transactions...
+
+
+
+
+
+
+
+Atomicity
+Consistency
+Isolation
+Durability
+
+
+
+
+
+
+
+
+ATOMICIDADE --> CADA STATEMENT 
+
+EM 1 TRANSACTION (read, write, update, delete) 
+
+É TRATADO COMO 1 UNIDADE...
+
+
+
+CADA STATEMENT OU É EXECUTADO 
+
+POR INTEIRO, OU NAO É EXECUTADO AT ALL 
+
+(
+    isso previne DATA LOSS 
+    e corruption se, por exemplo,
+
+    sua streaming data source falha durante o mid-stream.
+)
+
+
+
+
+
+
+
+
+
+CONSISTENCIA --> GARANTE QUE TRANSACTIONS 
+
+APENAS REALIZAM CHANGES EM TABLES DE MANEIRAS 
+PRÉ-DEFINIDAS, PREVISÍVEIS... a CONSISTENCIA 
+
+GARANTE QUE CORRUPTION OU ERROS NA SUA DATA 
+
+NAO VAO CRIAR UNINTENDED CONSEQUENCES 
+
+NA INTEGRIDADE DE SUA TABLE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ISOLATION --> quando MÚLTIPLOS USERS ESTAO 
+
+READING E WRITING DE 1 TABLE TUDO DE 1 VEZ SÓ,
+
+
+A ISOLACAO DAS TRANSACTIONS DELES GARANTE QUE 
+
+
+TRANSACTIONS CONCORRENTES 
+
+NAO __ INTERFEREM UMAS COM AS OUTRAS...
+
+
+
+CADA REQUEST PODE OCORRER como se 
+
+estivessem ocorrendo 1 por 1,
+
+quando na verdade 
+
+estao todos ocorrendo ao mesmo tempo..
+
+
+
+
+
+
+
+
+
+
+
+DURABILIDADE --> GARANTE QUE AS CHANGES 
+FEITAS À SUA DATA, REALIZADAS POR TRANSACTIONS 
+TERMINADAS COM SUCESSO, SERAO 
+
+SALVAS, MESMO EM CASOS DE SYSTEM FAILURE....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ACID transactions ensure the highest
+ possible data reliability and integrity. 
+ They ensure that your data never falls into 
+ an inconsistent state because of an operation
+  that only partially completes. For example,
+   without ACID transactions, if you were writing
+    some data to a database table, but the power 
+    went out unexpectedly, it's possible that only
+     some of your data would have been saved, while
+      some of it would not. Now your database is in
+       an inconsistent state that is very difficult
+        and time-consuming to recover from.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS COMO ESSAS TRANSACTIONS SAO POSSÍEVIS,
+
+NO SNOWFLAKE?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--. VEREMOS COMO O QUERY OPTIMIZER FUNCIONA,
+
+
+
+E VER COMO CONCURRENCY 
+
+VAI FUNCIONAR...
+
+
+
+
+
+
+
+
+
+
+--> JÁ VIMOS COMO PRUNING FUNCIONA NO SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+--> O SNOWFLAKE APLICA VÁRIAS TECNICAS, COMO PRUNING,
+MAPZONE, MIN-MAX TECHNIQUES,
+
+
+PARA FILTRAR 
+
+AS MICRO PARTITIONS...
+
+
+
+
+
+
+
+mas no próximo video veremos como 
+
+o snowflake 
+
+
+consegue 
+
+realizar acid transactions,
+
+
+
+e se 
+
+
+o 
+
+
+snowflake aplica quaisquer constraints 
+
+nas tables...
+
+
+

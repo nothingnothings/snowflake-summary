@@ -1,0 +1,898 @@
+
+
+
+NESSA LECTURE, O PROFESSOR RODA 1 QUERY,
+
+
+
+DE CUSTOMER,
+
+
+
+QUE TEM 10GB DE DATA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ELE RODA ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+SELECT * FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1000.CUSTOMER;
+
+
+
+
+
+
+
+
+
+--> QUANDO VC USA O SNOWSIGHT,
+
+
+VC DEVE CUIDAR COM ALGUMAS COISAS:
+
+
+
+
+
+
+
+
+1) QUANDO VC RODA QUERIES COMO ESSA,
+
+
+
+VC GANHA AQUELA WINDOW 
+
+
+
+QUE TE MOSTRA A QUANTIDADE DE ROWS PRODUZIDOS...
+
+
+
+
+
+
+-> SE TIVER MTOS ROWS SENDO PRODUZIDOS,
+
+SIGNIFICA QUE 
+a QUERY VAI RODAR POR 1 LONGO TEMPO...
+
+
+
+
+
+
+
+
+
+
+
+--> 106 MILLION RECORDS...
+
+
+
+
+
+
+--> O MOMENTO EM QUE ESSA JANELA FICA NESSE 
+
+STATE,
+
+
+
+E MOSTRA "EXECUTING",
+
+
+
+VC 
+
+
+DEVE TER 
+
+
+A NOCAO DE 
+
+
+""SERÁ QUE É NECESSÁRIO ESCREVER TODOS 
+
+ESSES ROWS NO CONSOLE?""...
+
+
+
+
+
+
+
+
+--> vc sempre deve perguntar essa question,
+
+
+
+
+
+pq 
+
+
+O RESULT SET REALMENTE VAI SER 
+
+ESCRITO NO OBJECT "RESULT"...
+
+
+
+
+
+
+
+
+
+O PROFESSOR PEGA A QUERY PROFILE...--> 
+
+
+
+
+
+
+10.15 GB SCANEADOS,
+
+E 8.49gb 
+
+
+RETORNADOS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> COMO USERS,
+
+
+
+
+
+NAO VEREMOS TODOS ESSES 150 MILHOES DE 
+
+
+ROWS,
+
+ELES NAO APARECEM NO RESULT... -->  MAS ISSO VAI SER
+
+
+
+ESCRITO NO RESULT SET...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... POR ISSO QUE 
+
+
+QUANDO VC 
+
+EXECUTA 
+
+
+
+COISAS NO SNOWSIGHT,
+
+VC 
+
+
+DEVE 
+
+PRESTAR ATENCAO NISSO -->  SE VC 
+
+
+
+
+FICAR COM 1 MONTE DE ROWS,
+
+VC DEVE CANCELAR IMEDIATAMENTE,
+
+E ENTAO 
+
+
+
+CONSEGUIR O NUMBER DE RECORDS 
+
+POR MEIO DE AGGREGATION,
+
+COM 
+
+
+"SELECT COUNT(*) FROM users",
+
+por exemplo..
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> de mil até 10.000,
+
+
+
+a sua query é fine,
+
+pode deixar rodar,
+
+mas MAIS DO QUE ISSO 
+
+NAO PODEMOS ACEITAR...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> NA WINDOW DE "QUERY PROFILE",
+
+
+VC NUNCA 
+
+DEVE 
+
+
+VER ALGO COMO 
+
+"5.85 GB",
+
+
+"10GB",
+
+
+'50GB"
+
+
+
+SENDO RETORNADOS NO RESULT LAYER...
+
+
+
+
+
+
+
+
+
+SE VC ENXERGAR ALGO ASSIM,
+
+VC DEVE ASSUMIR 
+
+QUE 
+
+VC 
+
+ESTÁ FAZENDO ALGO REALMENTE ERRADO....
+
+
+
+
+
+-> VC ESTÁ RODANDO 1 ANALYSIS QUERY BEM __RUIM__...
+
+
+
+
+
+
+
+
+essa é 1 indicacao...
+
+
+
+
+
+
+
+
+
+
+
+
+---> a segunda indicacao é, 
+quando 
+
+
+
+vc 
+ESTÁ 
+
+
+USANDO O SNOWSIGHT,
+
+
+
+VC PODE ENCONTRAR 
+
+
+1 MENSAGEM DE 
+
+""RESULTS TOO LARGE TO GENERATE STATS. LIMIT ROWS 
+
+TO UNDER 1 MILLION"...
+
+
+
+
+
+
+
+
+
+
+
+--> É UMA MESSAGE INDIRETA,
+
+
+
+
+QUE QUER DIZER QUE VC ESTÁ PULLANDO 
+
+
+MAIS DATA DO QUE O NECESSÁRIO 
+
+
+NA SUA ANÁLISE..
+
+
+
+
+
+
+
+
+--> como vc pode ver, o limit 
+
+
+SUBIU ATÉ 1 MILHAO...
+
+
+
+
+
+
+
+
+--> SE VC RESTRINGIR 
+
+
+
+SEUS RESULTS ATÉ 1 MILHAO,
+
+
+VC PODE USAR 
+
+
+
+ESSE OVERVIEW AÍ...
+
+
+
+
+
+
+
+
+
+--> DE CERTA FORMA,
+
+NAO É UMA RESTRICTION,
+E SIM UMA 
+
+
+INDIRECT MESSAGE/WARNING 
+
+
+
+DE QUE VC ESTÁ PULLANDO 1 MONTE DE DATA 
+
+
+NO CONSOLE SNOWFLAKE,
+
+
+data que nao é realmente necessária...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... POR ISSO SEMPRE USE A LIMIT CLAUSE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ok...
+
+
+
+
+
+
+
+
+
+COM ISSO, PODEMOS CONSTRUIR 
+
+
+OS CHARTS DE DIVERSAS MANEIRAS DIFERENTES,
+
+PODEMOS EXPLORAR OS DIFERENTES CHART TYPES...
+
+
+
+
+
+
+
+
+
+--> mais uma coisa com que vc deve ter cuidado:
+
+
+
+
+
+
+POR CONTA DA ARQUITETURA DO SNOWFLAKE,
+
+
+ESSA É UMA 
+
+HIGHLY IO INTENSIVE OPERATION --> CADA VEZ QUE 
+
+VC 
+
+TEM QUE PULLAR DATA 
+
+
+
+DA REMOTE AREA,
+
+
+OU WRITAR ALGUMA DATA AO LOCAL DISK 
+
+
+CACHE,
+
+
+
+
+ISSO É UMA IO INTENSIVE OPERATION -------> OU SEJA,
+
+
+
+ESTAMOS WRITTANDO 
+
+DATA 
+
+
+AO "RESULT OBJECT" (Result set)
+
+
+
+OU 
+
+
+
+
+A 1 TABLE OBJECT -------__> TUDO ISSO 
+
+
+SAO 
+
+
+IO INTENSIVE OPERATIONS -----> E, PARA ISSO,
+
+
+
+VC DEFINITVAMENTE SERÁ COBRADO -------> E VC 
+
+
+
+NAO DEVE PENSAR QUE
+
+
+"""AH, MAS SE EU RODAR SELECT * FROM xxxx
+
+mais uma vez, vou facilmente conseugir 
+
+o resultado de volta, de novo,
+
+
+vou usar o cache e tudo mais"" -->  voce pode 
+
+pensar que 
+
+
+está 
+
+se "aproveitando",
+
+
+
+MAS NA VERDADE NAO,
+ 
+
+ PQ O WRITE DESSE RESULT SET É QUASE 
+
+
+
+ COMO O CREATE DE OUTRA TABLE, EM 
+
+
+
+ 1 LAYER DIFERENTE ---------> E TODA ESSA DATA 
+
+ SEŔA DROPPADA DEPOIS DE 24 HORAS ----> QUER 
+
+ DIZER QUE 
+
+ VC 
+
+ ESTÁ __PAGANDO__ PELO QUE VC ESTÁ ESCREVENDO, AQUI...
+
+
+
+
+
+
+
+
+
+
+ --> VC ESTÁ FAZENDO UMA I/O INTENSIVE OPERATION,
+
+
+ ESTÁ ESCREVENDO ISSO NO RESULT OBJECT,
+
+
+ E 
+
+
+ TUDO ISSO NAO ESTÁ SENDO SALVO EM NENHUMA TABLE,
+
+ VAI SER DROPPADO 
+
+ DEPOIS DE 24 HORAS... --> NAO CAIA NA ILUSAO DE 
+
+ ""AH, ISSO ESTÁ SENDO CACHEADO,
+
+
+ VAI SER REUTILIZADO QUANDO EU RE-RODAR A QUERY""...
+
+
+
+
+
+
+
+
+
+
+
+ -> OK... SE VC ESTIVER RODANDO 1 QUERY MT LARGA,
+
+ É BEM MELHOR 
+
+
+ FAZER BREAK DESSA QUERY EM UNIDADES MENORES 
+
+ DE LÓGICA,
+
+
+ E AÍ, SE POSSÍVEL, SEMPRE QUE POSSÍVEL,
+
+
+ ARMAZENE O RESULT DAS SUBQUERIES DENTRO 
+
+
+ DE TEMPORARY/TRANSIENT/TEMPORARY 
+
+    TABLES, salvando 1 monte de dinheiro...
+
+
+
+
+
+
+
+
+
+
+--> PQ VC VAI ESCREVER EM 1 OBJECT,
+
+OBJECT QUE SERÁ VÁLIDO POR APENAS 24 HORAS...
+
+
+
+
+
+
+
+
+
+--> O SNOWSIGHT TEM ALGUMAS LIMITATIONS,
+
+
+como o query profile...
+
+
+
+
+
+
+mas, para o build analysis e charts,
+
+
+
+
+o snowsite é bem melhor...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-------------------------------------
+
+
+
+
+
+
+
+
+
+CONCLUSAO:
+
+
+
+
+
+1) APRENDEMOS A BUILDAR DASHBOARDS...
+
+
+
+
+
+
+
+2) APRENDEMOS A ANALISAR WAREHOUSE UTILIZATION...
+
+
+
+
+
+
+
+
+3) FEATURES DO SNOWSIGHT...
+
+
+
+
+
+
+
+
+4) SEMPRE DEVEMOS CUIDAR COM OS COSTS...
+
+
+
+
+
+
+
+
+
+
+--> DE EDITION PARA EDITION,
+
+
+AS FEATURES AUMENTAM...
+
+
+
+
+
+---> ACABAMOS PAGANDO ATRAVÉS DA 
+UTILIZATION 
+
+DO COMPUTE... --> UTILIZATION DO COMPUTE POWER....
+
+
+
+
+
+
+
+
+
+
+--> É IMPORTANTE SEMPRE MONITORAR 
+
+A WAREOUSE UTILIZATION...
+
+
+
+
+
+
+
+--> OS WAREHOUSES 
+
+SAO 
+
+O CORACAO DO SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> NO SNOWSIGHT --> PODEMOS USAR 
+
+
+O DASHBOARD,
+CONSTRUIR 1 DASHBOARD SIMPLES
+
+
+
+FAZENDO LEVERAGE DO SNOWSIGHT...
+
+
+
+
+
+
+
+
+
+
+--> PODEMOS USAR ESSES TILES PARA CHECAR 
+
+
+QUANTO FOI UTILIZADO, ETC ETC...
+
+
+
+
+
+
+
+
+--> CRIE ESSES DASHBOARDS E 
+
+MONITORE OS CUSTOS,
+
+
+A MEDIDA QUE VC VAI DEVELOPANDO 
+
+COM O SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+--> OK... DEVEMOS VER A PRÓXIMA LESSON...

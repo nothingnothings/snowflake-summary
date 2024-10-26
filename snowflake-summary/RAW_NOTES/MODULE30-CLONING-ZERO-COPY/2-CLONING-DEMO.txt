@@ -1,0 +1,606 @@
+
+
+O PROFESSOR TEM O SEGUINTE CÓDIGO:
+
+
+
+
+
+
+
+
+
+
+
+-- CLONE TABLE 
+CREATE OR REPLACE TRANSIENT TABLE EMPLOYEE_CLONE CLONE EMP;
+
+
+
+-- all metadata is cloned (timeline as well)...
+SELECT * FROM EMPLOYEE_CLONE;
+
+
+
+
+
+
+
+-- Make changes in EMPLOYEE_CLONE... THOSE CHANGES WILL NOT AFFECT EMP_TABLE:
+DELETE FROM EMPLOYEE_CLONE
+WHERE FIRST_NAME='Arlene';
+
+
+
+SELECT * FROM EMP 
+WHERE FIRST_NAME='Arlene';
+
+
+
+
+
+
+
+
+
+SELECT * FROM INFORMATION_SCHEMA.TABLE_STORAGE_METRICS
+WHERE TABLE NAME LIKE 'EMP' 
+AND TABLE_CATALOG='SNOWFLAKE_TUTORIAL' 
+AND TABLE_DROPPED IS NULL;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... COM ISSO, CRIAMOS UMA NOVA TABLE,
+
+
+
+"EMPLOYEE_CLONE"...
+
+
+
+
+
+
+
+--> COMO O PROFESSOR CLONOU A TABLE,
+
+
+
+ELE COPIOU A METADATA DA TABLE INTEIRA 
+
+
+
+PARA A NOVA TABLE... 
+(EMPLOYEE_CLONE tem essa metadata, uma cópia 
+dessa metadata)...
+
+
+
+
+
+
+
+
+
+-- QUER DIZER QUE A STORAGE EM SI 
+
+NAO FOI COPIADA,
+
+E SIM APENAS 
+
+A METADATA...
+
+
+
+
+
+
+
+--> OK...
+
+
+
+
+
+
+
+
+
+
+MAS SE ALTERARMOS A DATA DA TABLE ORIGINAL,
+
+ISSO VAI AFETAR A TABLE CLONE?
+
+
+
+
+
+
+
+
+
+
+--> NAO, NAO VAI...
+
+
+
+
+
+
+
+AS 2 TABLES, O ORIGINAL E O CLONE,
+
+SAO TOTALMENTE 
+
+
+INDEPENDENTES...
+
+
+
+
+
+
+
+
+
+--> SUA METADATA TEM O 
+MESMO "STARTING POINT",
+
+
+
+
+mas se executarmos changes 
+
+em algum deles,
+
+as changes
+
+
+nao serao refletidas 
+
+
+
+na outra table...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> mesma coisa,
+
+se 
+
+
+RODARMOS QUAISQUER CHANGES 
+
+NA TABLE ORIGINAL,
+
+ESSAS CHANGES 
+NAO AFETARAO
+ 
+
+
+
+ A TABLE CLONE,
+
+ "EMPLOYEE_CLONE"...
+
+
+
+
+
+
+
+
+
+
+
+--> EX:
+
+
+
+
+
+DELETE FROM 
+EMP WHERE 
+FIRST_NAME='Violette';
+
+
+
+
+
+
+
+
+SELECT 
+*
+FROM EMPLOYEE_CLONE
+WHERE FIRST_NAME='Violette'; --- data will still be there...
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> QUER DIZER QUE 
+
+
+SE __ NÓS FIZERMOS QUAISQUER CHANGE 
+
+EM 1 TABLE,
+
+
+
+
+
+ISSO NAO VAI AFETAR A OUTRA TABLE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK, MAS ___ COMO ISSO É POSSÍVEL?_________ 
+
+
+
+
+
+--> É POSSÍVEL 
+
+PQ __ NÓS COPIAMOS _ A METADATA EM SI,
+
+QUANDO REALIZAMOS O CLONE....
+
+
+
+
+
+
+
+
+
+
+
+--> E COMO AMBAS METADATA ESTAO 
+
+APONTANDO 
+
+
+à MESMA STORAGE AREA.... --> O SNOWFLAKE 
+
+HANDLA TUDO....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+---> MAS COMO O SNOWFLAKE HANDLA 
+
+TUDO ISSO?
+
+
+
+
+
+
+
+
+
+--> BEM, O SNOWFLAKE DEIXA TODAS AS CHANGES,
+
+PARA CADA TABLE,
+
+
+NA S3 BLOB STORAGE AREA....
+
+
+
+
+
+
+
+
+
+
+
+SE FAÇO QUALQUER CHANGE EM 1 TABLE,
+
+
+
+ISSO TAMBÉM PRODUZ 
+
+1 FILE 
+
+NO S3,
+
+
+
+
+E ESSA FILE VAI ESTAR APONTADA A ESSE CONJUNTO
+
+
+DE METADATA ESPECÍFICO (table b, por exemplo)....
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE TUDO ISSO É MANAGEADO 
+
+PELO SNOWFLAKE CLOUD SERVICES LAYER....
+
+
+
+
+
+QUAISQUER CHANGES APLICADAS EM 1 TABLE 
+
+
+
+NAO 
+
+SERAO APLICADAS NA OUTRA TABLE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... MAS TEMOS MAIS 1 ESCLARECIMENTO A FAZER...
+
+
+
+
+
+
+
+
+
+--> QUERIAMOS ESTA TABLE:
+
+
+
+
+
+
+
+
+
+
+
+
+SELECT * FROM INFORMATION_SCHEMA.TABLE_STORAGE_METRICS
+WHERE TABLE_NAME LIKE 'EMP'
+AND TABLE_CATALOG='SNOWFLAKE_TUTORIAL'
+AND TABLE_DROPPED IS NULL;
+
+
+
+
+
+
+
+
+
+
+
+-> VEREMOS, COM ESSA QUERY,
+
+QUE 
+
+
+CADA 
+
+
+
+TABLE POSSUI UM ID...
+
+
+
+
+--> TAMBÉM POSSUI UM "CLONE_GROUP_ID"..
+
+
+
+
+
+
+
+
+--> O ID E O CLONE_GROUP_ID 
+
+
+SAO OS MESMOS...
+
+
+(isso na table ORIGINAL)...
+
+tipo assim:
+
+
+ID: 9245 
+
+CLONE_GROUP_ID: 9245
+
+
+
+
+
+
+--> SE RODAMOS A MESMA COISA, MAS COM O CLONE,
+
+
+
+
+
+TIPO ASSIM:
+
+
+SELECT * FROM INFORMATION_SCHEMA.TABLE_STORAGE_METRICS
+WHERE TABLE_NAME LIKE 'EMPLOYEE_CLONE'
+AND TABLE_CATALOG='SNOWFLAKE_TUTORIAL'
+AND TABLE_DROPPED IS NULL;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... COM ISSO, PODEMOS VER 
+
+
+QUE 
+
+
+A SEGUNDA TABLE,
+
+O CLONE,
+
+ESTÁ 
+
+
+ASSIM:
+
+
+
+
+ID: 9251 
+
+
+CLONE_GROUP_ID: 9245
+
+
+
+
+
+
+
+
+
+
+
+O QUE ISSO SIGNIFICA,
+
+
+ESSE SET DE INFO,
+
+É QUE 
+
+ESSA TABLE CLONE 
+
+
+É __ TOTALMENTE INDEPENDENTE (tem um id próprio),
+
+
+
+MAS AO MESMO TEMPO ESTÁ HERDANDO 
+
+METADATA 
+
+DA OUTRA TABLE (
+
+    por isso o CLONE_GROUP_ID dessa clone 
+    table 
+
+    TEM O MESMO VALUE DA TABLE ORIGINAL...
+)
+
+
+
+
+
+
+
+
+
+
+
+OK.... ESSE É O CLONING DO SNOWFLAKE...
+
+

@@ -1,0 +1,39 @@
+Why are you rebuilding the table every time?
+
+
+1) Due to the size of the two other tables (SHA_TO_UPS and RAW_TOPICS), I thought it 
+would be cheaper to recreate the final table (PREMADE_4EYES) than to copy data into 
+it progressively (because then we would probably need to run comparisons between the tables, 
+to check which rows should be copied from the two initial tables to the final table, with joins). I also
+thought about using streams, but I couldn't find a way to make the use-case work without getting 
+increased costs.
+
+
+How frequently are you rebuilding the table?
+
+
+2) The final table is being rebuilt daily, but the other two tables are never rebuilt,
+they only receive new data once files are uploaded to their S3 stages (pipes).
+
+
+How much new data is being added?
+
+
+3) To the RAW_TOPICS table, one of the two tables used to recreate the final table,
+each day 200GB or 400GB are added/copied. There also were days in which no data was added/copied to
+that table. The time to recreate the final table grows, in average, 11 minutes each day. 
+(Now at 3h 36m)
+
+
+Do the upstream tables have an append-only, merge, or insert + delete pattern?
+
+
+4) The upstream tables have a append-only pattern (only new data gets added to the
+RAW_TOPICS table, and no other changes are made).
+
+
+Once data is added to the upstream tables, how quickly does that change need to be reflected in the downstream table?
+
+
+5) RAW_TOPICS receives new data at 6PM CST, and the Final Table (PREMADE_4EYES) gets recreated at 2AM CST, by a task. The change 
+needs to be reflected in the same day the Table gets recreated.

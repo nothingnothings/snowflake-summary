@@ -1,0 +1,320 @@
+
+JÁ FIZ ISSO VÁRIAS VEZES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+crio 1 role, com s3fullAccess,
+
+e aí 
+
+
+
+
+copio seu ARN:
+
+
+
+
+
+
+
+
+CREATE OR REPLACE STORAGE INTEGRATION S3_INTEGRATION
+    TYPE=EXTERNAL_STAGE
+    STORAGE_PROVIDER=S3
+    ENABLED=TRUE
+    STORAGE_AWS_ROLE_ARN= 'arn:aws:iam::269021562924:role/new-snowflake-access'
+    STORAGE_ALLOWED_LOCATIONS = ('s3://new-snowflake-course-bucket/CSV/')
+
+
+
+
+
+DESC STORAGE INTEGRATION S3_INTEGRATION;
+
+
+
+
+
+property	property_type	property_value	property_default
+ENABLED	Boolean	true	false
+STORAGE_PROVIDER	String	S3	
+STORAGE_ALLOWED_LOCATIONS	List	s3://new-snowflake-course-bucket/CSV/	[]
+STORAGE_BLOCKED_LOCATIONS	List		[]
+STORAGE_AWS_IAM_USER_ARN	String	arn:aws:iam::543875725500:user/heeb0000-s	
+STORAGE_AWS_ROLE_ARN	String	arn:aws:iam::269021562924:role/new-snowflake-access	
+STORAGE_AWS_EXTERNAL_ID	    String	   UU18264_SFCRole=2_TBE7RjHPfSqmCjne1y5exkh5IDQ=	
+COMMENT	String		
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> TENHO QUE PEGAR O EXTERNAL ID,
+
+ESTE:
+
+
+UU18264_SFCRole=2_TBE7RjHPfSqmCjne1y5exkh5IDQ=
+
+
+
+
+E COLOCAR LÁ NO AWS, NO EXTERNALID DO MEU ROLE
+
+
+
+
+
+
+
+
+TIPO ASSIM:
+
+
+
+
+
+
+{
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Effect": "Allow",
+			"Principal": {
+				"AWS": "arn:aws:iam::269021562924:root"
+			},
+			"Action": "sts:AssumeRole",
+			"Condition": {
+				"StringEquals": {
+					"sts:ExternalId": "UU18264_SFCRole=2_TBE7RjHPfSqmCjne1y5exkh5IDQ="
+				}
+			}
+		}
+	]
+}
+
+
+
+
+
+
+
+
+TAMBÉM PRECISAMOS, NO SNOWFLAKE,
+
+
+PEGAR O VALUE DE 
+
+
+"STORAGE_AWS_ROLE_ARN"... 
+
+que é este aqui:
+
+
+
+arn:aws:iam::269021562924:role/new-snowflake-access
+
+
+
+
+
+
+DEVEMOS PEGAR ESSE VALUE ARN aí 
+
+
+e colocar no lugar 
+
+do value da key de "AWS",
+
+
+lá no JSON das trusted relationships,
+
+
+tipo assim:
+
+
+
+
+
+{
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Effect": "Allow",
+			"Principal": {
+				"AWS": "arn:aws:iam::269021562924:role/new-snowflake-access"
+			},
+			"Action": "sts:AssumeRole",
+			"Condition": {
+				"StringEquals": {
+					"sts:ExternalId": "UU18264_SFCRole=2_TBE7RjHPfSqmCjne1y5exkh5IDQ="
+				}
+			}
+		}
+	]
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+CERTO.... COM TUDO ISSO FEITO,
+
+
+
+QUASE  ESTARÁ PRONTO....
+
+
+
+
+
+
+acho que já posso carregar a data desse bucket,
+na verdade...
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA ISSO, DEVO CRIAR 1 NOVO STAGE,
+
+EXTERNAL STAGE,
+
+
+APONTANDO PARA ESSA URL DO BUCKET (com a pasta),
+
+
+
+E AÍ 
+
+
+
+ESPECIFICAR QUE QUERO USAR:
+
+
+1) STORAGE INTEGRATION OBJECT 
+
+
+
+2) FILE FORMAT...
+
+
+
+
+
+
+
+
+
+
+
+--> TIPO ASSIM:
+
+
+
+
+
+
+
+
+    CREATE OR REPLACE STAGE MANAGE_DB.stages.csv_folder
+        URL='<bucket-url>'
+        STORAGE_INTEGRATION=S3_INTEGRATION
+        FILE_FORMAT=MANAGE_DB.file_formats.csv_fileformat;
+
+
+
+
+
+
+
+
+
+ex:
+
+
+
+
+CREATE OR REPLACE STAGE DEMO_DB.PUBLIC.S3_EXTERNAL_STAGE
+    URL='s3://new-snowflake-course-bucket/CSV/'
+    STORAGE_INTEGRATION=S3_INTEGRATION
+    FILE_FORMAT=<your_file_format>;
+
+
+
+
+
+EX:
+
+
+
+
+CREATE OR REPLACE STAGE DEMO_DB.PUBLIC.S3_EXTERNAL_STAGE
+    URL='s3://new-snowflake-course-bucket/CSV/'
+    STORAGE_INTEGRATION=S3_INTEGRATION
+    FILE_FORMAT=DEMO_DB.FILE_FORMATS.MY_CSV_FORMAT;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ok... agora temos que uploadar files 
+lá para o s3, para esse bucket...
+
+
+talvez o professor mostre como fazer isso...
+
+
+

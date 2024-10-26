@@ -1,0 +1,706 @@
+
+
+
+
+
+
+
+
+AGORA VAMOS CONCLUIR O ESTUDO SOBRE ROW ACCESS POLICY...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS AGORA FALAREMOS SOBRE "AUDITING" COM O ROW 
+ACCESS POLICY...
+
+
+
+
+
+
+
+
+RODAMOS ESTES CÓDIGOS:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SELECT * FROM PATIENT;
+USE ROLE POLICY_ADMIN;
+
+
+
+
+
+
+
+SELECT * 
+FROM TABLE(
+    INFORMATION_SCHEMA.POLICY_REFERENCES(
+        policy_name => 'patient_policy'
+    )
+    );
+
+
+
+
+
+
+
+
+
+
+
+--> SE VC QUERIAR POR ISSO AÍ,
+
+
+
+
+
+
+COM ESSA FUNCTION DE "INFORMATION_SCHEMA.POLICY_REFERENCES()",
+
+
+
+
+
+
+
+
+
+,
+
+
+passando o policy_name,
+
+
+
+
+
+VC GANHARÁ 
+
+
+
+
+
+1 RESULT 
+SET 
+
+
+
+EM QUE 
+
+CADA RECORD COMUNICARÁ:
+
+
+
+
+
+
+1) EM QUE DATABASE, SCHEMA, ESSA POLICY ESTÁ..
+
+
+
+
+
+
+
+2) O NOME DA POLICY 
+
+
+
+
+
+
+3) EM QUAL TABLE ELA FOI APLICADA....
+
+
+
+
+
+4) QUE ARGUMENT ESTAMOS PASSANDO 
+A ESSA POLICY (ICDCODE, no caso)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> E CADA DATABASE TERÁ SEU PRÓPRIO SCHEMA 
+
+DE 
+
+"INFORMATION_SCHEMA.POLICY_REFERENCES()"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> TEMOS UMA SINTAXE ALTERNATIVA,
+
+TAMBÉM,
+
+QUE É ESTA:
+
+
+
+
+
+
+
+
+
+
+SELECT 
+*
+FROM TABLE(
+    INFORMATION_SCHEMA.POLICY_REFERENCES(
+        ref_entity_name => 'claims.pharmacy.patient',
+        ref_entity_domain => 'table'
+    )
+);
+
+
+
+
+
+
+
+
+
+
+
+
+ESSE RECORD RETORNA 1 RECORD SIMILAR AO ANTERIOR....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... VC DEVE USAR ESSES COMANDOS SE VC ESTIVER EM 
+
+1 DATABASE ESPECÍFICA... --> SE VC ESTIVER NESSA TABLE,
+
+
+
+SE QUISER CONSEGUIR ESSA METADATA,
+
+
+
+
+DEVE USAR ESSA TABLE FUNCTION...
+
+
+
+
+
+
+
+----------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+A OUTRA MANEIRA POSSÍVEL É COM O USO 
+
+DO ROLE DE "ACCOUNTADMIN":
+
+
+
+
+
+
+
+
+
+
+
+ESCREVEMOS ASSIM:
+
+
+
+
+
+
+
+
+
+
+SELECT 
+*
+FROM SNOWFLAKE.ROW_ACCESS_POLICIES WHERE DELETED IS NULL
+ORDER BY CREATED;
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> COM ISSO, TEREMOS ACESSO A ESSA VIEW GLOBAL 
+
+DO SNOWFLAKE,
+
+
+
+
+QUE VAI TE DAR 
+
+MAIS INFO DETALHADA SOBRE 
+
+
+AS ROW ACCESS POLICIES QUE FORAM APLICADAS 
+
+
+
+NA SUA CONTA SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+
+
+--> É UMA LISTA DE POLICIES....
+
+
+
+
+
+
+
+
+
+
+
+--> TE DÁ 1 MONTE DE INFORMATION SOBRE 
+
+O 
+
+
+BODY DE CADA POLICY,
+
+
+SE 
+
+
+A POLICY 
+
+
+JÁ FOI DELETADA,
+
+
+
+
+
+
+ETC ETC... (
+    se o value de deleted está como "NULL",
+
+    significa que a policy ainda está como ACTIVE...
+)
+
+
+
+
+
+
+
+
+
+
+
+-> se 1 policy for deletada,
+'DELETED' fica com 1 timestamp..
+
+
+
+
+
+
+
+
+
+
+--> também é possível ver os arguments passados 
+
+a 
+
+essas row access policies...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> RESUMINDO:
+
+
+
+
+
+
+
+1 COISA LEGAL DO SNOWFLAKE 
+
+
+É A MANEIRA PELA QUAL ELES MANTÊM A METADATA,
+
+
+E COMO 
+
+
+
+ELES ENTREGAM 
+
+ACESSO 
+
+
+
+A ESSA METADATA --> 1 MONTE DE GRANULAR INFORMATION,
+
+
+
+E 
+
+1 
+
+
+MONTE DE DETAIL -----------> E VC PODE USAR 
+
+
+ISSO 
+
+PARA MONITORAR 
+
+QUAIS 
+
+
+POLICIES FORAM APLICADAS,
+
+
+QUAIS FORAM DROPPADAS 
+
+
+ E QUAIS 
+ FORAM MODIFICADAS...
+
+
+
+
+
+
+
+
+
+
+
+ ----------> AGORA VOLTAREMOS AOS NOSSOS SLIDES,
+
+
+
+ PARA 
+
+
+
+ RECAPITULARMOS OS STATEMENTS ESCRITOS PELO PROFESSOR:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 1) ROW ACCESS POLICIES IMPLEMENT ROW-LEVEL 
+ SECURITY TO DETERMINE WHICH ROWS ARE VISIBLE IN THE QUERY RESULT...
+
+
+
+
+
+
+
+
+ 2) ROW ACCESS POLICIES CAN INCLUDE CONDITIONS AND FUNCTIONS 
+ IN THE POLICY EXPRESSION TO TRANSFORM THE DATA AT QUERY 
+ RUNTIME, WHEN THOSE CONDITIONS ARE MET...
+
+
+
+
+
+
+
+3) THE POLICY-DRIVEN APPROACH SUPPORTS 
+SEGREGATION OF DUTIES, TO ALLOW GOVERNANCE 
+TEAMS TO DEFINE POLICIES THAT CAN 
+LIMIT SENSITIVE DATA EXPOSURE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK.... AGORA TUDO ISSO FAZ MAIS SENTIDO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+TEMOS O ÚLTIMO SLIDE:
+
+
+
+
+
+
+
+
+
+
+
+"AT QUERY RUNTIME, SNOWFLAKE GOES THROUGH THE 
+FOLLOWING PROCESS:""
+
+
+
+
+
+
+1. SNOWFLAKE DETERMINES WHETHER A ROW ACCESS POLICY 
+
+IS SET ON A DATABASE OBJECT. IF A POLICY IS 
+ADDED TO THE DATABASE OBJECT, ALL ROWS 
+ARE PROTECTED BY THE POLICY.
+
+
+
+
+
+2. SNOWFLAKE CREATES A __DYNAMIC SECURE VIEW (i.e. 
+a SECURE INLINE VIEW)
+OF THE DATABASE OBJECT.
+
+
+
+
+3. THE VALUES OF THE COLUMNS SPECIFIED IN THE "ALTER TABLE"
+
+OR 
+
+
+"ALTER VIEW" COMMAND (i.e. when adding a row 
+access policy to a table or view) ARE BOUND TO THE 
+
+CORRESPONDING PARAMETERS 
+
+IN THE POLICY,
+
+AND THE POLICY EXPRESSION IS EVALUATED.
+
+
+
+
+
+4) SNOWFLAKE GENERATES THE QUERY OUTPUT FOR THE USER,
+AND THE QUERY OUTPUT WILL ONLY CONTAIN ROWS BASED 
+
+ON THE POLICY DEFINITION EVALUATING TO "TRUE"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... POR FIM,
+TEMOS ESTA OBSERVACAO:
+
+
+
+
+
+
+
+""NAO É POSSÍVEL UPDATAR OU DELETAR 
+
+O RECORD PROTEGIDO PELA POLICY,
+
+MAS AINDA É POSSÍVEL, SIM,
+
+____INSERIR__ 1 RECORD COM 1 VALUE PROTEGIDO (
+    o único detalhe é que ele será imediatamente 
+    oculto, assim como 
+    o resto dos records "ocultos" pela 
+    row access policy 
+
+    atribuída À table...
+)""
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SNOWFLAKE CREATES A DYNAMIC SECURE VIEW of the table 
+
+object..
+
+
+
+

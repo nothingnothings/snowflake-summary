@@ -1,0 +1,1347 @@
+
+
+AGORA TENTAREMOS IMPLEMENTAR O SCENARIO DE MANAGED SCHEMA 
+
+QUE 
+
+DISCUTIMOS NA ÚLTIMA AULA....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CRIAREMOS 1 MANAGED SCHEMA,
+E ENTAO 
+
+2 ROLES,
+
+
+"MY_ROLE" ( o role "chefe", que vai dar grant de access 
+
+na database e schema objects a outros roles)
+
+
+
+
+
+
+E 
+
+"MY_ROLE_CHILD_1",
+
+
+que 
+
+vai ser o ROLE QUE VAI CRIAR OS SCHEMA OBJECTS,
+
+MAS QUE NAO TERÁ 
+
+
+PERMISSAO PARA GRANT ACCESS a esses objects a outros roles...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+rodamos estes códigos:
+
+
+
+
+
+
+
+
+
+
+--- MANAGED SCHEMA ----- 
+
+
+
+USE ROLE SECURITYADMIN;  -- securityadmin is the one that creates and manages roles
+
+
+CREATE OR REPLACE ROLE MY_ROLE_CHILD_1;
+
+
+USE ROLE MY_ROLE_CHILD_1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SE TENTAMOS USAR ESSE ROLE DIRETAMENTE,
+
+NAO CONSEGUIMOS,
+
+
+PQ 
+
+
+PRECISAMOS ANEXAR ESSE ROLE A 1 USER, ANTERIORMENTE...
+
+
+
+
+
+
+
+
+
+
+---> O PROFESSOR ENTAO ANEXA ESSE ROLE DE "MY_ROLE_CHILD_1" AO 
+
+
+ROLE DE "MY_ROLE" (Que será seu CHEFE, dentro do managed 
+schema)...
+
+
+
+
+
+
+
+
+
+
+
+--> DEPOIS DISSO, ELE EXECUTA NOVAMENTE O 
+
+
+
+
+USE ROLE MY_ROLE_CHILD_1;
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUANDO ELE FAZ ISSO, 
+
+
+DEIXA DE OBTER UM ERRO (
+    mesmo 
+
+    esse role nao estando vinculado a user algum... como 
+    ele está vinculado/sujeitado ao role de "my_role",
+
+
+    o erro deixa de aparecer...
+    
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ENTRETANTO, O PROFESSOR AINDA NAO ADICIONOU NENHUM 
+USER 
+
+EXPLICITAMENTE 
+
+A ESSE ROLE...
+
+
+
+
+
+
+--> MAS ELE JÁ ANEXOU ESSE CHILD ROLE 
+
+AO PARENT ROLE,
+QUE É 
+
+
+"MY_ROLE"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ISSO DEU CERTO, NO CASO,
+
+
+
+PQ 
+
+O 
+
+
+"MY_ROLE" JÁ ESTÁ COM 1 USER ANEXADO A SI... 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ESSE ERRO SÓ É THROWN 
+
+
+SE 
+
+""AINDA NAO CRIAMOS A HIERARCHY"" (
+
+
+    vinculacao entre roles
+)
+
+
+
+
+
+
+
+
+SE OS ROLES ESTAO VINCULADOS ENTRE SI,
+
+
+
+
+
+
+NAO 
+
+
+OCORRERÁ O THROW DO ERROR...
+
+
+
+
+
+
+
+
+
+--> MAS SE SEU ROLE É UM "STANDALONE ROLE",
+
+
+UM ROLE DESCONECTADO DA HIERARQUIA GERAL 
+
+DO SNOWFLAKE,
+
+
+E SE 
+
+ELE 
+
+NAO ESTÁ VINCULADO A UM USER,
+
+
+ELE __ cERTAMENTE __ FARÁ O THROW DE 1 ERROR...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... AGORA JÁ FIZEMOS O USE DESSE "MY_ROLE_CHILD_1",
+
+E JÁ O ANEXAMOS A 1 ROLE 
+
+
+
+HIERARQUICAMENTE SUPERIOR (o "my_role")...
+
+
+
+
+
+
+
+----------------------------------
+
+
+
+
+BEM, ATÉ AGORA, TEMOS CIÊNCIA DE QUE:
+
+
+
+
+
+1) USANDO "SYSADMIN",
+
+CRIAMOS A DATABASE 
+
+DE 
+
+"MY_DB"...
+
+
+
+
+
+2) CRIAMOS, COM O SYSADMIN,
+
+
+O SCHEMA "MY_SCHEMA",
+
+DENTRO DA DATABASE "MY_DB"...
+
+
+
+
+
+
+3) ESSE SCHEMA, CRIADO PELO "SYSADMIN",
+
+
+
+FOI CRIADO COMO 1 "NORMAL SCHEMA",
+
+E NAO 1 MANAGED SCHEMA...
+
+
+
+
+
+
+
+
+
+
+
+--> A PRÓXIMA COISA QUE O PROFESSOR FARÁ,
+
+AQUI,
+
+
+É _ _ALTERAR __ O SCHEMA "MY_SCHEMA",
+
+
+para que ele se torne um MANAGED SCHEMA....
+
+
+
+
+
+
+
+
+
+
+--> O COMANDO PARA ISSO É 
+
+
+
+
+
+
+
+
+
+ALTER SCHEMA MY_DB.MY_SCHEMA 
+ENABLE MANAGED ACCESS;
+
+
+
+
+
+
+
+
+
+
+
+
+--> TENTAMOS USAR ESSE COMANDO
+
+
+COM O ROLE DE "SYSADMIN"...
+
+
+
+
+
+
+
+
+
+ex:
+
+
+
+
+
+
+
+USE ROLE SYSADMIN;
+
+
+
+ALTER SCHEMA MY_DB.MY_SCHEMA 
+ENABLE MANAGED_ACCESS;
+
+
+
+
+
+
+
+
+
+
+
+
+ENTRETANTO, GANHAMOS UM ERROR,
+
+DE 
+
+"INSUFFICIENT PRIVILEGES"...
+
+
+
+
+
+
+
+
+
+
+
+
+MAS PQ GANHAMOS 1 ERROR?
+
+
+
+
+
+
+
+
+É PQ EXISTE UMA REGRA...
+
+
+
+
+
+
+
+
+
+
+
+""NORMAL SCHEMA CAN __ ONLY__ BE CONVERTED 
+TO A MANAGED SCHEMA IF __ THE ALTERING ROLE 
+HAS _ _GLOBAL__ MANAGE GRANTS"""...
+
+
+
+
+
+
+
+
+
+
+
+
+
+""GLOBAL MANAGE GRANTS""" --> SIGNIFICA QUE, POR DEFAULT,
+
+
+
+
+APENAS O SECURITYADMIN E O ACCOUNTADMIN PODEM 
+
+
+CONVERTER NORMAL SCHEMAS EM MANAGED SCHEMAS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> E O SYSADMIN NAO TEM ESSE "GLOBAL MANAGE GRANTS"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> o que o professor faz, agora,
+
+é 
+
+
+O ASSIGN DE 
+
+"GLOBAL MANAGE GRANTS"
+
+
+
+AO SYSADMIN,
+
+USANDO 
+
+O 
+
+SECURITYADMIN...
+
+
+
+
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+USE ROLE SECURITYADMIN;
+GRANT MANAGE GRANTS ON ACCOUNT TO ROLE SYSADMIN;
+REVOKE MANAGE GRANTS ON ACCOUNT TO ROLE SYSADMIN;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+PODEMOS CONCEDER ESSE PRIVILEGE, SIM,
+
+MAS _ NAO DEVEMOS FAZER ISSO...
+
+
+
+
+
+
+
+
+NAO DEVEMOS FAZER ISSO 
+
+PQ 
+
+"SYSADMIN"
+
+
+
+DEVE SER USADO APENAS 
+
+PARA CREATE E MANAGE 
+
+DE DATABASE E SCHEMA OBJECTS...
+
+
+
+
+
+
+
+
+
+
+
+--> PARA O MANAGE DE GRANTS E PRIVILEGES,
+E COISAS RELACIONADAS A SEGURANÇA,
+
+DEVEMOS UTILIZAR 
+
+
+O SECURITYADMIN... (coisas relacionadas a ROLES)...
+
+
+
+
+
+
+
+--> E NAO DEVEMOS FICAR FAZENDO "SWAP" de essas responsibilities 
+
+ao longo do securityadmin e sysadmin...
+
+
+
+
+
+
+
+
+É POR ISSO QUE RODAMOS O REVOKE 
+
+
+DESSES GRANTS CONFERIDOS 
+
+
+AO SYSADMIN...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+AGORA USAMOS O ROLE "MY_ROLE" ( o CHEFE)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA CRIAR 1 MANAGED SCHEMA,
+
+
+
+
+
+
+A ESCRITA É ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE SCHEMA MY_SCHEMA WITH MANAGED ACCESS;
+
+
+
+
+
+
+
+
+
+--> ESSA É A ESCRITA 
+
+PARA __ CRIARMOS __ ESSE SCHEMA COMO 1 MANAGED SCHEMA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+SE DESEJAMOS ALTERAR 1 SCHEMA NORMAL,
+
+DEIXÁ-LO  COMO MANAGED SCHEMA,
+
+DEVEMOS 
+
+
+ESCREVER ASSIM:
+
+
+
+
+
+
+
+
+
+
+ALTER SCHEMA <schema_name>
+ENABLE MANAGED ACCESS;
+
+
+
+
+
+
+
+---------------------
+
+
+
+
+
+
+
+
+
+OK... ISSO VAI CRIAR NOSSO SCHEMA COMO 1 MANAGED SCHEMA...
+
+
+
+
+
+
+
+
+
+
+
+--> É SEMPRE MELHOR CRIARMOS 1 SCHEMA COMO 1 MANAGED SCHEMA
+DIRETO,
+
+
+
+PQ 
+
+
+se vamos rodar 
+
+"ALTER SCHEMA ENABLE MANAGED ACCESS",
+
+
+
+
+
+teremos problemas 
+
+
+
+
+COM O MANAGE 
+DE GRANTS,
+
+TEREMOS QUE 
+
+
+FAZER TODO UM SETUP...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... CRIAMOS ESSE MANAGED SCHEMA 
+
+
+
+COM O ROLE DE "MY_ROLE"...
+
+
+
+
+
+
+
+
+
+
+A ESCRITA:
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE SCHEMA MY_SCHEMA_2 WITH MANAGED ACCESS;
+
+
+
+
+
+
+
+
+
+
+
+
+--> A PRÓXIMA COISA QUE O PROFESSOR FAZ É O GRANT 
+
+DE USAGE 
+
+
+NA DATABASE "MY_DB"
+
+
+
+AO __ ROLE "MY_ROLE_CHILD_1"...
+
+
+
+
+
+
+
+
+
+USE ROLE MY_ROLE; -- role that has the permission to grant usage to other roles (but does not actually create the database objects)...
+
+
+GRANT USAGE ON DATABASE MY_DB TO ROLE MY_ROLE_CHILD_1;
+
+GRANT USAGE ON SCHEMA MY_DB.MY_SCHEMA_2 TO ROLE MY_ROLE_CHILD_1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA QUE ESSE ROLE CONSIGA 
+
+CRIAR TODOS OS OBJECTS QUE QUISER,
+
+
+CONFERIMOS 
+
+
+O GRANT DE 
+
+
+
+"ALL PRIVILEGES",
+
+tipo assim:
+
+
+
+
+
+USE ROLE MY_ROLE; -- role that has the permission to grant usage to other roles (but does not actually create the database objects)...
+
+
+GRANT USAGE ON DATABASE MY_DB TO ROLE MY_ROLE_CHILD_1;
+
+GRANT USAGE ON SCHEMA MY_DB.MY_SCHEMA_2 TO ROLE MY_ROLE_CHILD_1;
+
+GRANT ALL PRIVILEGES ON SCHEMA MY_SCHEMA_2 TO ROLE MY_CHILD_1;
+
+
+
+
+
+
+
+
+
+
+
+
+AGORA ESSE ROLE TEM TODOS OS PRIVILEGES 
+
+
+NECESSÁRIOS PARA CRIAR 
+
+
+
+DATABASE OBJECTS NESSE SCHEMA,
+
+
+PARA ESSE "CHILD ROLE"...
+
+
+
+
+
+
+
+
+
+--> A VANTAGEM, AGORA,
+
+É QUE 
+
+TODOS OS OBJECTS CRIADOS DENTRO DESSE SCHEMA, POR ESSE 
+
+ROLE 
+
+"MY_ROLE,
+
+
+
+
+
+sua OWNERSHIP FICARÁ COM O __MY_ROLE...
+
+
+
+
+
+
+
+
+
+
+
+
+--> POR OUTRO LADO,
+TODOS 
+
+OS 
+
+OBJECTS CRIADOS DENTRO DO SCHEMA 
+
+
+POR "MY_ROLE_CHILD_1"
+
+
+
+SERAO OWNADOS PELO "MY_ROLE_CHILD_1"...
+
+
+
+
+
+
+-----------
+
+
+
+
+
+
+
+
+
+
+O PROFESSOR DEMONSTRA ISSO COM 1 EXEMPLO,
+
+
+ELE TROCA PARA O ROLE DE "MY_ROLE_CHILD_1",
+
+E AÍ 
+CRIA 1 TABLE,
+
+E AÍ 
+
+
+
+TENTA DROPPAR A TABLE...
+
+
+
+
+
+
+EX:
+
+
+
+
+
+
+USE ROLE MY_ROLE_CHILD_1;
+USE DATABASE MY_DB;
+USE SCHEMA MY_SCHEMA_2;
+
+
+
+CREATE OR REPLACE TABLE EMP (A VARCHAR);
+
+
+DROP TABLE EMP; ---- THIS WILL WORK...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+COM ISSO,
+
+SEREMOS CAPAZES DE DROPPAR ESSA TABLE,
+
+
+PQ 
+
+O 
+
+"MY_ROLE"
+
+SERÁ 
+
+REALMENTE 
+
+O __ OWNER__ DESSA TABLE...
+
+
+
+
+
+
+
+
+
+
+--> a única diferença, no caso,
+
+
+é que 
+
+MESMO ELE SENDO O __ OWNER __ DESSA TABLE,
+
+
+ELE 
+
+
+NAO PODERÁ 
+
+FAZER "GRANT" DO ACESSO A ELA 
+
+
+A OUTROS ROLES.... ------------> O ENCARREGADO 
+
+
+DESSA TAREFA 
+
+SERÁ SEMPRE "MY_ROLE",
+
+O PARENT DESSE "MY_ROLE_CHILD_1"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PODEMOS OBSERVAR ISSO, COM ESTE COMANDO:
+
+
+
+
+
+
+USE ROLE MY_ROLE_CHILD_1;
+
+
+GRANT SELECT ON TABLE MY_DB.MY_SCHEMA_2 TO ROLE SOME_GUY;
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ISSO NOS DARÁ UM ERRO, IMEDIATAMENTE...
+
+
+
+
+
+
+É NESSE ASPECTO QUE 
+
+O 
+
+
+
+MANAGED SCHEMA 
+
+
+
+
+VAI NOS RESTRINGIR,
+
+O  QUE É BOM...
+
+
+
+
+
+
+
+
+
+
+--> O ERRO QUE RECEBEMOS É ESTE:
+
+
+
+
+"Not authorized in a managed access schema. Use the schema owner role 
+or a role with the MANAGE GRANTS privilege".
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AÍ O PROFESSOR TROCA PARA O ROLE DE "MY_ROLE" (parent),
+
+PARA VER 
+
+
+SE ESSA FEATURE 
+
+DE GRANT ACCESS AO SCHEMA E SEUS OBJECTS REALMENTE FUNCIONA:
+
+
+
+
+
+
+
+
+
+
+USE ROLE MY_ROLE;
+
+GRANT USAGE ON SCHEMA MY_DB.MY_SCHEMA_2 TO ROLE SOME_GUY;
+GRANT USAGE ON TABLE MY_DB.MY_SCHEMA_2.EMP TO ROLE SOME_GUY;
+GRANT SELECT ON TABLE MY_DB.MY_SCHEMA_2.EMP TO ROLE SOME_GUY;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK, AGORA SABEMOS A IMPORTANCIA DOS MANAGED SCHEMAS,
+
+
+
+E COMO ELES FUNCIONAM...
+
+
+
+
+
+
+
+
+
+--> VIMOS OUTRA COISA, TAMBÉM:
+
+
+
+
+
+
+
+*** QUANDO VC CRIA 1 NOVO ROLE,
+
+
+VOCE NAO É OBRIGADO A ATTACHEAR 1 USER IMEDIATAMENTE... --> VC PODE,
+
+ALTERNATIVAMENTE,
+
+
+
+VINCULAR ESSE ROLE AO SYSADMIN/ALGUM ROLE VINCULADO AO SYSADMIN,
+
+
+
+PARA QUE 
+
+
+ENTAO ELE CONSIGA SER INCORPORADO A HIERARQUIA 
+
+DE SEU APP SNOWFLAKE...
+
+
+
+
+
+
+
+--> SE VC FIZER ISSO, NADA TE IMPEDE 
+
+DE VINCULAR 1 USER POSTERIORMENTE A ESSE ROLE QUE VOCE 
+CRIOU...
+
+
+
+

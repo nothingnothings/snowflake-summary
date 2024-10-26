@@ -1,0 +1,955 @@
+
+
+
+
+
+
+
+
+
+--> AGORA VEREMOS COMO FUNCIONAM ERROR SCENARIOS 
+
+
+NO SNOWPIPE...
+
+
+
+
+
+
+
+
+
+
+
+
+--> VEREMOS COMO O SNOWPIPE SE COMPORTA,
+SEMPRE QUE 
+
+
+
+QUAISQUER ERRORS ACONTECEM, DURANTE O DATA LOAD...
+
+
+
+
+
+
+
+
+
+
+--> O PROFESSOR JÁ CRIOU 1 INTEGRATION OBJECT PARA ESTE 
+
+EXEMPLO, 
+
+E TAMBÉM OUTROS OBJECTS,
+COM ESTE CÓDIGO:
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE STORAGE INTEGRATION SNOWFLAKE_OBJECT 
+    TYPE=EXTERNAL_STAGE 
+    STORAGE_PROVIDER=S3 
+    ENABLED=TRUE 
+    STORAGE_AWS_ROLE_ARN='<your_aws_arn_here>'
+    STORAGE_ALLOWED_LOCATIONS=('<path-inside-bucket>')
+
+
+
+
+
+
+
+
+CREATE OR REPLACE FILE FORMAT DEMO_DB.FILE_FORMATS.EMP_FILE_FORMAT
+    TYPE=CSV 
+    FIELD_DELIMITER=','
+    SKIP_HEADER=1
+    NULL_IF=('NULL', 'null')
+    EMPTY_FIELD_AS_NULL=TRUE;
+
+
+
+
+
+CREATE OR REPLACE STAGE SNOW_STAGE
+    STORAGE_INTEGRATION=S3_INTEGRATION
+    URL='<s3_bucket_url>'
+    FILE_FORMAT=EMP_FILE_FORMAT;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> TAMBÉM A TABLE EM QUE VAMOS QUERER CARREGAR A DATA...
+
+
+
+
+
+
+
+
+"EMP_SNOWPIPE"...
+
+
+
+
+
+
+
+O PIPE OBJECT TAMBÉM JÁ FOI CRIADO...
+
+
+
+
+
+
+
+
+
+
+
+--> ENQUANTO O PROFESSOR CRIAVA O OBJECT DE 
+
+"FILE FORMAT",
+
+
+ELE INTENCIONALMENTE DEIXOU A COMPRESSION DAS FILES 
+
+
+COMO "GZIP" --> FEZ ISSO PARA FORÇAR 1 ERRO,
+
+
+
+SE NENHUMA DATA DE TIPO GZIP FOR CARREGADA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AGORA VAMOS VERIFICAR QUE ERRO NOS É MOSTRADO,
+
+
+POR MEIO DO 
+
+
+
+EXECUTE DO 
+
+
+CÓDIGO DE "COPY" DIRETAMENTE:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- O OBJETO DE "PIPE" SEMPRE VAI WRAPPAR 1 COMANDO DE COPY (Que é a acao/código que é triggada, sempre que novas files sao adicionadas no bucket s3):
+CREATE OR REPLACE PIPE SNOWPIPE_DEMO.PUBLIC.SNOWPIPE_OBJECT
+    AUTO_INGEST=TRUE
+    AS COPY INTO SNOWPIPE_DEMO.PUBLIC.EMP_SNOWPIPE -- copy command, wrapped by the snowpipe...
+    FROM @SNOWPIPE_DEMO.PUBLIC.SNOW_STAGE;
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK.. O PROFESSOR EXECUTA O COMANDO DE COPY DIRETAMENTE,
+
+TIPO ASSIM:
+
+
+
+
+
+COPY INTO SNOWPIPE_DEMO.PUBLIC.EMP_SNOWPIPE -- copy command, wrapped by the snowpipe...
+    FROM @SNOWPIPE_DEMO.PUBLIC.SNOW_STAGE;
+
+
+
+
+
+
+
+
+
+
+
+
+    --> 
+
+
+GANHAMOS ESTE ERROR:
+
+
+
+
+
+
+
+"INVALID DATA ENCOUNTERED DURING DECOMPRESSION FOR FILE 
+xxxxxx. compression type used: 'GZIP', cause: 'data error'....
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE DEVEMOS USAR 
+
+ESSA 
+
+PROPRIEDADE 
+
+____aPENAS__ QUANDO FAZEMOS UNLOAD 
+
+
+DE 
+
+DATA 
+
+
+DO 
+
+"SNOWFLAKE"
+
+NA DIRECAO 
+
+
+DO AWS S3 (extract de data,
+
+do snowflake, ao s3)
+
+
+
+
+
+
+
+
+
+AQUI, NO CASO,
+
+
+ESTAMOS USANDO ESSA PROPRIEDADE DE PROPÓSITO,
+PARA GERAR 
+ESSE ERROR...
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... QUANDO EU UPLOADO 1 FILE AO AWS S3 
+
+LOCATION,
+
+
+O OBJECT DE "PIPE"
+
+
+É TRIGGADO... ISSO, POR SUA VEZ,
+
+ACABA RODANDO O COMANDO DE COPY...
+
+
+
+
+
+
+
+
+--> OK... O QUE FAREMOS, AGORA,
+
+
+É _ UPLOADAR 1 FILE AO AWS S3 LOCATION,
+
+
+FAZENDO O TRIGGER DO PIPE OBJECT,
+
+TUDO PARA VER O QUE VAI ACONTECER...
+
+
+
+
+
+
+
+
+O UPLOAD DE UMA FILE VAI TRIGGAR 
+
+
+O COPY COMMAND...
+
+
+
+
+
+
+
+
+
+--> E O COPY COMMAND VAI NOS DAR 1 ERRO...
+
+
+
+
+
+
+
+
+
+
+ ALTER PIPE SNOWPIPE_OBJECT REFRESH;
+
+
+
+
+
+
+
+
+ CHECAMOS A TABLE, PARA VER SE A DATA 
+
+ FOI COPIADA PARA DENTRO..
+
+
+
+
+
+
+
+
+
+ -> SELECT * FROM <table_name>
+
+
+
+
+
+
+
+
+
+
+
+ ---> MAS A DATA NAO FOI LOADED...
+
+
+
+
+
+
+
+MAS COM 
+
+
+"ALTER PIPE SNOWPIPE_OBJECT REFRESH",
+
+
+
+lemos que o status já está "SENT"..
+
+
+
+
+
+
+
+
+
+
+
+
+
+MAS COMO PODEMOS SABER O QUE DEU DE ERRADO?
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA ISSO, PRECISAMOS VALIDATE _ O PIPE OBJECT...
+
+
+
+
+
+
+
+
+
+--> PARA FAZER ISSO, PRECIASMOS EXECUTAR 
+
+
+
+2 COMMANDS ESPECÍFICOS...
+
+
+
+
+
+
+
+
+
+
+A PRIMEIRA COISA É "CHECAR O STATUS DA PIPE"...
+
+
+
+
+
+
+
+
+-----> fazemos isso assim:
+
+
+
+
+
+
+
+--- Validate 
+SELECT SYSTEM$PIPE_STATUS('SNOWPIPE_OBJECT');
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> isso vai dar o status da pipe,
+
+tipo assim:
+
+
+
+{
+    "executionState": "RUNNING",
+    "pendingFileCount": 0
+}
+
+
+
+
+
+
+
+ESSE OUTPUT SIGNIFICA QUE:
+
+1) A PIPE ESTÁ RUNNING FINE 
+
+
+
+
+
+2) O pendingFileCount está 0, NENHUMA
+file resta...
+
+
+
+
+
+
+
+
+--> A PRÓXIMA COISA QUE TEMOS QUE FAZER É 
+
+"VALIDATE THE PIPE LOAD"...
+
+
+
+
+
+
+
+--> PARA ISSO, TEMOS QUE MENCIONAR:
+
+1) O NOME DA PIPE 
+
+
+2) O MOMENTO..
+
+
+
+
+
+
+
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+
+SELECT * FROM TABLE(
+    VALIDATE_PIPE_LOAD(
+        PIPE_NAME=>'DEMO_DB.PUBLIC.snowpipe'
+        START_TIME=>dateadd(hour, -4, current_timestamp())
+    )
+);
+
+
+
+
+
+
+
+
+
+
+CERTO...
+
+
+
+
+ISSO VAI NOS DAR O ERROR ESPECÍFICO...
+
+
+
+
+
+
+
+
+
+
+
+
+--> EX:
+
+
+
+
+
+
+
+ERROR 
+
+
+
+'REMOTE FILE WAS NOT FOUND. THERE ARE SEVERAL POTENTIAL CAUSES.
+THE FILE MIGHT NOT EXIST. THE REQUIRED CREDENTIALS MAY BE 
+MISSING OR INVALID. IF YOU ARE RUNNING A COPY COMMAND,
+PLEASE MAKE SURE FILES ARE NOT DELETED WHEN THEY ARE 
+BEING LOADED, OR FILES ARE NOT BEING LOADED INTO TWO 
+DIFFERENT TABLES CONCURRENTLY WITH AUTO PURGE OPTION'...
+
+
+
+
+
+
+
+
+
+
+
+é uma mensagem de error bem inútil....
+
+
+
+
+
+
+
+
+-> AQUI PRECISAMOS OBSERVAR ALGUMAS COISAS..
+
+
+
+
+
+
+
+
+
+
+1) O SNOWPIPE 
+
+NUNCA VAI FAZER THROW DE ERRORS DIRETAMENTE AO CONSOLE,
+
+OU 
+
+
+ENVIAR QUALQUER NOTIFICATION ACERCA 
+
+
+DA FAILURE DO PIPE OBJECT...
+
+
+
+
+
+
+
+2) É SUA RESPONSABILIDADE 
+
+CHEGAR E VALIDAR O 
+
+PIPE OBJECT...
+
+
+
+
+
+3) ALÉM DISSO, O ERROR 
+
+ENTREGUE PELO PIPE OBJECT NAO TE DÁ PISTA ALGUMA 
+SOBRE O PIPE OBJECT...
+
+
+
+
+(
+
+    a mensagem de erro 
+
+    do snowpipe é quase sempre a mesma, para todos 
+    cenário s...
+)
+
+
+
+
+
+
+
+
+MAS SE EXECUTAMOS O COMANDO DE COPY DIRETAMENTE,
+
+
+RECEBEMOS A EXATA MESMA MESSAGE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+4) SABEMOS QUE O PIPE VAI EXECUTAR O COMANDO DE 
+
+COPY....
+
+
+
+MAS QUANDO NOŚ EXECUTAMOS O COMANDO DE "COPY" DIRETAMENTE,
+
+A EXECUTION VAI FICAR 
+
+REGISTRADA 
+
+
+NA SCHEMA "INFORMATION_SCHEMA",
+
+
+DENTRO DA TABLE DE "query_HISTORY"...
+
+
+
+
+
+
+
+--> ENTRETANTO, QUANDO EXECUTAMOS COMANDOS DE COPY POR MEIO 
+
+DO PIPE,
+
+NAO É POSSÍVEL 
+
+
+VER __ O COPY COMMAND __ NESSA TABLE DE "QUERY_HISTORY"...
+
+
+
+
+
+
+
+
+
+--> AINDA ASSIM, MESMO COM ISSO NAO APARECENDO NA TABLE 
+
+DE "QUERY HISTORY",
+
+
+
+
+
+
+
+VC É CAPAZ DE ENCONTRAR INFO SOBRE ESSE RUN DE COPY,
+
+
+
+LÁ NA 
+
+TABLE 
+
+DE 
+
+"copy_history"...
+
+
+
+
+
+
+
+
+--> PARA FAZER ISSO, PRECISAMOS DESTE SELECT:
+
+
+
+
+
+
+
+
+SELECT * 
+FROM TABLE(SNOWFLAKE.INFORMATION_SCHEMA.copy_history(
+    table_name=>'emp_snowpipe',
+    start_time=> dateadd(hours, -1, current_timestamp())
+));
+
+
+
+
+
+
+
+
+
+
+
+--> COM ISSO,
+
+
+FICAMOS COM VÁRIAS INFOS:
+
+
+
+
+
+
+1) STATUS --> LOAD_FAILED 
+
+
+
+2) PIPE_NAME -> "SNOWPIPE_DEMO"..
+
+
+3) ok..... QUER DIZER QUE INFO SOBRE ESSE FAILED LOAD 
+FICA NESSA COPY_HISTORY TABLE...
+
+
+
+
+
+
+
+
+COMO O PROFESSOR MENCIONOU,
+
+
+
+ESSA TENTATIVA DE LOAD, DO PIPE OBJECT,
+
+
+NAO VAI APARECER NA TABLE 
+
+DE 
+query_HISTORY,
+
+
+NEM SE ESCREVERMOS ASSIM:
+
+
+
+
+
+
+
+
+
+SELECT 
+*
+FROM TABLE(INFORMATION_SCHEMA.query_HISTORY())
+WHERE QUERY_TYPE='COPY'
+ORDER BY START_TIME DESC;
+
+
+
+
+
+
+
+
+
+OK... QUER DIZER QUE SE O COMANDO DE "COPY"
+
+REJEITAR ALGUNS RECORDS, NO INTERIOR DO PIPE,
+
+
+
+NÓS NAO VAMOS CONSEGUIR RETRIEVAR ESSES REJECTED RECORDS,
+
+JUSTAMENTE 
+
+PQ NAO VAMOS CONSEGUIR ESSE "queryId"...
+
+
+
+
+
+
+
+
+--> NA TABLE DE "queryHistory",
+
+
+TAMBÉM NAO SEREMOS CAPAZES DE VER ESSE QUERYID...
+
+
+
+
+
+
+
+
+
+sem o queryID,
+
+
+nao conseguimos retrievar os rejected 
+
+
+
+records, rejeitados por esse command de copy, no snowpipe...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+LESSONS LEARNED:
+
+
+
+
+
+
+1) YOU HAVE TO VALIDATE SNOWPIPE OBJECT 
+
+IN ERROR SCENARIOS (
+    o snowflake nao faz throw de qualquer 
+
+    notification em error scenarios envolvendo pipes...
+
+)
+
+
+
+
+
+2) VOCE NAO CONSEGUE CAPTURAR REJECTED RECORDS 
+
+
+___QUANDO VC __ ESTÁ EXECUTANDO COPY COMMANDS 
+
+ATRAVÉS DO SNOWPIPE... 
+(isso é bem ruim)....
+
+

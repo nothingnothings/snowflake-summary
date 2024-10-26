@@ -1,0 +1,362 @@
+
+
+
+
+
+
+
+
+
+
+
+AGORA FALAREMOS DA OPTION DE "VALIDATION_MODE",
+
+
+QUE DEVE SER USADA JUNTO COM O COMMAND DE "COPY"...
+
+
+
+
+PODE SER:
+
+
+
+
+
+
+VALIDATION_MODE="RETURN_ERRORS"
+
+
+
+
+
+
+VALIDATION_MODE="RETURN_X_ROWS"
+
+
+
+
+
+
+
+VALIDATION_MODE=RETURN_ALL_ERRORS
+
+
+
+
+
+
+
+
+
+
+
+RETURN_N_ROWS -----> O NÚMERO DE ROWS 
+
+
+
+QUE SERAO RETORNADOS,
+
+
+SE OCORRER SUCCESS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+DOCS DO SNOWFLAKE:
+
+
+
+
+
+
+
+VALIDATION MODE --> ITS A STRING(CONSTANT) THAT INSTRUCTS THE 
+
+COPY COMMAND TO VALIDATE THE DATA FILES INSTEAD OF LOADING THEM 
+INTO THE SPECIFIED TABLE; i.e. THE COPY COMMAND ___TESTS__ THE FILES 
+FOR ERRORS, BUT DOES NOT LOAD THEM. THE COMMAND 
+VALIDATES THE DATA TO BE LOADED AND THEN RETURNS RESULTS BASED
+ON THE VALIDATION OPTION SPECIFIED.
+
+
+
+
+
+
+
+
+
+ok... quer dizer que ela ECONOMIZA STORAGE...
+
+
+
+
+
+
+
+--> QUER DIZER QUE O COPY COMMAND NAO VAI CARREGAR DATA NA TABLE... --> QUER DIZER QUE 
+
+
+O COPY COMMAND TESTA A FILE POR ERRORS,
+
+MAS NAO FAZ LOAD DELA...
+
+
+
+
+
+
+
+
+--> O COMMAND VALIDA A DATA TO BE LOADED E RETURNS RESULTS COM BASE 
+
+NA VALIDATION OPTION QUE FOI ESPECIFICADA...
+
+
+
+
+
+
+
+
+
+--> CERTO...
+
+
+
+
+
+
+É BOM DE RODAR __ ANTES__ DE CARREGAR _ DATA NAS SUAS TABLES..
+
+
+
+
+
+
+
+
+
+
+
+--> TEMOS 1 DEMO:
+
+
+
+
+
+
+
+
+
+-- Create table 
+
+ create or replace table emp (
+         first_name string ,
+         last_name string ,
+         email string ,
+         streetaddress string ,
+         city string ,
+         start_date date
+);
+
+-- We will be copying the data where we have error values for date columns.
+
+copy into emp
+from @my_s3_stage
+file_format = (type = csv field_optionally_enclosed_by='"')
+--pattern = '.*employees0[1-5].csv'
+validation_mode = 'RETURN_ERRORS';
+
+-- Recreate the table with start_date as string.
+
+ create or replace table emp (
+         first_name string ,
+         last_name string ,
+         email string ,
+         streetaddress string ,
+         city string ,
+         start_date string
+);
+
+-- We will change the data type of date column and try to load it again.
+
+copy into emp
+from @my_s3_stage
+file_format = (type = csv field_optionally_enclosed_by='"')
+--pattern = '.*employees0[1-5].csv'
+validation_mode = 'RETURN_ERRORS';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+O VALIDATION_MODE ESTÁ IGUAL A "RETURN ERRORS"...
+
+
+
+
+
+
+ESSE VALIDATION MODE RETORNOU OS ERRORS QUE ELE VIU NA FILE,
+
+
+
+
+COM AS MESSAGES DE ERROR...
+
+
+
+
+
+
+
+
+
+
+
+
+-> ELE ESCANEOU TODAS AS FILES DA S3 STAGING AREA... E NAS FILES 
+
+
+EM QUE ENCONTROU ERRORS,
+
+
+
+
+
+ELE CRIOU ROWS PARA ELAS (
+
+    com o nome das files e quais os errors...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> NA ÚLTIMA COLUMN,
+
+TEMOS O ACTUAL ERROR_RECORD,
+
+
+o row que nos produziu esse error...
+
+
+
+
+
+
+
+
+
+
+ok... AÍ O PROFESSOR TENTA COPIAR COM ESSE COMANDO DE NOVO,
+
+
+
+
+
+
+MAS É CLARO QUE NADA SERÁ COPIADO, E NENHUM OUTPUT (result set)
+
+SERÁ PRODUZIDO,
+
+
+JUSTMAENTE PQ ELE HAVIA COLOCADO 
+
+
+A OPTION DE 
+
+"VALIDATION_MODE='RETURN ERRORS'"
+
+
+
+
+
+
+
+
+
+
+
+OU SEJA,
+
+SEMPRE 
+
+CERTIFIQUE-SE 
+
+DE QUE 
+
+ESTÁ SETTANDO 
+
+PROPER DATA TYPES
+ 
+ NAS COLUMNS DE SUAS TABLES....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ LESSONS LEARNED:
+
+
+
+
+
+
+ 1) VALIDATION_MODE WILL NOT LOAD ANY DATA INTO TABLE...
+
+
+
+
+
+
+
+ 2) DEFINE PROPER DDL (data-definition language) WHILE CREATING TABLES...
+ (
+    proper data types for columns...
+ )
+
+

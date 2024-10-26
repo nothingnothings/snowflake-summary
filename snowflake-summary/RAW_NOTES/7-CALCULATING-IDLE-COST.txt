@@ -1,0 +1,286 @@
+
+
+
+
+
+
+VAMOS NUMA WORKSHEET....
+
+
+
+
+
+
+
+
+
+
+O PROFESSOR 
+
+TEM 1 QUERY QUE ELE USA 
+
+
+PARA CALCULAR O IDLE COST DE WAREHOUSES...
+
+
+
+
+
+
+
+A QUERY É TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+-- Warehouse will give information about credit information.
+-- WAREHOUSE_HISTORY view will calculate credit and cost grouped by warehouse name.
+
+
+WITH 
+WAREHOUSE_HISTORY AS
+
+ (SELECT TO_DATE(START_TIME) START_TIME,
+          WAREHOUSE_NAME,
+          'SNOWFLAKE_WAREHOUSE_COST' CRITERIA,
+                                     sum(credits_used) AS CREDITS,
+                                     ROUND(sum(credits_used)*4, 2) COST  -- according to edition (standard, enterprise, business critical)
+   FROM snowflake.account_usage.warehouse_metering_history
+   WHERE to_date(start_time) >=date_trunc(MONTH, CURRENT_DATE)
+     AND WAREHOUSE_NAME IS NOT NULL
+     AND WAREHOUSE_NAME NOT IN (' ',
+                                'CLOUD_SERVICES_ONLY')
+   GROUP BY TO_DATE(START_TIME), WAREHOUSE_NAME),
+			
+	
+-- Using the query execution time we will calculate the approx credits for the queries executed on warehouse.
+-- We will compare the credits calculated from query execution with total credits from WAREHOUSE_HISTORY to calculate Idle cost.
+
+  QUERY_HISTORY AS
+  
+  (SELECT TO_DATE(START_TIME) START_TIME,
+          WAREHOUSE_NAME,
+          'QUERY_EXECUTION_COST' CRITERIA,
+                                 sum(WAREHOUSE_COST) CREDITS,
+                                 ROUND(sum(WAREHOUSE_COST) *4, 2) COST
+   FROM
+     (SELECT TO_DATE(START_TIME) START_TIME,
+             WAREHOUSE_NAME,
+             CASE
+                 WHEN WAREHOUSE_SIZE='X-Small' THEN ((((EXECUTION_TIME/1000)/60))*(CLUSTER_NUMBER*1))/60
+                 WHEN WAREHOUSE_SIZE='Small' THEN ((((EXECUTION_TIME/1000)/60))*(CLUSTER_NUMBER*2))/60
+                 WHEN WAREHOUSE_SIZE='Medium' THEN ((((EXECUTION_TIME/1000)/60))*(CLUSTER_NUMBER*4))/60
+                 WHEN WAREHOUSE_SIZE='Large' THEN ((((EXECUTION_TIME/1000)/60))*(CLUSTER_NUMBER*8))/60
+                 WHEN WAREHOUSE_SIZE='X-Large' THEN ((((EXECUTION_TIME/1000)/60))*(CLUSTER_NUMBER*16))/60
+                 WHEN WAREHOUSE_SIZE='2X-Large' THEN ((((EXECUTION_TIME/1000)/60))*(CLUSTER_NUMBER*32))/60
+                 WHEN WAREHOUSE_SIZE='3X-Large' THEN ((((EXECUTION_TIME/1000)/60))*(CLUSTER_NUMBER*64))/60
+                 WHEN WAREHOUSE_SIZE='4X-Large' THEN ((((EXECUTION_TIME/1000)/60))*(CLUSTER_NUMBER*128))/60
+             END WAREHOUSE_COST
+      FROM snowflake.account_usage.query_history
+      WHERE to_date(start_time) >=date_trunc(MONTH, CURRENT_DATE) )
+   GROUP BY TO_DATE(START_TIME),
+            WAREHOUSE_NAME),
+			
+
+  -- 1 credit -- 60 minutes
+
+-- Calculate approx Idle credits and cost. This will use the calculation done from above steps.
+			
+   IDLE_COST AS
+   
+  (SELECT A.START_TIME,
+          A.WAREHOUSE_NAME,
+          'IDLE_COST' CRITERIA,
+                      (A.CREDITS-B.CREDITS) CREDITS,
+                      (A.CREDITS-B.CREDITS)*4 COST
+   FROM WAREHOUSE_HISTORY A
+   INNER JOIN QUERY_HISTORY B ON A.WAREHOUSE_NAME=B.WAREHOUSE_NAME
+   AND A.START_TIME=B.START_TIME),
+   
+  -- Categorise and union actual snowflake warehouse cost, snowflake query execution cost and Idle cost.
+  
+  OVERVIEW AS
+  
+  (SELECT START_TIME,
+          WAREHOUSE_NAME,
+          CRITERIA,
+          ROUND(CREDITS, 2)CREDITS,
+          ROUND(COST, 2) COST
+   FROM WAREHOUSE_HISTORY
+   
+   UNION 
+   
+   SELECT START_TIME,
+                WAREHOUSE_NAME,
+                CRITERIA,
+                ROUND(CREDITS, 2)CREDITS,
+                ROUND(COST, 2) COST
+   FROM QUERY_HISTORY
+   
+   UNION 
+   
+   SELECT START_TIME,
+                WAREHOUSE_NAME,
+                CRITERIA,
+                ROUND(CREDITS, 2)CREDITS,
+                ROUND(COST, 2) COST
+   FROM IDLE_COST)
+   
+   
+SELECT SUM(COST) COST
+FROM OVERVIEW
+WHERE CRITERIA='SNOWFLAKE_WAREHOUSE_COST'
+-- WHERE CRITERIA='QUERY_EXECUTION_COST'
+-- WHERE CRITERIA='IDLE_COST' -- o idle cost de suas maquinas (é um value dentro do snowflake_warehouse_cost)
+  AND WAREHOUSE_NAME='COMPUTE_WH'; -- insert value in here
+  -- AND WAREHOUSE_NAME=:my_warehouse; -- custom filter (created by us) example.
+-- AND  WAREHOUSE_NAME=:Warehouse;  -- insert value in here (dynamic, use SNOWSIGHT to insert value) -- and ':Warehouse' is a custom filter, created by us
+-- AND  START_TIME=:daterange;  -- insert value in here (dynamic, use SNOWSIGHT to insert value)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  NO EXEMPLO DO PROFESSOR,
+   
+
+   DE 
+
+
+   145 DÓLARES DE CUSTO, 
+
+
+
+   129 DOLÁRES FORAM DE IDLE... QUER DIZER QUE ELE NAO UTILIZOU 129 DOLARES...
+
+
+(só usou 16 dólares)...
+
+
+
+
+
+
+
+   NO MEU CASO,
+
+
+
+
+
+   FORAM 52 DOLARES EM TOTAL,
+
+   e 48 dolares DE IDLE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+   OU SEJA, UMA BOA PARTE DE NOSSO CUSTO __ É DE NAO UTILIZACAO DAS MÁQUINAS...
+
+
+
+
+
+
+
+
+
+
+
+
+NA PRÓXIMA AULA,
+
+VEREMOS COMO CRIAR DYNAMIC FILTERS PARA 
+
+
+ESSAS QUERIES,
+
+USANDO O SNOWSIGHT...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+MAS HÁ MAIS DETALHES SOBRE COST:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+In the provided SQL query, there are three main criteria values
+ being used: 'SNOWFLAKE_WAREHOUSE_COST', 'QUERY_EXECUTION_COST',
+  and 'IDLE_COST'. These criteria values are used to 
+  categorize and union different types of costs and credits
+   related to Snowflake warehouse usage. Based on the provided 
+   query, it seems like these are the only criteria values being 
+   used. However, if you want to expand the criteria values,
+    you could consider adding more categories that are relevant
+    to the context of the query. Here are a few potential 
+    additional criteria values you could consider:
+
+'SNOWFLAKE_STORAGE_COST': If you want to track the storage cost associated with the data stored in Snowflake.
+'SNOWFLAKE_DATA_TRANSFER_COST': To track the costs related to data transfer and network usage within Snowflake.
+'SNOWFLAKE_OTHER_COST': For any other miscellaneous costs that might be associated with Snowflake usage.
+'SNOWFLAKE_QUERY_FAILURE_COST': To track costs related to queries that failed or had errors.
+'SNOWFLAKE_CUSTOM_COST': For any specific custom cost calculations that you want to include.
+Remember, the criteria values you choose should reflect the types of costs or metrics you want to track within your Snowflake environment. The query structure can be adapted accordingly to accommodate the new criteria values and their calculations.
+
+

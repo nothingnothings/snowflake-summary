@@ -1,0 +1,1073 @@
+
+
+
+
+
+
+
+
+
+
+
+--> MAPPING TABLES...
+
+
+
+
+
+
+
+
+
+
+
+
+--> NESSA LECTURE,
+
+TENTAREMOS COMPREENDER MAIS 1 CONCEITO 
+
+A
+RESPEITO DA ROW ACCESS POLICY,
+
+
+
+
+
+
+
+
+
+
+
+
+que é a feature de ""MAPPING TABLES""...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ex:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+----------------- MAPPING TABLES ----------------
+
+
+
+
+
+
+GRANT USAGE ON DATABASE CLAIMS TO ROLE POLICY_ADMIN;
+GRANT USAGE ON SCHEMA PHARMACY TO ROLE POLICY_ADMIN;
+GRANT ALL ON ALL TABLES IN SCHEMA PHARMACY TO ROLE POLICY_ADMIN;
+
+GRANT ALL PRIVILEGES ON TABLE PATIENT TO ROLE POLICYADMIN;
+
+
+
+
+
+
+
+CREATE OR REPLACE ROW ACCESS POLICY PATIENT_POLICY
+AS (ICDCODE VARCHAR) RETURNS BOOLEAN ->
+    CASE
+        WHEN CURRENT_ROLE()='SYSADMIN' THEN TRUE 
+        ELSE
+            CASE
+                WHEN ICDCODE='F70' THEN FALSE
+                ELSE TRUE 
+            END
+    END;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> OK... SE VC ANALISAR ESSE CÓDIGO,
+
+
+1 PROBLEMA É QUE 
+
+ESTAMOS __ MENCIONANDO __ EXPLICITAMENTE 
+
+
+
+OS "RECORD VALUES",
+
+
+
+como "F70", por exemplo...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+------> AQUI TEMOS APENAS 1 ÚNICO RECORD VALUE (f70),
+
+
+
+
+
+MAS IMAGINE QUE VC TEM CENTENAS DE ICD CODES,
+
+
+
+
+
+ICD CODES EM QUE QUEREMOS APLICAR 
+
+
+ESSA POLICY ------------> NESSE CASE,
+
+SEREMOS FORÇADOS A ESCREVER 
+
+
+TODOS ESSES VALUES,
+O QUE 
+
+VAI SER CUMBERSOME E DIFÍCIL DE FAZER...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> O QUE PODEMOS FAZER, EM CASOS COMO ESSES,
+
+
+É UTILIZAR 1 RECURSO DE "ESCRITA DINÂMICA"...
+
+
+
+
+
+
+
+
+
+
+
+
+O PROFESSOR DIZ QUE PODEMOS __ CLASSIFICAR___ 
+ESSES 
+
+
+ICDCODES,
+
+
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+F00-- Dementia in Alzheimer disease
+W13---Fall from, out of or through building or structure
+J09---Influenza and pneumonia
+H03--- Disorders of eyelid in diseases classified elsewhere
+F70--- Mental retardation
+H60--- Diseases of external ear
+H30--- Disorders of choroid and retina
+E65--  Obesity and other hyperalimentation
+O81.0-- Low forceps delivery
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA CONSEGUIR "MAPPEAR" NOSSOS 
+
+VALUES LÁ NAQUELA ROW ACCESS POLICY,
+
+
+
+
+
+
+O PROFESSOR CRIA 1 TABLE ESPECÍFICA PARA ESSES VALUES,
+
+
+DE NOME 
+
+
+
+
+"ICDCODES"...
+
+
+
+
+
+
+
+
+
+
+EX:
+
+
+
+
+
+
+
+CREATE TABLE ICDCODES (ICD VARCHAR, TYPE VARCHAR);
+
+
+
+
+
+
+
+
+
+
+
+
+-----> DENTRO DESSA TABLE,
+
+O PROFESSOR CLASSIFICOU OS ICDCODES 
+
+
+COMO "RED", "ORANGE" E "GREEN"
+
+
+
+
+
+
+
+
+
+
+
+tipo assim:
+
+
+
+
+
+
+
+f70     red 
+w13     red 
+f00     red
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> TUDO ISSO ESTÁ FALANDO SOBRE DISEASES..
+
+
+
+
+
+--> ALGUMAS SAO SENSITIVE....
+
+
+
+
+
+
+
+
+213 --> SUICIDE INCIDENT.. -> SENSITIVE INFORMATION...
+
+
+
+
+
+
+
+
+
+
+
+--> "RED" -> COISAS QUE NAO DEVEM SER EXPOSTAS...
+
+
+
+
+
+
+
+
+
+--> "oRANGE"-> É OK ESSA INFO SER EXPOSTA, A ALGUNS CLIENTS...
+
+
+
+
+
+
+
+--> GREEN --> NAO HÁ PROBLEMA EM SER EXPOSTO...
+
+
+
+
+
+
+
+
+
+
+--> OK.. QUER DIZER QUE NOSSOS ICDCODES 
+
+
+FORAM CLASSIFICADOS,
+
+
+E AÍ 
+
+
+ARMAZENADOS, SEUS CODES E SEU "GRAU",
+
+
+
+
+
+NESSA TABLE SEPARADA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+É ESSA TABLE, DE NOME "ICDCODES"..
+
+
+
+
+
+
+
+
+
+
+--> SIMILARMENTE, O PROFESSOR CRIA OUTRA 
+
+TABLE 
+
+SEPARADA,
+
+MAS DE NOME 
+
+
+
+"ACCESS_CONTROL",
+
+
+
+QUE SERÁ USADA 
+
+PARA 
+
+
+DETERMINAR 
+
+
+
+QUAIS ROLES TEM ACESSO A QUAIS RECORDS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> NO CASO,
+
+
+
+
+
+
+ELE ESCREVE ASSIM:
+
+
+
+
+
+
+CREATE OR REPLACE TABLE ACCESS_CONTROL (
+    ROLE_NAME VARCHAR,
+    ACCESS_FOR VARCHAR
+);
+
+
+
+
+
+
+ROLE_NAME               ACCESS_FOR 
+
+UHG                     GREEN
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE 
+
+
+ESSE ROLE TERÁ ACESSO 
+
+APENAS AOS RECORDS DE TIPO "GREEN"...
+
+
+
+
+
+
+
+
+
+
+--> AGORA TEMOS ESSAS 2 TABLES...
+
+
+
+
+
+
+
+--> ESSAS 2 TABLES SAO CHAMADAS 
+
+DE 
+
+"mAPPING TABLES"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> COMO ESSAS 2 TABLES FORAM CRIADAS 
+
+DENTRO DO SCHEMA DE GOVERNANCE,
+
+PELA CONTA DE "POLICY_ADMIN",
+
+
+
+
+
+
+ELAS NAO PODEM SER ACESSADAS POR "ETL_DEV" (
+    hierarquicamente inferior...
+)
+
+
+
+
+
+
+
+
+
+AGORA DIGAMOS QUE TEMOS QUE CRIAR 1 POLICY 
+
+COM BASE NESSAS 2 MAPPING TABLES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> O PROFESSOR RODA 1 QUERY PARA ACESSAR 
+
+
+ESSA INFO TODA...
+
+
+
+
+
+
+
+
+
+EX:
+
+
+
+
+
+
+
+
+
+SELECT
+A.*
+FROM GOVERNANCE.ROW_ACCESS_POLICY.ACCESS_CONTROL AS A 
+INNER JOIN 
+GOVERNANCE.ROW_ACCESS_POLICY.ICDCODE AS B
+ON A.ACCESS_FOR=B.TYPE
+WHERE A.ROLE_NAME='UHG' 
+AND ICD='H60';
+
+
+
+
+
+
+
+
+
+
+
+ESTAMOS FAZENDO 1 JOIN,
+
+
+
+PROCURANDO POR 
+
+APENAS OS RECORDS DE "ACCESS_CONTROL"
+
+
+COM 1 NOME DE "UGH",
+
+
+
+
+E APENNAS OS ICDCODES DE VALUE "H60"... --> 
+
+
+
+
+SE ESSE VALUE NAO EXISTE COMO "GREEN"
+
+
+
+NA TABLE ORIGINAL (ICDCODES),
+
+
+
+nao receberemos record algum, aqui, com 
+
+esse select com join...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AGORA SE RODAMOS ISTO:
+
+
+
+
+
+
+
+
+
+SELECT
+A.*
+FROM GOVERNANCE.ROW_ACCESS_POLICY.ACCESS_CONTROL AS A 
+INNER JOIN 
+GOVERNANCE.ROW_ACCESS_POLICY.ICDCODE AS B
+ON A.ACCESS_FOR=B.TYPE
+WHERE A.ROLE_NAME='UHG' 
+AND ICD='H03';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+FICAMOS COM ALGUNS RECORDS,
+
+
+
+
+JUSTAMENTE PQ O 'UHG'
+
+
+
+TEM PERMISSAO (green) PARA 
+ACESSAR 
+
+
+ESSE RECORD...
+
+
+
+
+------------------------------------
+
+
+
+
+
+
+
+
+
+OK, MAS O QUE FAZEMOS, AGORA?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> BEM, O PROFESSOR APONTA QUE 
+
+
+__PODEMOS __ COLOCAR_ ESSA QUERY 
+
+DENTRO 
+
+DE 1 
+
+CLAUSE DE 'EXISTS"
+
+
+NO CREATE DE NOSSA ROW ACCESS POLICY,
+
+
+
+E TAMBÉM COM O USO DE "EXISTS", TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE ROW ACCESS POLICY GOVERNANCE.ROW_ACCESS_POLICY.PATIENT_POLICY
+AS (ICDCODE VARCHAR) RETURNS BOOLEAN -> 
+    EXISTS (
+        SELECT
+        A.*
+        FROM GOVERNANCE.ROW_ACCESS_POLICY.ACCESS_CONTROL AS A 
+        INNER JOIN 
+        GOVERNANCE.ROW_ACCESS_POLICY.ICDCODE AS B
+        ON A.ACCESS_FOR=B.TYPE
+        WHERE A.ROLE_NAME=CURRENT_ROLE()
+        AND B.ICD=icdcode
+    );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+"EXISTS() --> QUER DIZER QUE SE QUALQUER 
+
+1 DOS RECORDS 
+
+
+DE DENTRO DA QUERY É RETURNED,
+
+
+
+
+ELE VAI RETORNAR TRUE... -----> esse true,
+
+POR SUA VEZ,
+
+VAI RETORNAR O RECORD 
+
+
+DA PATIENT TABLE....
+
+
+
+
+
+
+
+
+
+
+
+-> e esse é o esquema para 
+
+
+
+CRIAR 1 ROW ACCESS POLICY MAIS COMPLEXA,
+
+
+COM "TABLE MAPPING"..
+
+
+
+
+
+
+
+
+
+
+
+--> quer dizer que essa query vai evaluate o role name e 
+
+o icd code value enquanto é executada...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+faz sentido...
+
+
+
+
+
+
+
+
+
+EX: DIGAMOS QUE O ROLE É "UGH" (permite apenas green)
+
+
+
+E O VALUE DO RECORD É 
+
+
+"J09, ORANGE" --------> NESSE CASO,
+                        ESTE RECORD NAO SERÁ 
+                        RETORNADO A ESSE ROLE,
+
+                        JUSTAMENTE PQ 
+
+                        O GRAU DE ACESSO MÁXIMO 
+
+                        DESSE ROLE É "GREEN",
+
+                        E ESSE RECORD TEM 1 
+
+                        GRAU DE ACESSO "ORANGE"...
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
+    --> NO NOSSO EXEMPLO,
+
+
+    O "UGH"
+
+    VAI TER ACESSO A APENAS 3 TIPOS DE RECORDS,
+
+
+    OS COM 
+
+
+
+    VALUES E65, H03 E H30 (os 3 sao green)....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DEVEMOS APLICAR ESSA POLICY,
+PARA TESTARMOS..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+
+ALTER TABLE CLAIMS.PHARMACY.PATIENT 
+ADD ROW ACCESS POLICY PATIENT_POLICY;
+
+
+
+
+
+
+
+
+
+
+--> QUERIAMOS ESSA TABLE... --> ENXERGAMOS 
+
+APENAS 3 RECORDS,
+
+
+QUE SAO DE TYPE "GREEN", CERTAMENTE...
+
+
+
+
+
+
+
+
+
+
+
+-->  ESSE MAPPING É MT BOM,
+PQ NAO 
+PRECISAMOS 
+
+ESCREVER TODOS OS VALUES "PROIBIDOS"
+
+DIRETAMENTE 
+
+
+NO CÓDIGO SQL DE CRIACAO DA ROW ACCESS POLICY 
+
+(
+    podemos apenas usar 'exists()' com esses joins,
+
+
+    usando essas mapping tables, essas tables tipo
+    "icdcode" e "access_control"...
+)
+
+
+
+
+
+
+
+
+
+
+COM ISSO, FICA BEM FÁCIL O CONTROLE DE ACESSO A ESSES 
+
+RECORDS...
+
+
+
+
+
+
+
+

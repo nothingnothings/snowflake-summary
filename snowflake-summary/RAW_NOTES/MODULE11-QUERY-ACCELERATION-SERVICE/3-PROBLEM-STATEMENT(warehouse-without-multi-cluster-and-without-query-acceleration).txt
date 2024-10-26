@@ -1,0 +1,521 @@
+
+
+
+
+
+
+
+
+
+
+VAMOS CONTINUAR NOSSA DISCUSSAO...
+
+
+
+
+
+
+
+
+
+--> USAREMOS A WAREHOUSE 
+
+
+SEM MULTI-CLUSTER E SEM QUERY ACCELERATION...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> agora salvamos essas changes,
+
+e aí 
+
+tentamos executar algumas queries em cima 
+dessa warehouse...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> A NOSSA QUERY SERÁ ESTA:
+
+
+
+
+
+
+
+
+
+SELECT d.d_year AS "Year",
+        i.i_brand_id AS "Brand ID",
+        i._ibrand AS "Brand",
+        sum(ss.net_profit) AS "Profit"
+
+...
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... DIGAMOS QUE ENTAO TEMOS 1 OUTRO USER, QUE COMECA 
+
+A 
+
+RODAR OUTRA
+
+QUERY...
+
+
+
+
+
+
+--> ESSAS 2 QUERIES VAO COMPETIR POR RESOURCES,
+
+
+BASICAMENTE...
+
+
+
+
+
+
+
+
+--> NA PAGE DE ACTIVITY,
+
+
+PODEMOS VISUALIZAR QUE 
+
+
+3 QUERIES 
+
+
+ESTAO SENDO RODADAS...
+
+
+
+
+
+
+--> CADA 1 DESSAS QUERIES ESTÁ COMPETINDO 
+
+PELO RESOURCE DESSE CLUSTER/WAREHOUSE,
+
+
+
+que é extra small e sem nenhum multi-cluster ou 
+
+
+
+query acceleration..
+
+
+
+
+
+
+
+
+
+QUER DIZER QUE 
+
+
+AS 3 QUERIES ESTAO COMPARTILHANDO 
+
+OS RESOURCES DESSE MESMO QUERY..
+
+
+
+
+
+
+
+
+
+
+
+
+--> SE QUEREMOS MELHORAR A PERFORMANCE DESSAS QUERIES,
+
+
+
+FARÍAMOS:
+
+
+
+
+
+
+1) A PRIMEIRA COISA QUE PODERÍAMOS FAZER 
+
+É __ ENABLAR_ O MULTI-CLUSTERING...
+
+
+(
+    ISSO VAI LEVAR AO SPIN UP DE OUTRA WAREHOUSE/CLUSTER,
+
+    E A SEGUNDA QUERY VAI RODAR NELA, 
+
+    E PODEMOS SETTAR AINDA MAIS MAX CLUSTERS,
+    PARA SPIN UP MAIS
+
+    1 WAREHOUSE...
+)
+
+
+
+
+
+--> OK... QUER DIZER QUE EM VEZ DE COMPETIR PELA 
+
+'MESMA WAREHOUSE',
+PODEMOS USAR ESSE RECURSO 
+
+PARA 
+
+FAZER "SCALE" DA WAREHOUSE HORIZONTALMENTE,
+
+O QUE 
+
+RESOLVE O PROBLEMA 
+
+DE QUERIES/QUEUE EM CIMA 
+
+
+DE 1 MESMA WAREHOUSE/CLUSTER...
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... MAS O PROBLEMA PODE CONTINUAR, EM ALGUNS CASOS...
+
+
+
+
+
+
+--> O PROBLEMA PODE CONTINUAR SE 
+
+
+
+A QUERY DEMORA 3 MINUTOS PARA COMPLETAR, POR EXEMPLO... --> 
+
+
+
+
+
+
+ESSA MESMA QUERY VAI DEMORAR 3 MINUTOS 
+
+NO SEGUNDO CLUSTER, E 3 MINUTOS 
+
+NO TERCEIRO CLUSTER... -> QUER DIZER QUE O EXECUTION 
+
+TIME DA QUERY 
+INDIVIDUAL VAI 
+
+CONTINUAR O MESMO.... ---------_> A ÚNICA COISA QUE 
+
+
+RESOLVEREMOS SERÁ 
+
+
+
+A QUEUE EM SI,
+
+
+
+
+
+
+O PROBLEMA DA QUERY RESPONSE TIME INDIVIDUAL AINDA VAI CONTINUAR..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--. PARA RESOLVER ESSE PROBLEMA,
+
+
+
+PODERÍAMOS FAZER SCALE UP 
+
+
+
+
+___ DAS INSTANCES, TRANSFORMAR AS INSTANCES 
+
+EM XL, 2XL,
+
+3XL...
+
+
+
+
+
+
+
+--> ISSO REDUZ O TEMPO 
+
+
+DA QUERY EXECUTION,
+
+
+
+MAS 
+ISSO TRAZ UM MONTE DE PROBLEMAS:
+
+
+
+
+
+
+
+
+
+1o problema) -->  AO CONTRÁRIO 
+
+
+DO SCALE HORIZONTAL DE WAREHOUSES,
+
+COM MULTI-CLUSTERING,
+
+
+O SCALE VERTICAL (s, m, l, xl, etc)
+
+
+
+nao é AUTOMÁTICO 
+
+
+E BEM FEITO COMO O OUTRO... ------> QUER DIZER QUE ISSO NAO É POSSÍVEL...
+
+
+
+
+
+
+
+
+
+
+
+
+--> MESMO SE O SNOWFLAKE TIVESSE PROVIDENCIADO 
+
+ESSA OPTION, AINDA TEMOS O SEGUNDO PROBLEMA:
+
+
+
+
+
+
+
+
+
+2o problema) O SCALE UP DE 
+
+WAREHOUSE SIZE SEMPRE TRAZ CONSIGO MAIORES CUSTOS....
+
+
+--> DUPLICA OS GASTOS...
+
+
+
+
+
+
+
+
+
+
+
+3o problema) SE HABILITAMOS 
+
+
+MULTI-CLUSTERING em cima 
+desse 
+
+
+warehouse size aumentado,
+
+
+ISSO AUMENTA O PRECO AINDA MAIS...
+
+
+
+
+
+
+
+
+EX:
+
+
+
+
+
+
+
+
+2units  2units  2units
+
+SMALL  SMALL   SMALL  ---> 6 units
+
+4u      4u      4u
+ 
+MEDIUM MEDIUM MEDIUM    ---> 12 units
+
+
+
+
+
+8u      8u      8u
+
+LARGE LARGE LARGE     ---> 24 units... (per hour)...
+
+
+
+
+
+
+
+
+
+
+
+
+QUER DIZER QUE TUDO ISSO NAO É UMA 
+
+
+MANEIRA MT BOA DE RAISE A PERFORMANCE 
+
+
+DE SUAS QUERIES -->  ISSO VAI LEVAR A CUSTOS ADICIONAIS...
+
+
+
+
+
+
+
+
+
+
+
+4o problema)  RESOURCE UNDERUTILIZATION....
+
+
+
+
+
+
+
+--> PQ __ SE NÓS AUMENTARMOS O TAMANHO 
+
+DA WAREHOUSE, COMO XL/2XL,
+
+
+
+
+
+ISSO VAI REDUZIR O QUERY TIME 
+
+DA QUERY INDIVIDUAL, SIM,
+
+MAS SE NAO 
+
+RODARMOS 
+
+NENHUMA 
+
+OUTRA 
+
+
+QUERY INTENSA DEPOIS DISSO,
+
+
+AINDA ESTAREMOS COM 1 
+
+WAREHOUSE DE TAMANHO IMENSO,
+
+
+
+TUDO PARA RODAR QUERIES PEQUENAS/low-intensity..
+
+
+
+
+
+
+
+
+
+--> POR ISSO O RESOURCE UNDERUTILIZATION é um grande problema, sim...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+O SNOWFLAKE TENTA RESOLVER TODOS ESSES PROBLEMAS 
+
+COM O QUERY ACCELERATION SERVICE,
+QUE VEREMOS NA PRÓXIMA AULA...

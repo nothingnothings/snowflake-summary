@@ -1,0 +1,748 @@
+AGORA VEREMOS COMO CRIAR 1 TAG....
+
+
+
+
+
+
+
+
+
+
+
+
+--- PARA CRIAR UMA TAG, ESCREVEMOS:
+
+
+
+
+
+
+
+-- Create a tag 
+
+CREATE OR REPLACE TAG DEMO_DB.PUBLIC.DB_DATA_SENSITIVITY;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> OU SEJA,
+
+PRECISAMOS DA KEYWORD "TAG",
+
+
+e aí 
+
+1 nome...
+
+
+
+
+
+
+
+--> CRIAMOS 1 TAG, DE NOME "DB_DATA_SENSITIVITY"...
+
+
+
+
+
+
+
+
+
+
+
+CRIADA A TAG, AGORA PRECISAMOS 
+
+FAZER "LABEL"
+
+dela...
+
+
+
+
+
+
+
+
+
+
+
+
+-> PARA APLICAR 1 TAG EM ALGUM OBJECT,
+
+ESCREVEMOS ASSIM:
+
+
+
+
+
+
+
+
+
+-- Apply tag to database:
+
+
+CREATE OR REPLACE DATABASE Revenue WITH TAG (
+    demo_db.public.DB_DATA_SENSITIVITY = 'Red Data'
+);
+
+
+CREATE OR REPLACE DATABASE Marketing WITH TAG (
+    demo_db.public.DB_DATA_SENSITIVITY = 'Orange Data'
+);
+
+CREATE OR REPLACE DATABASE Weather WITH TAG (
+    demo_db.public.DB_DATA_SENSITIVITY = 'Green Data'
+);
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... CRIAMOS 1 DATABASE DE NOME "REVENUE"... --> 
+
+
+
+QUANDO FAZEMOS ISSO,
+
+
+
+COLOCAMOS 1 TAG DE "DB_DATA_SENSITIVITY",
+
+
+DE VALUE 'Red Data'...
+
+
+
+
+
+
+
+
+
+
+
+--> OK, AGORA IMAGINE 1 
+
+SISTEMA LARGO,
+
+
+
+COM 120 DATABASES... --> SE EU COLOCAR AS TAGS 
+
+NESSAS DATABASES,
+
+NO FUTURO 
+
+SERÁ 
+BEM MAIS FÁCIL 
+
+PROCURAR 
+
+POR ESSAS 
+
+DATABASES,
+
+PROCURAR POR 
+
+
+
+ELAS CONSIDERANDO ESSES REQUIREMENTS (
+    se é red data, ou orange data,
+
+    ou green data... pegar todas as databases com 
+
+    DB_DATA_SENSITIVITY como "red data", por exemplo...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CADA TAG CARREGA 1 VALUE...
+
+
+
+
+
+
+
+--> o que temos que observar, aqui,
+
+É QUE 
+
+
+
+__ESSA É A MESMA TAG,
+
+SIM,
+
+
+MAS PARA A MESMA TAG ESTOU 
+
+
+DEFININDO DIFERENTES VALUES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+---> QUER DIZER QUE 1 MESMA TAG PODE TER MÚLTIPLOS
+ 
+ VALUES...
+
+
+
+
+
+
+
+ --> POR ISSO FICAMOS COM "ORANGE DATA" 
+
+ PARA O MARKETING,
+
+
+ E "GREEN DATA" PARA O "WEATHER"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OUTRA REGRA:
+
+
+
+
+"" CADA DATABASE PODE 
+
+TER MÚLTIPLAS TAGS ATTACHEADAS A SI... MAS 
+CADA TAG __ TERÁ APENAS 1 PARTICULAR VALUE"" 
+
+(
+
+    EX:
+
+    a database de "weather" 
+
+    PODE TER APENAS 1 ÚNICA TAG "DB_DATA_SENSITIVITY",
+
+    de value x... e x pode ser qualquer coisa...
+
+)
+
+
+
+
+
+
+
+
+
+
+PODEMOS ATTACHAR MÚLTIPLAS TAGS,
+
+como 
+
+
+
+"db_data_open",
+
+
+
+"db_data_close",
+
+
+
+
+
+
+com values quaisquer... (mas apenas 
+1 único exemplar por oject)....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CERTO...
+
+
+
+
+
+
+
+
+
+--> AGORA DIGAMOS QUE QUEREMOS __DESCREVER __ 
+
+
+
+1 tag....
+
+
+
+
+
+
+
+
+
+DESC TAG __ NAO FUNCIONA__...
+
+
+
+
+
+
+
+
+
+
+PARA VER OS DETALHES DE SUAS TAGS,
+
+
+VC DEVE ESCREVER ASSIM:
+
+
+
+
+
+
+
+SHOW TAGS IN SCHEMA DEMO_DB.PUBLIC;
+
+SHOW TAGS IN DATABASE DEMO_DB;
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> TIPO ASSIM:
+
+
+
+
+
+
+CREATED_ON 
+
+
+NAME 
+
+DATABASE_NAME 
+
+
+SCHEMA_NAME 
+
+
+
+
+OWNER 
+
+
+
+ALLOWED_VALUES (aqui está como "null")...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+"""ALLOWED_VALUES""" --> essa column existe 
+
+
+JUSTAMENTE 
+
+
+PQ, COM TAGS,
+
+PODEMOS 
+
+
+PRÉ-DEFINIR QUAIS VALUES 
+
+
+SAO PERMITIDOS,
+
+NAS NOSSAS TAGS... 
+
+
+
+
+
+
+(
+    ex:
+    apenas ORANGE, BLUE E GREEN sao permitidos...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA DEFINIR QUAIS VALUES 
+
+SAO PERMITIDOS 
+
+PARA NOSSAS TAGS,
+
+
+
+FAZEMOS ISSO NO MOMENTO DE SUA CRIACAO,
+ 
+ COM COMANDOS ESPECÍFICOS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ --> TAMBÉM PODEMOS __ ALTERAR _ O VALUE 
+
+ DE 1 TAG ATRIBUÍDA A 1 OBJECT 
+ DEPOIS 
+
+
+ DE ELA TER SIDO SETTADA,
+
+
+
+
+
+ COM ESTE CÓDIGO:
+
+
+
+
+
+
+
+ALTER DATABASE REVENUE 
+SET TAG DEMO_DB.PUBLIC.DB_DATA_SENSITIVITY='confidential';
+
+
+
+
+
+COM ISSO, RETAGGAMOS 
+
+
+ESSE OBJECT COM _ OUTRO _VALUE...
+
+
+
+
+
+
+
+
+
+
+
+
+--> E SE EU QUERO VER 
+
+
+""QUAL É O VALUE DE 1 TAG EM PARTICULAR,
+
+PARA 1 OBJECT EM PARTICULAR"",
+
+
+
+devo rodar assim:
+
+
+
+
+
+
+SELECT SYSTEM$get_tag(
+    'DEMO_DB.PUBLIC.DB_DATA_SENSITIVITY', 'Revenue', 'database'
+);
+
+
+
+
+
+
+
+
+OU SEJA,
+
+
+
+
+
+SELECT SYSTEM$GET_TAG(
+    '<tag_name>', '<object_name>', '<object_type>'
+)
+
+
+
+
+
+
+
+
+
+GANHAREMOS, AQUI,
+
+O VALUE 
+DE 
+
+
+'confidential'...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> SE ESTAMOS COM O ROLE DE ACCOUNTADMIN,
+
+
+
+PODEMOS RODAR ESTE COMANDO,
+
+
+PARA VER TODAS AS TAGS QUE APLICAMOS 
+
+EM SNOWFLAKE OBJECTS:
+
+
+
+
+
+
+
+
+SELECT 
+*
+FROM SNOWFLAKE.ACCOUNT_USAGE.TAG_REFERENCES
+ORDER BY TAG_NAME, DOMAIN, OBJECT_ID;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> ISSO TE DÁ 1 LISTA DE 
+
+
+
+TODAS AS TAGS APLICADAS...
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE O CONCEITO 
+
+
+DE TAGGING É MT SIMPLES...
+
+
+
+
+
+
+
+
+--> BASTA:
+
+
+
+
+
+1) CRIAR O OBJECT DE "TAG"
+
+
+
+
+2) ATTACHEAR ESSAS TAGS, COM 1 VALUE ESPECÍFICO,
+
+AOS SEUS VÁRIOS SNOWFLAKE OBJECTS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> MAS O QUE REALMENTE 
+
+IMPORTA ENTENDER, AQUI, 
+
+É 
+
+A 
+
+___aPLICACAO 
+
+DAS TAGS..
+
+
+
+
+
+
+
+
+
+--> NAS PRÓXIMAS LECTURES,
+
+TENTAREMOS ENTENDER ESSA PARTE...
+
+
+
+
+
+
+
+
+
+
+
+--> COM ISSO, FECHAMOS ESTA LESSON...
+
+
+
+
+
+

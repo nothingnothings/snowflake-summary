@@ -1,0 +1,704 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... AGORA CONTINUAREMOS NOSSA DISCUSSAO....
+
+
+
+
+
+
+
+
+
+
+PQ PRECISAMOS DESSA ROW ACCESS POLICY,
+
+E QUAL A VANTAGEM DE SEU USO?
+
+
+
+
+
+
+
+
+BEM, DIGAMOS QUE TEMOS ESTA QUERY:
+
+
+
+
+
+
+
+
+
+
+
+
+
+USE ROLE UHG;
+
+
+
+SELECT * FROM CLAIMS.PHARMACY.PATIENT;
+
+
+
+
+
+
+
+
+
+
+
+-->> isso me retornou 9 records...
+
+
+
+
+
+
+
+
+
+vamos na query profile,
+
+
+e aí visualizamos o que está acontecendo 
+
+
+no backend...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> O QUE VEREMOS É:
+
+
+
+
+
+
+
+1) O SNOWFLAKE ESTÁ CRIANDO UMA 
+
+__"DYNAMIC SECURE VIEW"...
+
+
+
+
+2) em cima de essa DYNAMIC SECURE VIEW,
+
+ELE ESTÁ RETORNANDO O RESULTADO...
+
+
+
+
+
+
+
+
+
+
+--> ESSA DYNAMIC SECURE VIEW 
+
+ESTÁ FAZENDO ISTO:
+
+
+"PATIENT (+ RowAccessPolicy)",
+
+
+
+
+
+
+
+
+ESTÁ PEGANDO A TABLE DE PATIENT E ADICIONANDO 
+
+
+A POLICY QUE CRIAMOS... CRIADA A SECURE_VIEW,
+
+É RETORNADA COMO RESULTAOD...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-->  OK.... RESUMINDO:
+
+
+
+
+
+
+
+
+
+""NAO INTERESSA A POLICY QUE 
+
+ESCREVEMOS... --> NOSSA TABLE É 
+
+__dINAMICAMENTE CONVERTIDA EM UMA SECURE VIEW,
+
+
+
+
+E QUALQUER COISA QUE RETORNAMOS DE ESSA TABLE,
+
+
+SERÁ NA VERDADE RETORNADA DE ESSA VIEW""..
+
+
+
+
+
+
+
+
+
+
+--------------------------------------------------
+
+
+
+
+
+
+O PROFESSOR EXPLICA QUE É QUASE ALGO EQUIVALENTE COMO 
+ISTO:
+
+
+
+
+
+
+
+
+
+
+
+------------ why row access policy ---------------------
+
+
+
+
+
+
+
+
+CREATE OR REPLACE SECURE VIEW PATIENT_VW 
+AS 
+SELECT * FROM PATIENT 
+WHERE CURRENT_ROLE()='SYSADMIN' OR 1= 
+CASE 
+    WHEN ICDCODE='F70' THEN 0 
+    ELSE 1 
+END;
+
+
+
+
+
+
+GRANT SELECT ON PATIENT_VW TO ROLE UHG;
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... QUER DIZER QUE BASICAMENTE 
+
+
+FAZEMOS ISSO... 
+(
+
+    é quase como se a row access policy
+    FOSSE 
+
+    TRADUZIDA PARA ESSA SINTAXE...
+)
+
+
+
+
+
+
+
+
+
+A ROW ACCESS POLICY 
+
+
+É _ CONVERTIDA _ PARA UMA DYNAMIC SECURE VIEW...
+
+
+
+
+
+
+
+
+
+
+
+ E, SÓ ENTAO,
+
+ É RETORNADO O RESULT...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ --> ok... mas entao qual é a utilidade de 1 
+
+
+ row access policy? 
+
+
+ pq aparentemente 
+
+ podemos 
+
+ facilmente criar 1 secure view 
+
+
+ por conta própria,
+
+
+e aí 
+
+
+expor esse "patient_vw" 
+
+
+ao role UHG (
+
+    que só verá alguns rows....
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+QUAL O MOTIVO PARA USAR/CRIAR ROW ACCESS POLICIES?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+BEM,
+
+
+TANTO 
+
+AS SECURE VIEWS COMO AS ROW ACCESS POLICIES 
+
+
+FAZEM O MESMO SERVIÇO...
+
+
+
+
+
+
+
+
+
+
+
+MAS QUAL É A VANTAGEM 
+
+
+DE CRIARMOS 
+
+1 POLICY?
+
+
+
+
+
+
+
+
+
+
+
+
+
+EXPLICACAO:
+
+
+
+
+
+
+
+
+
+1) "VIEW" É UM OBJECT POR SI SÓ...
+
+
+
+
+
+
+
+
+
+2) POR SER 1 OBJECT,
+
+PRECISAMOS FAZER "MANAGE" DO ACESSO 
+
+
+
+A ELA, SEPARADAMENTE (
+
+    como vimos aqui, com "GRANT SELECT ON patient_vw TO ROLE UHG"
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+3) JÁ A "ROW ACCESS POLICY" É DIFERENTE... --> ELA 
+SÓ PRECISA 
+SER APLICADA NA __tABLE__ EM SI.... QUER DIZER QUE 
+
+
+O ACESSO/PRIVILEGES A ESSA TABLE NAO PRECISAM 
+
+SER MANAGEADOS/CONFERIDOS COM "GRANTS"
+
+
+aos roles de sua conta...
+
+
+
+
+
+
+
+
+
+
+
+A FRASE QUE RESUME TUDO ISSO É:
+
+
+
+
+
+""VIEW IS AN OBJECT BY ITSELF. YOU HAVE 
+TO MANAGE ACCESS TO IT SEPARATELY. AS THE 
+RULE IS NOT TIED TO THE TABLE ITSELF, SENSITIVE 
+DATA CAN BE EXPOSED. AS RULES OF DATA EXPOSURE 
+BECOME MORE COMPLEX, THE VIEW'S LOGIC ITSELF 
+WILL BECOME MORE COMPLEX""...
+
+
+
+
+
+
+
+
+
+
+
+
+
+4) COMO O "TABLE OBJECT" de "patient" 
+
+AINDA EXISTE,
+
+
+PODEM OCORRER FALHAS DE SEGURANÇA,
+
+
+COMO POR EXEMPLO 
+
+
+"alguém acidentalmente 
+dá grant de select na table de patient, a 'main patient table',
+para 
+
+1 client, client que deveria ter aplicado a si 
+
+somente o grant de select na table de "patient_vw" "..
+
+
+
+(
+    se isso acontecer, a sensitive data poderá 
+    ser acessada mesmo assim...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+5) A SINTAXE DE CRIACAO DE ROW ACCESS POLICIES 
+
+É BEM MAIS INTUITIVA DO QUE A SINTAXE 
+
+
+
+
+
+DE "BLOCK ACCESS" EM SECURE VIEWS...
+
+
+
+
+
+
+
+
+
+
+--> o write da secure view 
+
+
+nao é tao intuitivo quanto o write de row access policy....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ENTRETANTO, É CLARO QUE 
+
+
+
+AS VIEWS POSSUEM 1 VANTAGEM.... --> A VANTAGEM 
+
+
+
+É QUE 
+
+VC 
+
+
+PODE CRIAR QUANTAS SECURE VIEWS VOCE QUISER,
+
+PARA 1 MESMA TABLE... JÁ NO CASO 
+
+
+
+
+
+DA ROW ACCESS POLICY,
+
+
+VC _ SÓ PODE TER 1 ÚNICO ROW ACCESS POLICY 
+
+
+__POR TABLE____...
+
+
+
+
+
+
+
+
+
+
+
+
+
+6) POR FIM, UMA VANTAGEM IMPORTANTE 
+
+DAS ROW ACCESS POLICIES 
+
+
+
+
+É 
+
+
+A 
+
+"SEGREGATION OF DUTIES" (
+
+
+
+    QUER DIZER QUE 
+
+    PODEMOS CRIAR 1 ROLE 
+
+    SEPARADO,
+
+    COMO "POLICY ADMIN",
+
+    E ELE PODE SER RESPONSÁVEL APENAS 
+
+    PELO APPLY DE POLICIES 
+
+    NAS SUAS TABLES... --> quer dizer que ele 
+
+
+    nao vai criar objects separados, como secure views,
+
+
+
+    e sim 
+
+
+    VAI TER A RESPONSABILIDADE ÚNICA DE CRIAR POLICIES 
+
+    NAS TABLES,
+
+
+    POLICIES QUE VAO SER ATTACHEADAS A ELAS,
+
+
+    E QUE ENTAO CUJAS RULES SERAO MANAGEADAS 
+
+
+    POR ELE...
+)
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE O ROW ACCESS POLICY 
+
+FACILITA A SEGREGATION OF DUTIES....
+
+
+
+
+
+
+
+
+certoo....

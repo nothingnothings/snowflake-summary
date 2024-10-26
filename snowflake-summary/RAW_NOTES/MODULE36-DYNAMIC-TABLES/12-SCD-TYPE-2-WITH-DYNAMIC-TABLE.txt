@@ -1,0 +1,830 @@
+
+
+
+
+
+
+
+
+NESTA AULA,
+
+TENTAREMOS COMPREENDER COMO 
+
+PODEMOS CONSEGUIR "SCD TYPE 2"
+
+
+COM 1 DYNAMIC TABLE...
+
+
+
+(é um tipo de table que mantém a HISTORY do sistema,
+history de overwrites, updates, deletes, etc)
+
+
+
+
+
+
+
+
+
+
+SCD TYPE 0 --> IGNORE ANY CHANGES AND AUDIT THE CHANGE...
+
+
+
+SCD TYPE 1 --> OVERWRITE THE CHANGES...
+
+
+SCD TYPE 2 -> HISTORY WILL BE ADDED AS A NEW ROW
+
+
+
+
+
+
+
+
+
+
+--> PARA IMPLEMENTAR ESSE SCD TYPE 2,
+
+DEVEMOS CONSIDERAR UM SCENARIO:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DIGAMOS QUE VAMOS CRIAR 1 TABLE, DE NOME CUSTOMER CHANGES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+TRUNCATE TABLE CUSTOMER_CHANGES;
+
+
+
+
+CREATE OR REPLACE TABLE DEMO_DB.PUBLIC.CUSTOMER_CHANGES (
+  CUSTOMER_ID INT,
+  FIRST_NAME VARCHAR(50),
+  LAST_NAME VARCHAR(50),
+  EMAIL VARCHAR(100),
+  PHONE_NUMBER VARCHAR(15),
+  FULL_ADDRESS VARCHAR(365),
+  UPDATE_TIME TIMESTAMP_NTZ(9)
+);
+
+
+
+
+
+INSERT INTO CUSTOMER_CHANGES
+VALUES
+(1, 'John', 'Doe', 'john.doe@example.com', '1234567890', '123 Main St, New York, NY, 10001', TO_TIMESTAMP_NTZ('2023-05-05 01:02:03')),
+(2, 'Jane', 'Smith', 'jane.smith@example.com', '0987654321', '456 Pine St, San Francisco, CA, 94101', TO_TIMESTAMP_NTZ('2023-05-05 02:02:03')),
+(1, 'John', 'Doe', 'john.doe2@example.com', '1234567890', '789 Broadway St, New York, NY, 10002', TO_TIMESTAMP_NTZ('2023-05-05 03:02:03')),
+(3, 'Jim', 'Brown', 'jim.brown@example.com', '1122334455', '321 Elm St, Chicago, IL, 60601', TO_TIMESTAMP_NTZ('2023-05-05 04:02:03')),
+(2, 'Jane', 'Smith', 'jane.smith2@example.com', '0987654322', '654 Oak St, San Francisco, CA, 94102', TO_TIMESTAMP_NTZ('2023-05-05 05:02:03'));
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> O ÚLTIMO TIMESTAMP É O "MOMENTO EM QUE ESSE RECORD
+
+
+FOI INSERIDO NA TABLE"....
+
+
+
+
+
+
+--> O PROFESSOR FEZ HARDCODE DESSES TIMESTAMPS,
+
+
+MAS DEVEMOS CONSIDERAR QUE ESSE FIELD VAI SER PREENCHIDO 
+
+
+AUTOMATICAMENTE POR NOSSAS ETL TOOLS,
+
+QUANDO FIZERMOS O LOAD DA DATA...
+
+
+
+
+
+
+
+
+
+
+--> OK... JÁ CRIAMOS A TABLE...
+
+
+
+
+
+
+
+-_> INSERIMOS OS RECORDS...
+
+
+
+
+
+
+5 RECORDS...
+
+
+
+
+
+
+
+
+AÍ RODAMOS ESTE SELECT:
+
+
+
+
+
+
+
+
+
+
+
+
+SELECT * FROM DEMO_DB.PUBLIC.CUSTOMER_CHANGES WHERE CUSTOMER_ID=1;
+
+
+
+
+
+
+
+
+
+
+
+
+NOSSO OUTPUT FICA ASSIM:
+
+
+
+
+
+CUSTOMER_ID	FIRST_NAME	LAST_NAME	EMAIL	PHONE_NUMBER	FULL_ADDRESS	UPDATE_TIME
+1	John	Doe	john.doe@example.com	1234567890	123 Main St, New York, NY, 10001	2023-05-05 01:02:03.000
+1	John	Doe	john.doe2@example.com	1234567890	789 Broadway St, New York, NY, 10002	2023-05-05 03:02:03.000
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SABEMOS QUE ESSE É BASICAMENTE O 'MESMO RECORD',
+
+
+mas 
+
+
+
+um record que tem 2 momentos (1 old, e um atual)...
+
+
+
+
+
+
+
+
+
+
+--> QUEREMOS FLAGGAR ESSE RECORD,
+
+O RECORD RECEBIDO __ ANTERIORMENTE__ 
+
+
+COMO "INACTIVE",
+
+
+
+
+E FLAGGAR O RECORD MAIS ATUAL COMO "ACTIVE">..
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> E UMA MANEIRA DE DEIXAR O RECORD 
+
+
+MAIS ATUAL COMO ACTIVE E OS OUTROS COMO INACTIVE 
+
+
+
+
+
+É __ USAR 1 COLUMN DE "RECORD_END", DE TIPO TIMESTAMP...
+
+
+
+
+
+
+
+
+
+
+
+
+--> SE NO NOSSO RECORD TIVERMOS 1 FIELD DE "RECORD_END"
+
+
+
+PREENCHIDO,
+
+ISSO SIGNIFICARÁ QUE 
+
+ESSE RECORD 
+
+JÁ FOI UTILIZADO/OVERWRITTADO 
+
+
+POR OUTRO RECORD (pq já foi "ended")...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+---> OK... O PRÓXIMO PASSO QUE FAREMOS, AQUI,
+
+
+
+É CRIAR 
+
+
+
+1 TABLE DE "CUSTOMER_HISTORY",
+
+
+
+
+DINAMICA,,
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE DYNAMIC TABLE CUSTOMER_HISTORY
+    TARGET_LAG='1 MINUTE'
+    WAREHOUSE=compute_wh
+AS 
+SELECT * RENAME (UPDATE_TIME AS RECORD_START_TIME),
+CUSTOMER_ID || '-' || DATE_PART(EPOCH_MILLISECONDS, UPDATE_TIME) AS CUSTOMER_HISTORY_SK,
+SPLIT_PART(FULL_ADDRESS, ' ', -1) AS POSTAL_CODE,
+LEAD(UPDATE_TIME) OVER (PARTITION BY CUSTOMER_ID ORDER BY UPDATE_TIME ASC) AS RECORD_END_TIME
+FROM CUSTOMER_CHANGES;
+
+
+
+
+
+
+
+
+
+
+
+
+
+-------> essa query vai handlar o scd type 2 para nós,
+
+para essa dynamic table em particular....
+
+
+
+
+
+
+
+
+
+
+-> O QUE ESSA QUERY ESTÁ FAZENDO?
+
+
+
+
+
+
+
+
+1) ESTAMOS SELECIONANDO TODAS AS COLUMNS DA TABLE ANTERIOR...
+
+
+
+
+
+
+2) O QUE ESTAMOS FAZENDO É __A RENOMEACAO 
+
+DA COLUMN DE "UPDATED_TIME" 
+
+COMO "RECORD_sTART_TIME"...
+
+
+
+
+3) DEPOIS DISSO, ESTAMOS CRIANDO UM "CUSTOMER_HISTORY_SK",
+
+QUE SERÁ JUSTAMENTE UMA SURROGATE_KEY (
+    uma key realmente unique...
+
+    a combinacao do "customer_id" + "date_part()",
+    vai formar 1 record com id realmente unique....
+
+    que será nossa SURROGATE_KEY...
+)
+
+
+
+
+
+OBS: A CRIACAO DA SURROGATE_KEY DESSA FORMA ESPECÍFICA 
+
+NAO É OBRIGATÓRIA... TAMBÉM PODEMOS USAR 1 SEQUENCE 
+
+
+E AINDA CRIAR 1 SURROGATE_KEY....
+
+
+
+
+
+
+
+
+
+
+
+
+4) PARA O ADDRESS, PEGAMOS O POSTAL_CODE...
+
+
+
+
+
+5) A ÚLTIMA COLUMN É A MAIS IMPORTANTE,
+
+PQ É ELA QUE VAI ACTUALLY HANDLAR O SCD TYPE 2...
+
+
+
+aqui, no caso,
+ estamos usando a LEAD function... --> ESSA FUNCTION VAI PEGAR 
+
+ O RECORD VALUE DO PRÓXIMO RECORD (
+    quer dizer que ele vai pegar o updated timestamp do 
+    próximo value 
+
+    e apresentar 
+
+    esse value como value da column de "RECORD_END_TIME" 
+
+    do "OLD RECORD"...
+ ) 
+
+
+
+
+
+ --> para conseguir isso, usamos a window function de 
+
+ OVER(), 
+
+ E PARTICIONAMOS PELO CUSTOMER_ID....
+
+
+
+
+
+
+
+ aí essa column fica como "RECORD_END_TIME"...
+
+
+
+
+
+
+
+
+
+
+
+
+ --> OK... E ISSO SERÁ INSERIDO COMO 1 RECORD_END_TIME
+
+
+ NESSA TABLE DE "CUSTOMER_HISTORY"..
+
+
+
+
+
+
+
+
+
+
+ --> SE O RECORD END_TIME ESTÁ COMO NULL,
+
+ ISSO SIGNIFICA QUE ESSE RECORD EM SI ESTÁ ACTIVE....
+
+
+
+
+
+
+
+
+
+
+
+
+
+ --> OK... FAZ TOTAL SENTIDO.....
+
+
+
+
+
+
+
+
+
+
+ --> E TUDO ISSO É HANDLADO PELA QUERY EM SI 
+
+
+
+ E PELA LEAD FUNCTION (que nos ajuda a trackar o updated time),
+
+
+ E O "TARGET_LAG"
+
+ MANAGEIA
+  
+
+  O TEMPO entre updates da table....
+
+
+
+
+
+
+
+
+
+
+
+
+-> COM ISSO, SOMOS CAPAZES DE __GRAVAR_ 
+
+SCD TYPE 2 CHANGES NA TABLE..
+
+
+
+
+
+
+
+
+
+
+
+--. SE QUEREMOS VISUALIZAR ESSA TABLE IMEDIATAMENTE,
+
+
+TEMOS QUE RODAR 
+
+
+
+
+
+
+ALTER DYNAMIC TABLE CUSTOMER_HISTORY REFRESH;
+
+
+
+
+
+
+
+
+
+
+
+---> O PROFESSOR ENTAO TESTA TUDO ISSO,
+
+
+
+COM O INSERT DE UM RECORD 
+
+
+
+COM ALTERACAO (um John doe, id 1, para ver se 
+
+o RECORD MAIS ATUAL DE AGORA FICARÁ COM O VALUE 
+
+DE 
+
+"RECORD_END_TIME" preenchido com esse record que inserimos...
+)
+
+
+
+
+
+
+
+
+
+
+TIPO ASSIM:
+
+
+
+
+
+
+INSERT INTO CUSTOMER_CHANGES 
+VALUES
+(1, 'John', 'Doe', 'Gohn.doe@example.com', 1234567890, '123 Main St, New York, CY, 10001',
+TO_TIMESTAMP_NTZ('2023-05-05 07:02:00'));
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... INSERIMOS ESSE RECORD..
+
+
+
+
+
+--> AÍ QUERIAMOS A TABLE PELO CUSTOMER_ID, COM 
+
+
+
+
+
+
+
+
+
+
+
+SELECT * fROM DEMO_DB.PUBLIC.CUSTOMER_CHANGES 
+WHERE CUSTOMER_ID=1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CHECAMOS NOSSA DYNAMIC TABLE:
+
+
+
+
+
+
+
+
+SELECT * FROM CUSTOMER_HISTORY;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> COMO O TARGET_LAG ESTÁ COMO 1 MINUTE,
+
+A DYNAMIC TABLE JÁ FOI REFRESHADA,
+
+E AÍ 
+
+PODEMOS 
+
+
+VER QUE 
+
+
+O LATEST RECORD FOI ATUALIZADO (
+    agora é esse com o email de 
+
+    gohn.doe@example.com
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ok... E TODOS OS RECORDS ANTERIORES, OVERWRITTADOS,
+
+
+FICARAM COM O CAMPO DE "RECORD_END_TIME" preenchido,
+
+
+satisfazendo  O
+
+
+
+SCD TYPE 2...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK....
+
+
+
+
+
+
+
+
+
+
+
+--> MAS ENQUANTO VC APLICA ESSA QUERY,
+
+
+ENTENDA 
+
+
+QUE 
+
+
+TODO O  CONCEITO DE "DYNAMIC TABLE"
+
+
+DEPENDE 
+
+
+DA QUERY QUE ESTÁ SENDO USADA/RODADA NO BACKGROUND .... --> quer 
+dizer que 
+
+
+DEVEMOS FICAR DE OLHO NA PARTE DA PERFORMANCE DESSA TABLE,
+
+
+PQ TUDO DEPENDE DA QUERY QUE RODAMOS (
+
+    nao devemos deixar a query mt complexa, 
+    e nao devemos usar union/union alls...
+)
+
+
+
+
+
+
+
+
+
+
+
+--> TAMBÉM DEVEMOS MANTER 1 OLHO NA PARTE DO "COST"
+
+
+DA DYNAMIC TABLE...
+
+
+
+
+
+

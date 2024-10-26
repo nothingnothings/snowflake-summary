@@ -1,0 +1,230 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK.... NAS  AULAS ANTERIORES VIMOS 
+
+
+COMO PODEMOS FAZER SHARE DE DATA 
+
+AO LONGO DE 
+
+MÚLTIPLAS CONTAS SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+CERTO....
+
+
+
+
+
+
+
+MAS E SE A PESSOA N TEM UMA CONTA SNOWFLAKE?
+
+
+
+
+
+
+
+
+
+--> E SE A CONSUMER ACCOUNT N TEM 
+
+
+
+CONT SNOWFALKE?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+BEM, AÍ DEVEMOS USAR READER ACCOUNTS..
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AGORA VEREMOS COMO AS CRIAR..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ACHO QUE TEREMOS DE RODAR ASSIM:
+
+
+
+
+
+
+
+CREATE MANAGED ACCOUNT tech_joy_account 
+ADMIN_NAME=tech_joy_admin,
+ADMIN_PASSWORD='Tech_Account_Joy@456',
+TYPE=READER;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> tipo assim:
+
+
+
+
+
+
+
+CREATE MANAGED ACCOUNT READER_TEST 
+    ADMIN_NAME=SOME_RANDOM_GUY
+    ADMIN_PASSWORD=Exemplo123
+    TYPE=READER;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ISSO VAI CRIAR A MANAGED ACCOUNT 
+PARA VOCE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ENTRETANTO, LEMBRE-SE:
+
+ 
+
+
+""TODO WAREHOUSE COST,
+TODO PROCESSING COST,
+
+SERÁ ENNVIADO AO "PROVIDER" " (
+
+
+    CRIADOR DESSA RAEDER ACCOUNT...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> criada a conta, NO OUTPUT 
+
+
+temos 1 column de "accountUrl" --> 
+
+DENTRO DISSO,
+
+
+
+temos o value da url que deve ser usada para conseguirmos acessar 
+
+
+essa reader account...
+
+
+
+
+
+NA PRÓXIMA AULA VEREMOS COMO CONFIGURAR ESSA READER ACCOUNT...

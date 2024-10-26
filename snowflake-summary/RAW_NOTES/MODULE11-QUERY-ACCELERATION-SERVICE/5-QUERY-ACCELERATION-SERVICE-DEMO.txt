@@ -1,0 +1,180 @@
+
+
+
+
+
+
+
+
+
+
+
+
+OK... A QUERY, SEM USAR QUERY ACCELERATION SERVICE,
+
+
+DEMOROU 4MIN E 12 SEGUNDOS..
+
+
+
+
+
+
+
+
+AGORA COPIAMOS ESSA QUERY,
+
+
+
+
+E AÍ 
+
+
+
+VISUALIZAMOS OS DETALHES DA WAREHOUSE... A WAREHOUSE FOI 
+
+DE TAMANHO 
+
+
+
+
+EXTRA-SMALL..
+
+
+
+
+
+
+
+
+
+
+--> O PROFESSOR HABILITA O 
+
+QUERY ACCELERATION NESSA WAREHOUSE ESPECÍFICA...
+
+
+
+
+
+
+
+
+--> CERTO... DEIXAMOS O TAMANHO IGUAL,
+
+
+E AÍ 
+
+
+RODAMOS A QUERY... (com a query acceleration ligada)...
+
+
+
+
+
+
+
+
+
+
+
+ANTES, FOI 4MIN E 12 segundos...
+
+
+
+
+
+
+
+
+
+1min e 13 segundos....
+
+
+
+
+
+
+
+QUER DIZER QUE FOI UM AUMENTO ABSURDO DE PERFORMANCE...
+
+
+
+
+
+
+
+
+
+
+
+
+--> CHECAMOS O QUE ACONTECEU NO BACKGROUND...
+
+
+
+
+
+--> O REMOTE DISK I/O TOMOU 96% do tempo, ainda....
+
+
+
+
+
+--> MAS COMO HABILITAMOS O QUERY ACCELERATION SERVICE,
+
+O 
+
+SNOWFLAKE 
+
+CRIOU 
+
+MÁQUINAS READ-WRITE INTENSIVE NO BACKGROUND,
+
+E AÍ 
+
+
+FEZ READ DA DATA, LÁ DO REMOTE STORAGE,
+
+RAPIDAMENTE,
+
+E COLOCOU TUDO ISSO NO VIRTUAL WAREHOUSE LAYER...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AGORA, SE VAMOS ATÉ A PAGE DE USAGE,
+
+
+
+PODEMOS 
+
+
+VER O QUANTO O SNOWFLAKE NOS COBRA POR ESSE QUERY ACCELERATION 
+SERVICE...
+
+
+
+
+
+
+
+
+
+--> 

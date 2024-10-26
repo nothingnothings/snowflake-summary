@@ -1,0 +1,1394 @@
+
+
+
+
+NESSA AULA,
+
+O PROFESSOR NOS MOSTRARÁ O FUNCIONAMENTO 
+
+
+DE UMA MATERIALIZED VIEW, UNDER THE HOOD...
+
+
+-------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+A SINTAXE DE CRIACAO DE 1 MATERIALIZED VIEW É:
+
+
+
+
+
+
+
+
+
+
+
+CREATE MATERIALIZED VIEW TABLE_MV 
+    AS 
+SELECT * FROM TABLE;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> visualizamos o html com o esquema....
+
+
+
+
+
+
+
+
+
+
+
+--> para o propósito do demo, o professor 
+
+nao está rodando "where" em cima da data, para criar a 
+
+view....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> SEMPRE QUE NÓS CRIAMOS 1 MATERIALIZED VIEW,
+
+
+
+
+
+UM "MONITORING SERVICE" VAI SER ANEXADO 
+
+
+A NOSSA MAIN TABLE...
+
+
+
+
+
+
+
+
+
+
+-> SE TENHO 10 RECORDS NA MAIN TABLE,
+    TEREI 10 RECORDS NA MATERIALIZED VIEW...
+
+
+
+
+
+
+
+
+
+----> OK... 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AGORA, SE EU DELETAR 1 RECORD DA MAIN TABLE,
+
+O MONITORING SERVICE VAI IMEDIATAMENTE RECONHECER 
+ESSA CHANGE,
+
+
+E AÍ VAI INSERIR O 
+
+
+"CHANGE/CHANGED RECORD"
+
+
+
+LÁ NA TABLE DA MATERIALIZED VIEW...
+
+
+
+
+
+
+
+
+
+
+--> DEPOIS DE FAZER ESSA CHANGE
+
+NA MAIN TABLE,
+
+
+
+
+
+EU POSSO RODAR 
+
+
+
+"SHOW MATERIALIZED VIEW <view_name>"...
+
+
+
+
+
+
+
+SE EU FIZER ISSO,
+
+
+
+EU VEREI A METADATA INFORMATION....
+
+
+
+
+
+
+
+
+
+
+------> NESSA METADATA INFORMATION,
+TEMOS A COLUMN DE "RECORD_COUNT"....
+
+
+
+
+
+
+
+
+--> nessa column,
+
+
+poderei enxergar 
+
+
+uma marcacao de 
+
+
+"10+9 records"...
+
+
+
+
+
+
+
+
+
+
+--> OU SEJA,
+
+
+19 RECORDS...
+
+
+
+
+
+
+
+
+
+--> SAO OS 10 RECORDS QUE TÍNHAMOS NO PASSADO, 
+ANTES DO DELETE,
+
+
+E OS 9 RECORDS QUE RESTARAM, APÓS O DELETE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> CERTO... MESMO ASSIM, QUANDO VC QUERIAR 
+
+ESSA MATERIALIZED VIEW,
+
+
+VC _cERTAMENTE__ NAO VERÁ 19 RECORDS,
+
+
+VERÁ APENAS 9 (os 9 records atuais, com o record 10 já deletado)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PQ NAO VEREMOS ESSE record 10?
+
+
+
+
+
+
+
+
+
+--> NAO O ENCONTRAREMOS JUSTAMENTE PQ 
+
+
+
+O SNOWFLAKE VAI, DE FORMA INTELIGENTE,
+
+
+USAR ESSE "NEW RECORD",
+
+
+QUE __ EXTRAIU __ DA MAIN TABLE,
+
+
+
+
+EM UMA COMPARACAO COM OS __ OLD RECORDS QUE 
+
+ESTAVAM ARMAZENADOS/COPIADOS NA MATERIALIZED VIEW...
+
+
+
+
+
+ELE FAZ ISSO PARA 
+
+__REFLETIR A CHANGE QUE VC TEVE NA MAIN TABLE...
+
+
+
+
+
+
+
+
+
+Application users create transactions.
+Data is committed to a source table.
+An internal trigger in the Snowflake’s source table populates the materialized view log table.
+A fast refresh is initiated.
+DML changes that have been created since the last refresh are applied to the materialized view.
+Users can now query data from the materialized view which contains the latest snapshot of the source table’s data.
+
+
+
+
+
+
+
+
+--> 
+
+
+
+
+
+Application users create transactions.
+
+
+Data is committed to a source table.
+
+
+An internal trigger in the Snowflake’s source table populates the materialized view log table.
+
+
+A fast refresh is initiated.
+
+
+DML changes that have been created since the last refresh are applied to the materialized view.
+
+
+Users can now query data from the materialized view which contains the latest snapshot of the source table’s data.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+O SNOWFLAKE TAMBÉM VAI "KEEP TRACK"
+
+
+DA EXTRACTION LÁ DA MAIN TABLE
+
+
+POR MEIO DO USO DE UMA COLUMN DE "TIMESTAMP"...
+
+
+
+
+
+essa column de 
+
+timestamp 
+
+
+
+
+tem um nome de 
+
+"behind by"...
+
+
+
+
+
+
+
+
+
+ESSA COLUMN FAZ PARTE DA TABLE DE METADATA..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+QUANDO UMA NOVA CHANGE ACONTECE NA MAIN TABLE,
+
+
+
+
+É EXTRAÍDA DATA E _ PRODUZIDO 1 TIMESTAMP,
+
+
+
+
+
+exatamente no momento em que essa main table 
+
+é alterada... 
+
+
+
+
+
+
+
+
+
+
+é a column de "BEHIND_BY"..
+
+
+
+
+
+
+
+
+
+
+
+essa column também pode ser visualizada com 
+
+
+"SHOW MATERIALIZED VIEW <VIEW_NAME>"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+resumindo:
+
+
+
+
+1) quando ocorre a change,
+
+essa change é armazenada também na materialized 
+
+view...
+
+
+
+
+
+2) essa change coexiste com a existing data 
+
+da materialized view, por algum tempo...
+
+
+
+
+
+3) snowflake vai internamente comparar 
+
+os old records com os new records,
+para refletir 
+
+a change que vc fez na main table...
+
+
+
+
+4) PARAA EXTRAIR A DATA DESSA MAIN TABLE,
+
+o snowflake vai usar 1 timestamp,
+
+que será armazenado 
+
+nessa column de "behind_by"...
+
+
+
+
+
+
+
+
+
+
+
+
+AGORA TENTAREMOS RECRIAR TODO ESSE PROCESSO,
+
+
+USANDO 1 EXEMPLO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+o código vai ficando assim:
+
+
+
+
+
+
+
+
+---- STEP 1:
+
+
+
+
+CREATE SCHEMA MV;
+
+
+
+
+
+CREATE OR REPLACE TRANSIENT TABLE CALL_CENTER 
+AS 
+SELECT * FROM SNOWFLAKE_SAMPLE_DATA.TPCDS_SF100TCL.CALL_CENTER;
+
+
+
+
+
+SELECT * FROM CALL_CENTER; --- 60 records;
+
+
+
+
+
+
+
+
+CREATE OR REPLACE MATERIALIZED VIEW CALL_CENTER_M_VIEW
+AS 
+SELECT * FROM CALL_CENTER;
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... TEMOS 60 RECORDS NESSA TABLE,
+
+E 60 RECORDS NA MATERIALIZED VIEW...
+
+
+
+
+
+
+podemos checar isso com 
+
+
+
+SELECT * FROM CALL_CENTER_M_VIEW;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AGORA DEVEMOS CHECAR O "REFRESHING SERVICE"
+
+QUE VAI SER ATTACHEADO A NOSSA VIEW E MAIN TABLE....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ISSO PODE SER VISUALIZADO COM ESTE COMANDO:
+
+
+
+
+
+
+
+
+
+SELECT * FROM TABLE(INFORMATION_SCHEMA.MATERIALIZED_VIEW_REFRESH_HISTORY());
+
+
+
+
+
+
+
+
+
+
+
+
+--> PERCEBEMOS QUE NAO TEMOS NENHUMA REFRESHING INFORMATION....
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA QUE ESSA TABLE/MATERIALIZED_VIEW_REFRESH_HISTORY
+
+
+SEJA PREENCHIDA,
+
+
+PRECISAMOS 
+
+
+
+TER ALGUMA CHANGE SOBRE A MAIN TABLE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PODEMOS TER MAIS METADATA INFO SOBRE ESSA VIEW 
+
+
+COM ESTE COMANDO:
+
+
+
+
+
+
+
+SHOW MATERIALIZED VIEWS LIKE 'CALL_CENTER_M_VIEW';
+
+
+
+
+
+
+
+
+
+
+
+OUTPUT:
+
+
+
+
+
+
+
+
+created_on	                            name	            reserved	    database_name	schema_name	    cluster_by	rows	bytes	source_database_name	source_schema_name	source_table_name	refreshed_on	compacted_on	                                        owner	    invalid	invalid_reason	behind_by	comment	text	                                                                            is_secure	automatic_clustering	owner_role_type
+2023-08-24 07:02:17.453 -0700	CALL_CENTER_M_VIEW		                    DEMO_DB	            PUBLIC		             60	    19,456	    DEMO_DB	                    PUBLIC	        CALL_CENTER	    2023-08-24      07:01:56.331 -0700	2023-08-24 07:01:56.331 -0700	ACCOUNTADMIN	false		                0s		        CREATE OR REPLACE MATERIALIZED VIEW CALL_CENTER_M_VIEW AS  SELECT * FROM CALL_CENTER;	false	            OFF	            ROLE
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> TEMOS DIVERSAS INFORMACOES SOBRE ESSA VIEW,
+
+
+
+O TIMESTAMP DE SUA CRIACAO,
+
+
+
+QUANTOS RECORDS,
+
+
+
+
+QUANTOS BYTES,
+
+
+
+
+SOURCE_SCHEMA,
+
+
+
+ETC ETC....
+
+
+
+
+
+
+
+
+
+
+
+
+behind_by está como 0,
+
+
+
+o que quer dizer que 
+
+está igual à main table...
+
+
+
+
+
+
+também nao é uma secure view...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> O PRÓXIMO PASSO É DELETAR 1 RECORD DA MAIN TABLE,
+
+E AÍ CHECAR O QUE ACONTECE COM ESSA MATERIALIZED_VIEW_REFRESH_HISTORY...
+
+
+
+
+
+
+E TAMBÉM VER O QUE VAI ACONTECER 
+
+
+COM ESSE 
+
+
+
+"SHOW MATERIALIZED VIEWS LIKE 'CALL_CENTER_M_VIEW';
+
+
+
+
+
+
+
+TIPO ASSIM:
+
+
+
+
+
+DELETE FROM CALL_CENTER WHERE CC_CALL_CENTER_SK=1;
+
+
+SHOW MATERIALIZED VIEWS LIKE 'CALL_CENTER_M_VIEW';
+
+
+
+SELECT * FROM TABLE(INFORMATION_SCHEMA.MATERIALIZED_VIEW_REFRESH_HISTORY());
+
+
+
+
+
+
+
+
+
+
+
+
+
+AGORA AINDA ESTÁ MOSTRANDO "60 ROWS" (quer dizer que 
+o delete ainda nao foi processado completamente),
+
+
+
+e "behind_by" como 15min e 35 segundos...
+
+
+
+
+
+
+MAS A REFRESH HISTORY AINDA ESTÁ VAZIA....
+
+
+
+
+
+
+
+
+
+
+
+
+--> NO CASO DO PROFESSOR, ELE FICOU COM BEHIND BY DE 180 HORAS....
+
+
+
+
+-> DIZ QUE ISSO É ESTRANHO...
+
+
+
+
+
+
+
+--> MAS O QUE INTERESSA É QUE O VALUE DESSA COLUMN MUDOU....
+
+
+
+
+
+
+
+-------> MAS SE RODARMOS ESSA VIEW,
+
+SELECT NELA,
+
+VEREMOS 60 RECORDS... (
+    a change ainda nao foi aplicada...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+QUER DIZER QUE ESSA INFO 
+
+AINDA NAO FOI UPDATADA,
+
+NA METADATA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA VISUALIZARMOS ESSA CHANGE NA METADATA,
+
+
+TEMOS QUE ESPERAR APROXIMADAMENTE 
+
+
+10-12 MINUTOS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> VEREMOS ESSENCIALMENTE '60+59' records,
+
+o que quer dizer que 
+
+
+VEREMOS '119' 
+
+
+na parte de "ROWS".... --> E ISSO DEMORA UM POUCO PARA APARECER,
+CLARO...
+
+
+
+
+
+
+
+
+--> O NÚMERO DE BYTES TAMBÉM AUMENTOU, POR CONTA DISSO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> O VALUE DE BEHIND_BY 
+
+TAMBÉM JÁ ESTARÁ COMO "0 SECONDS"...
+
+
+
+
+
+
+
+
+
+
+--> ISSO QUER DIZER QUE A MAIN TABLE E VIEW TABLE 
+
+
+ESTÃO SINCRONIZADAS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS SE VC QUERIAR 
+
+
+AQUELA METADATA 
+
+INFO DA REFRESH HISTORY....
+
+
+
+
+
+
+
+
+
+--> FICAMOS COM... ___ NADA__... --> quer dizer que 
+
+A INFORMATION AINDA NAO FOI REFRESHADA (
+
+
+
+O QUE ESSA TABLE NOS MOSTRA É O 
+"START_TIME" DO REFRESH 
+
+
+ E O 
+ "END_TIME" DO REFRESH... 
+
+
+ TAMBÉM OS CREDITS_USADOS...
+
+
+
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS O PONTO PRINCIPAL É:
+
+
+
+""SE VC DELETA 1 RECORD DA MAIN TABLE,
+
+OS OLD RECORDS + CURRENT RECORDS VAO APARECER 
+
+NA MATERIALIZED VIEW"" (
+    pq o snowflake está tentando extrair a data da main 
+    table e a comparar com a data da materialized view...
+)
+
+
+
+
+
+
+
+
+veremos 119 records 
+
+
+nessa metadata, por uma certa quantia de tempo (considerável)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> SE NO FUTURO EU REALIZAR QUALQUER CHANGE NESSA MAIN TABLE,
+
+
+
+
+
+__ A __ DATA _ SERÁ COPIADA DA "MAIN TABLE",
+
+
+
+
+
+E COLOCADA NA MATERIALIZED VIEW...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... AGORA  UMA ÚLTIMA COISA,
+A RESPEITO 
+
+
+DA REFRESHED DATA...
+
+
+
+
+
+
+
+
+--> DEPOIS DE CERTO TEMPO,
+
+PODEMOS VER 
+
+O REFRESH,
+
+COM 
+
+
+
+o run de 
+
+
+
+SELECT * FROM TABLE(INFORMATION_SCHEMA.MATERIALIZED_VIEW_REFRESH_HISTORY());
+
+
+
+
+
+
+
+
+
+
+
+
+--> ESSA REFRESH HISTORY SEMPRE TE MOSTRARÁ 
+
+UMA "ONE-HOUR WINDOW", o intervalo é sempre assim..
+
+
+
+
+
+
+
+
+
+
+
+--> TAMBÉM TEMOS "CREDITS_USED" --> PQ SEMPRE QUE 
+
+
+
+EXISTE 1 CHANGE NA MAIN TABLE,
+
+
+
+ESSE SERVICE 
+
+
+
+DE REFRESH VAI COMEÇAR,
+
+
+E ELE 
+
+VAI TE CUSTAR....
+
+
+
+
+
+
+
+
+--------> QUER DIZER QUE SE VC RODA MTOS UPDATES,
+
+
+
+AS MATERIALIZED VIEWS COMEÇAM A CUSTAR MT....
+
+
+
+
+
+
+
+
+
+
+
+depois de horas,
+
+os records finalmente ficaram como "59", na materialized view...
+
+
+
+
+
+
+
+
+
+--> o refresh demorou mt tempo, 5-6 horas...
+
+
+
+
+
+
+
+
+--> na table de refresh data,
+
+a data 
+
+foi lost...
+
+
+
+
+
+
+
+
+
+
+-->  O QUE TEMOS QUE ENTENDER É QUE 
+
+
+A MATERIALIZED VIEW PASSOU POR 1 "CYCLE"...
+
+
+
+
+
+
+
+
+--> OS CHANGED RECORDS FORAM EXTRAÍDOS 
+
+
+
+DA MAIN TABLE E COLOCADOS 
+
+
+NA MATERIALIZED VIEW (por isso vimos 60 + 59, 119...)...
+
+
+
+
+
+
+--> esse processo demorou mtas horas,
+
+
+mas eventualmente
+
+
+
+ficamos com
+
+59 records na materialized view (
+    e aí a column de "behind_by" ficou zerada,
+
+    o que quer dizer que 
+
+
+    as 2 tables ficaram sincronizadas...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> BEHIND_BY --> "how far the upadtes of the materialized 
+view are behind the updates of the base table"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+MAS PQ É IMPORTANTE ENTENDER 
+
+
+
+TODOS ESSES PROCESSOS, RODANDO UNDER THE HOOD?
+

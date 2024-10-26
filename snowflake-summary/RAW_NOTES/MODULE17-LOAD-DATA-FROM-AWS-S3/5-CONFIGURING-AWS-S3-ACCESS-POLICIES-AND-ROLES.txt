@@ -1,0 +1,24 @@
+
+
+
+JÁ FIZ ISSO, NA AULA 4...
+
+
+
+
+
+
+
+
+
+
+
+CRIADA A POLICY (1 json),
+
+
+AGORA VAMOS 
+
+
+CRIAR 1 ROLE QUE UTILIZE ESSA POLICY... (
+    é tipo uma policy de fullS3Access...
+)

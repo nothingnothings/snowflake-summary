@@ -1,0 +1,192 @@
+
+
+
+
+
+
+
+
+
+AGORA ENTENDEREMOS A OPTION DE 'PURGE",
+
+
+COM O COMANDO DE "COPY"....
+
+
+
+
+
+
+
+
+
+
+
+
+--> TIPO ASSIM:
+
+
+
+
+
+
+COPY INTO emp
+FROM @demo_db.external_stages.my_s3_stage
+FILE_FORMAT=(TYPE=CSV 
+field_optionally_enclosed_by='"')
+ON_ERROR='CONTINUE'
+PURGE=TRUE;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--. O QUE ISSO FARÁ, NO CASO,
+
+
+É 
+
+
+
+__APAGAR__ AS FILES_ DEPOIS _ QUE 
+
+
+
+SEU CONTEÚDO/RECORDS FOREM CARREGADOS PARA DENTRO 
+
+
+DAS TABLES DO SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+OK... É SÓ ISSO...
+
+
+
+
+
+
+
+
+
+
+MAS QUANDO VC 
+
+TEM 1 EXTERNAL STAGING AREA,
+
+É ÚTIL 
+
+MANTER UMA CÓPIA DAS FILES, LÁ NO AWS S3...
+
+
+
+
+
+
+
+
+
+
+
+-> ESSA OPTION DE PURGE É ÚTIL QUANDO VC 
+
+ESTÁ USANDO 1 INTERNAL STAGING AREA... --> UMA VEZ 
+
+QUE 
+
+SUA DATA JÁ ESTÁ CARREGADA,
+
+NAO É MAIS NECESSÁRIO 
+
+MANTER 
+
+ESSAS FILES NO INTERNAL STAGING AREA (
+    pq isso vai acarretar mais custos,
+    no snowflake...
+
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+É BEM COMUM, DEPOIS DE CARREGARMOS 
+
+DATA NA TABLE,
+
+
+ESQUECERMOS 
+
+DE 
+
+APAGAR ESSA DATA/FILES 
+
+LÁ DAS INTERNAL STAGING AREAS/TABLE STAGING AREAS....
+
+
+
+
+
+
+
+
+
+--> PQ ESSAS FILES VAO CONSUMIR STORAGE,
+
+
+E O 
+
+
+SNOWFLAKE VAI COBRAR DE VOCE...
+
+
+
+
+
+
+
+
+
+--> PARA RESOLVER ISSO, VC PODE DEFINIR ESSA OPTION DE 
+PURGE COMO TRUE...
+
+
+
+
+
+
+DEIXE ESSA OPTION MARCADA SE VC TIVER CERTEZA QUE VC 
+
+VAI APAGAR ESSA DATA,
+
+
+NO FUTURO...
+
+
+

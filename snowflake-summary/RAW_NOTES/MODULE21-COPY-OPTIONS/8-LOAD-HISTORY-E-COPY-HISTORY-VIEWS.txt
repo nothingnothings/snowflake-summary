@@ -1,0 +1,761 @@
+
+
+
+
+
+
+
+
+OK... NESSA LECTURE TENTAREMOS ENTENDER A VIEW
+
+DE 
+
+"LOAD HISTORY"
+
+NO SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+
+MAS O QUE É ESSA VIEW?
+
+
+
+
+
+
+
+
+
+
+
+
+EXPLICACAO:
+
+
+
+
+
+
+
+""THIS INFORMATION SCHEMA VIEW ENABLES YOU TO RETRIEVE 
+THE __HISTORY__ OF DATA___ LOADED INTO TABLES USING THE 
+__cOPY__ INTO <TABLE>  COMMAND. THE VIEW DISPLAYS ONE ROW 
+FOR EACH FILE LOADED""...
+
+
+
+
+
+
+
+
+
+
+
+
+
+quer dizer que 
+
+
+
+todas as files que vc carregar na sua database,
+
+
+a info sobre esse load 
+
+poderá ser retrievada 
+
+usando 
+
+essa view de "load_history"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OUTRO DETALHE:
+
+
+
+
+
+""SNOWFLAKE RETAINS HISTORICAL DATA 
+FOR ___cOPY__ INTO__ commands_ EXECUTED 
+WITHIN THE _ PREVIOUS 14 DAYS ONLY""".....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE, SE ESTAMOS USANDO ESSA VIEW,
+
+PODEMOS
+
+
+
+RETRIEVE A DATA/HISTORY DOS COPY COMMANDS QUE 
+
+CARREGARAM DATA NA TABLE,
+
+
+
+ATÉ 14 DIAS ATRÁS...
+
+
+
+
+
+
+
+
+--> CERTO...
+
+
+
+
+
+--> E QUAL A LIMITACAO DESSA VIEW...
+
+
+
+
+
+
+
+
+
+
+
+
+--> "THIS VIEW RETURNS AN UPPER LIMIT OF 10.000 ROWS"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> AGORA VEREMOS COMO 
+
+
+ESSA VIEW FUNCIONA,
+
+
+
+E TAMBÉM VEREMOS COMO PODEMOS BURLAR ESSA LIMITACAO 
+
+DE 
+10.000 rows...
+
+
+
+
+
+
+o comando para queriar essa view é este:
+
+
+
+
+
+
+
+
+
+-- Load history view
+
+SELECT * FROM demo_db.information_schema.load_history
+    ORDER BY last_load_time DESC;
+
+
+SELECT * FROM demo_db.information_schema.load_history
+    WHERE schema_name='PUBLIC'
+    AND table_name='EMP';
+
+
+
+
+
+
+
+
+-- Load history global 
+
+SELECT * FROM snowflake.information_schema.load_history;
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PODEMOS USAR ESSA VIEW 
+SE ESTAMOS 
+
+
+
+BUILDANDO 1 PROCESS 
+
+
+PARA 
+
+
+
+CARREGAR DATA PARA DENTRO DO 
+
+
+SNOWFLAKE,
+
+COM 1 AUTOMATED PROCESS... (definitivamente usaremos essa view)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS O QUE TEMOS QUE SABER É QUE 
+
+
+A VIEW DE "load_history"
+
+
+
+SEMPRE 
+
+
+FICA VINCULADA A 1 DATABASE ESPECÍFICA...
+
+
+
+
+
+
+
+
+
+
+
+
+--> POR ISSO SEMPRE DEVEMOS ESCREVER 
+
+
+USE DATABASE <database_name>
+
+
+
+
+ANTES DE RODAR 
+
+COMANDOS 
+
+COM 'information_schema.load_history",
+
+
+PQ 
+
+
+
+SENAO NAO CONSEGUIREMOS 
+
+TARGETTAR 
+
+
+A LOAD HISTORY DESSA TABLE ESPECÍFICA..
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS É CLARO QUE TAMBÉM PODEMOS 
+
+
+QUERIAR A LOAD HISTORY __ GLOBAL,
+
+DE TODAS AS TABLES,
+
+TODOS OS COMANDOS DE COPY RODADOS 
+
+EM TODAS NOSSAS TABLES....
+
+
+
+
+
+->  e essa info é apenas relativa 
+
+AO COMANDO DE COPY, Mais nada...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... E O PROFESSOR HAVIA MENCIONADO 
+
+QUE ESSA VIEW (load_history)
+
+SÓ CONSEGUE RETORNAR 
+
+ATÉ 10.000 records..
+
+
+
+
+
+
+
+--> para conseguirmos DAR BYPASS NESSE LIMITE,
+
+TEMOS OUTRA VIEW,
+CHAMADA 
+DE 
+
+"COPY_HISTORY"...
+
+
+
+
+
+
+
+
+
+PODEMOS USAR 
+
+ESSA FUNCTION TIPO ASSIM:
+
+
+
+
+
+
+
+SELECT * 
+FROM TABLE(information_schema.copy_history(table_name=>'EMP', start_time=>dateadd(hours, -42, current_timestamp())))
+-- WHERE error_count > 0;
+
+
+
+
+
+
+
+ISSO PROVIDENCIA INFO PARECIDA,
+
+
+
+MAS VC PODE CONSIDERAR O 'copy_history"
+
+COMO O "PARENT"
+
+DESSA VIEW DE "load_history"...
+
+
+
+
+
+--> precisamos da table function,
+
+
+para ter esse result bem certinho...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK, MAS QUAL É A DIFERENCA 
+
+
+ENTRE 
+
+
+AS VIEWS DE 
+
+
+"load_history"
+
+
+e 
+
+
+"copy_history",
+
+
+
+
+EM TERMOS DE 
+
+
+"COMO O RESULT É RETORNADO"?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> BEM, 
+
+PODEMOS COMPARAR 
+
+
+AS COLUMNS:
+
+
+
+
+
+                    LOAD HISTORY VIEW     COPY HISTORY VIEW 
+FILE_SIZE                                      X 
+STAGE_LOCATION                                  X 
+
+
+
+
+
+
+
+
+
+
+
+QUER DIZER QUE A COPY HISTORY VIEW É MAIS DETALHADA....
+
+
+
+te dá mais info...
+
+
+
+
+
+
+
+
+
+
+--> E TAMBÉM A LOAD HISTORY VIEW 
+
+
+TEM AQUELE LIMITE DE 10.000 ROWS...
+
+
+
+
+
+
+
+
+------------------------
+
+
+
+
+
+
+O PROFESSOR TAMBÉM QUER MOSTRAR 
+
+MAIS 1 COISA 
+
+RELACIONADA A ESSE  information_schema...
+
+
+
+
+
+
+
+
+
+information_schema --> SAO VINCULADOS 
+
+A CADA 
+
+DATABASE....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+MAS TAMBÉM EXISTE 1 NEGÓCIO GLOBAL LEVEL,
+
+
+
+O load_history GLOBAL,
+
+DISPONÍVEL APENAS 
+
+
+AO 
+
+
+ACCOUNTADMIN....
+
+
+
+
+
+
+
+
+
+
+
+
+--> É A SHARED DATABASE "SNOWFLAKE" --> 
+
+
+
+DENTRO DESSA DATABASE,
+
+
+
+TEMOS 
+
+
+O SCHEMA DE "ACCOUNT_USAGE",
+
+
+E É NELE QUE TEMOS O LOAD_HISTORY....
+
+
+
+
+
+
+
+
+
+
+--> MAS A DIFERENCA DA "LOAD_HISTORY" VIEW 
+
+
+
+
+DA DATABASE DE NOME "SNOWFLAKE", GLOBAL,
+
+É QUE 
+
+
+
+__ eLA GUARDA A INFO DE COPY INTO COMMANDS 
+
+__ POR ATÉ 1 ANO...
+
+
+
+
+
+
+
+FICAMOS COM A HISTORY DE ATÉ 1 ANO ATRÁS,
+
+
+
+
+DE TODA A DATA QUE FOI ACTUALLY LOADED 
+
+INTO AS SUAS TABLES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--->_ ok... 
+
+
+mais alguma coisa?
+
+
+
+
+
+
+
+---> TAMBÉM EXISTE UMA COPY_HISTORY VIEW 
+
+
+
+NO SCHEMA DE ACCOUNT_USAGE,
+
+
+
+e ela também é de até 365 dias atrás....
+
+
+
+
+(
+    ESSA copy_history e load_history views,
+
+    as 2 do ACCOUNT_USAGE,
+
+
+    ELAS NAO POSSUEM MT DIFERENÇA... 
+)
+
+
+
+
+
+
+
+
+
+
+
+--> PARA QUERIAR ESSA DATA GLOBAL,
+RODAMOS:
+
+
+
+
+
+SELECT * FROM SNOWFLAKE.ACCOUNT_USAGE.LOAD_HISTORY;
+
+
+
+
+E 
+
+
+
+
+
+SELECT * FROM SNOWFLAKE.ACCOUNT_USAGE.COPY_HISTORY;
+
+
+
+
+
+
+
+
+E 
+
+
+
+
+SELECT * FROM SNOWFLAKE.ACCOUNT_USAGE.LOAD_HISTORY
+WHERE TABLE_NAME='EMP';
+
+
+
+
+
+
+
+
+
+
+
+
+
+copy_history view --> melhor para auditing...

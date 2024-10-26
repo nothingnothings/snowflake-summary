@@ -1,0 +1,447 @@
+
+
+
+
+
+
+
+AGORA VEREMOS COMO __ UPDATE STATEMENTS 
+
+E 
+
+DELETE STATEMENTS 
+
+
+FUNCIONAM/FUNCIONARAO 
+
+
+
+EM TABLES 
+
+
+
+
+QUE POSSUEM 1 ROW ACCESS POLICY APLICADA A SI..
+
+
+
+
+
+
+
+
+
+
+
+--> O PROFESSOR ADICIONOU MAIS 2 RECORDS 
+
+NA TABLE DE "ACCESS_CONTROL" (os roles,
+
+
+cada 1 com um tipo acesso, ou nao, a nossa 
+table de "patient"... como visto na aula de 
+"mapping tables")
+
+
+
+
+
+
+--> TEMOS ESTES CÓDIGOS (usando o role de "ETL_DEV",
+
+que nao possui acesso à policy de "patient_policy" aplicada na 
+nossa table):
+
+
+
+
+
+
+insert into access_ctl_tbl
+values('ETL_DEV','green'),
+('ETL_DEV','orange');
+
+
+
+
+USE ROLE ETL_DEV;
+USE DATABASE CLAIMS;
+USE SCHEMA PHARMACY;
+
+
+
+
+SHOW TABLES;
+
+
+DELETE FROM PATIENT WHERE ICDCODE='F70';
+
+UPDATE PATIENT SET ICDCODE='F700' WHERE ICDCODE='F70';
+
+
+
+
+
+UPDATE PATIENT SET CITY='MISSI' WHERE ZIP_CODE='39425';
+
+
+
+
+
+
+
+
+
+SELECT * FROM patient;
+
+
+
+
+
+
+
+
+
+
+
+AGORA O ETL_DEV POSSUI ACESSO à GREEN E ORANGE DATA:
+
+
+
+
+
+
+
+ROLE_NAME           ACCESS_FOR
+
+UHG                 GREEN
+
+ETL_DEV             GREEN 
+
+ETL_DEV             ORANGE
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SE RODAMOS 
+
+
+
+"show tables",
+
+
+FICAMOS COM ISTO:
+
+
+
+
+
+
+
+
+
+
+owner: "ETL_DEV"... ----------> COMO O 
+
+
+
+__OWNER__ 
+
+
+
+DA TABLE AINDA É 
+
+
+"ETL_DEV",
+
+
+
+teoricamente ele é capaz 
+
+de realizar 
+
+
+
+
+OPERATIONS  DE DATA MANIPULATION NESSA TABLE (
+    mesmo que 
+
+    tenhamos uma ROW ACCESS POLICY ativada 
+
+    em cima dessa table,
+
+    para ocultar os 
+
+
+    records vistos pelo ETL_DEV,
+
+
+    por meio da criação de uma dynamic secure view...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+OK... RODAMOS O DELETE....
+
+
+
+
+
+
+
+
+
+
+--> EX:
+
+
+
+DELETE FROM PATIENT WHERE ICDCODE='F70';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+O DELETE É EXECUTADO,
+
+
+MAS O NUMBER DE RECORDS DELETADOS FICOU COMO "0"...
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE, CASO 
+
+
+EXISTA UMA ROW ACCESS POLICY 
+
+PROTEGENDO ESSE RECORD CONTRA ESSE ROLE 
+
+ESPECÍFICO,
+
+
+
+
+
+___ NAO SERÁ POSSÍVEL APAGAR ESSE RECORD (
+
+    mesmo que o delete esteja sendo executado 
+
+    pelo role que é o OWNER dessa table... o 
+
+    row access policy é realmente tao forte...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> DE CERTA FORMA,
+
+
+OS RECORDS ACABAM SENDO PROTEGIDOS... NEM MESMO O OWNER 
+
+DESSA TABLE 
+
+SERÁ CPAAZ DE APAGAR ESSES RECORDS,
+
+
+
+TUDO POR CONTA DO 
+
+ROW ACCESS POLICY APLICADO NESSA TABLE...
+
+
+
+
+
+
+
+
+
+----> mas é claro que o role de ETL_DEV
+
+
+AINDA TEM ACESSO 
+
+
+AOS RECORDS DE TIPO "GREEN" E "ORANGE",
+
+
+
+
+
+
+
+
+por isso o professor tenta 
+
+
+updatar 
+
+2 records,
+
+
+
+de type "green" e "orange"...
+
+
+
+
+
+
+
+
+
+
+EX;
+
+UPDATE PATIENT SET CITY='MISSI' WHERE ZIP_CODE='39425';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+isso dá cereto,
+
+
+
+
+
+PQ ESSE ROLE TEM ACESSO A ESSES 2 
+
+RECORDS...
+
+
+
+
+
+
+
+
+
+
+
+
+--> TUDO DEPENDE DA ROW ACCESS POLICY 
+
+QUE FOI APLICADA 
+
+
+
+NA TABLE, 
+
+
+é isso que determina se 1 given role
+
+
+consegue RODAR SELECTS/UPDATES/DELETES 
+
+
+
+em cima daqueles records... (
+
+    nao interessa se o role for o owner 
+    da table em si...
+
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+e se vc usar 1 secure view pura,
+
+vc 
+
+nem mesmo poderá rodar select/update statements 
+
+em cima dessa table (
+
+    pq 
+
+    vc nao terá acesso à table em si,
+    e sim apenas 
+
+
+    a 1 view da table...
+)
+
+
+
+

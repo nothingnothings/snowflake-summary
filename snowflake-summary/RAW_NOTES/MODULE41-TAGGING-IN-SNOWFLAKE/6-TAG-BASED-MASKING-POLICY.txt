@@ -1,0 +1,1130 @@
+
+
+
+
+AGORA TENTAREMOS ENTENDER O QUE É 
+
+"TAG-BASED MASKING POLICY", NO SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1) "A TAG-BASED MASKING POLICY COMBINES 
+    THE OBJECT TAGGING AND MASKING POLICY FEATURES 
+    TO ALLOW A __MASKING POLICY TO BE SET__ ON A TAG __ 
+    USING AN ´´´ALTER TAG´´´ COMMAND"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> JÁ DISCUTIMOS SOBRE MASKING POLICIES...
+
+
+
+
+
+MAS O QUE ESSA FEATURE PROVIDENCIARÁ
+
+
+
+É A COMBINACAO 
+
+
+DAS TAGS E MASKING POLICIES ---> 
+
+
+
+
+
+
+
+
+RESUMO:
+
+
+
+""PARA CADA COLUMN EM QUE APLICAMOS 1 TAG,
+
+A MASKING POLICY É APLICADA TAMBÉM"" (
+
+
+
+    E A MASKING POLICY VAI SER COMUNICADA/ATTACHED 
+    ÀQUELAS COLUMNS ESPECÍFICAS,
+
+    TUDO POR MEIO 
+
+    DESSA GIVEN TAG...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2) "WHEN THE DATA TYPE IN THE MASKING POLICY 
+SIGNATURE AND THE DATA TYPE __OF THE COLUMN ___ MATCH,
+THE TAGGED COLUMN IS _ AUTOMATICALLY PROTECTED BY THE
+CONDITIONS IN THE MASKING POLICY"...
+
+
+
+
+
+
+
+
+
+
+3) THE __ TAG___ CAN SUPPORT__ ONE MASKING POLICY 
+
+FOR _ EACH __ DATA TYPE THAT SNOWFLAKE SUPPORTS...
+
+
+
+
+
+
+
+
+
+
+
+VEREMOS ESSES PONTOS MAIS TARDE...
+
+
+
+
+
+
+agora vamos no snowflake 
+
+
+console 
+veremos tag-based masking policy...
+
+
+
+
+
+
+
+
+
+
+
+OK... AGORA CRIAREMOS ALGUMAS MASKING POLICIES...
+
+
+
+
+
+
+
+
+
+--- SCENARIO 1 
+
+
+CREATE OR REPLACE MASKING POLICY COMMENTS_MASK
+AS (VAL STRING) RETURNS STRING -> 
+CASE
+    WHEN CURRENT_ROLE() IN ('ACCOUNTADMIN') THEN '***MASKED***'
+    ELSE VAL
+END;
+
+
+
+
+
+CREATE OR REPLACE MASKING POLICY NAME_MASK
+AS (VAL STRING) RETURNS STRING -> 
+CASE
+    WHEN CURRENT_ROLE() IN ('ACCOUNTADMIN') THEN '***MASKED***'
+    ELSE VAL
+END;
+
+
+
+
+CREATE OR REPLACE MASKING POLICY DATE_MASK
+AS (VAL STRING) RETURNS STRING -> 
+CASE
+    WHEN CURRENT_ROLE() IN ('ACCOUNTADMIN') THEN '1990-01-01'
+    ELSE VAL
+END;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... A MORAL DE TUDO ISSO É FAZER 
+
+A 
+
+"GOVERNANCE" DE SUA DATA 
+
+ACONTECER ___ ATRAVÉS __ DAS TAGS... ou seja,
+
+
+
+
+APLICAR SUAS MASKING POLICIES ATRAVÉS 
+
+DAS TAGS...
+
+
+
+
+
+
+
+
+
+
+
+
+--> É POR ISSO QUE O SNOWFLAKE COMBINOU 
+
+ESSA FEATURE DE TAGS COM MASKING POLICIES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+MAS COMO ISSO FUNCIONA?
+
+
+
+
+
+
+
+
+
+
+
+
+
+funciona assim:
+
+
+
+
+1) PARA QUALQUER COLUMN EM 
+
+QUE APLICAMOS TAGS,
+
+
+SE __ SETTAMOS MASKING POLICIES PARA 
+
+ESSAS GIVEN TAGS,
+
+
+
+AS MASKING POLICIES VAO 
+
+
+SER AUTOMATICAMENTE 
+
+
+SETTADAS 
+
+
+
+NAS COLUMNS em que as tags foram posicionadas..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> COMO ISSO ACONTECE, AQUI?
+
+
+
+
+
+
+
+
+
+--> CRIAMOS 3 MASKS... ------->
+
+
+
+
+
+
+
+VAMOS ATTACHAR A MASKING POLICY DE "comments_mask"
+
+
+à tag de 'COMMENTS"..
+
+
+
+
+
+
+
+
+COM ISSO, TODAS AS COLUMNS QUE receberem 
+
+ESSA TAG SERÃO __ MASKED__...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> IDEALMENTE,
+
+ESSAS MASKING POLICIES 
+
+
+DEVEM SER CRIADAS 
+
+SOB 1 ROLE ESPECÍFICO (como "MASK_ADMIN")...
+
+
+
+
+
+
+
+
+
+-> POR ENQUANTO, USAREMOS O "TAG_ADMIN", 
+
+
+
+é ele que vai managear 
+
+
+essas masks, atribuídas a nossas tags...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA RECRIAR 
+
+
+MASKING POLICIES,
+
+
+
+
+DEVEMOS PRIMEIRO FAZER UNSET 
+
+DESSA POLICY 
+
+DAS COLUMNS EM QUE 
+
+
+A APLICAMOS...
+
+
+
+
+
+
+
+
+
+-->
+
+
+
+
+
+FAZEMOS ISSO COM 
+
+
+
+
+"UNSET MASKING POLICY"
+
+
+
+
+
+
+
+
+
+
+
+
+--> AGORA TENTAMOS 
+
+
+ATTACHEAR 
+
+ESSAS MASKING POLICIES
+
+
+àS NOSSAS TAGS...
+
+
+
+
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+ALTER TAG TAG.GOVERNANCE.COMMENTS 
+SET MASKING POLICY COMMENTS_MASK,
+    MASKING POLICY NAME_MASK;
+
+
+
+
+
+
+
+
+
+
+
+
+OK... AGORA NOSSA TAG DE "COMMENTS"
+
+
+
+
+ESTÁ COM 1 MASKING POLICY ATTACHEADA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> E NÓS JÁ TÍNHAMOS 
+ATTACHEADO ESSA TAG 
+
+
+
+
+A VÁRIAS COLUMNS 
+
+DE NOSSA TABLE "TELECALLS",
+
+
+
+como temos neste código:
+
+
+
+
+alter table revenue.media.telecalls modify column "Topic Notes" set tag tag.governance.comments='Broadband connection notes';
+
+
+
+
+
+
+TAMBÉM FIZEMOS ISSO COM OUTRA
+
+COLUMN,
+
+
+
+COM ESTA:
+
+
+
+
+
+alter table revenue.transport.airline modify column "Airlines Notes" set tag tag.governance.comments='Traffic control comments';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ok... temos essa tag aplicada em 2 columns diferentes,
+
+
+
+em tables diferentes...
+
+
+
+
+
+
+
+
+
+
+
+--> E O QUE INTERESSA É QUE 
+
+
+
+
+ESTAMOS ATTACHEANDO 2 MASKING POLICIES 
+
+A 
+
+
+
+
+
+1 MESMA TAG...
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... E AQUI PODEMOS TER PROBLEMAS (
+    múltiplas masks em 1 mesma tag
+),
+
+pq veja a definicao de suas 
+
+masks:
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE MASKING POLICY COMMENTS_MASK
+AS (VAL STRING) RETURNS STRING -> 
+CASE
+    WHEN CURRENT_ROLE() IN ('ACCOUNTADMIN') THEN '***MASKED***'
+    ELSE VAL
+END;
+
+
+
+
+
+CREATE OR REPLACE MASKING POLICY NAME_MASK
+AS (VAL STRING) RETURNS STRING -> 
+CASE
+    WHEN CURRENT_ROLE() IN ('ACCOUNTADMIN') THEN '***MASKED***'
+    ELSE VAL
+END;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+AS 2 SAO STRING MASKS,
+
+
+MAS SERÁ QUE PODEMOS ADICIONAR 
+
+ESSAS 2 MASKING POLICIES EM 1 TAG...?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+TENTAMOS RODAR ESTE COMANDO:
+
+
+
+
+
+
+
+ALTER TAG TAG.GOVERNANCE.COMMENTS 
+SET MASKING POLICY COMMENTS_MASK,
+    MASKING POLICY NAME_MASK;
+
+
+
+
+
+
+
+
+
+
+
+
+--> E É CLARO QUE FICAMOS COM 1 ERROR:
+
+
+
+
+""MULTIPLE MASKING POLICIES ARE SPECIFIED WITH 
+SAME DATA TYPE VARCHAR""...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> SE VISUALIZARMOS O SLIDE QUE O PROFESSOR MOSTROU 
+
+NO INÍCIO 
+
+DO MODULE,
+TEMOS:
+
+
+
+
+
+
+3) THE __ TAG___ CAN SUPPORT__ ONE MASKING POLICY 
+
+FOR _ EACH __ DATA TYPE THAT SNOWFLAKE SUPPORTS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OU SEJA,
+
+
+
+
+
+
+NOSSA TAG NAO PODE TER MÚLTIPLAS MASKING 
+POLICIES 
+
+
+COM DATA TYPE ""REPETIDO"" 
+
+
+( 
+    ou seja,
+
+
+    1 TAG DE "EXAMPLE_TAG"
+
+
+    PODE TER 
+
+
+
+    VÁRIAS MASKING POLICIES,
+
+    COMO:
+
+
+    STRING_MASK,
+    NUMBER_MASK,
+    DATE_MASK,
+    BOOLEAN_MASK,
+
+
+
+
+
+
+
+    MAS __ ELA NAO PODE TER ALGO COMO:
+
+
+
+    VARCHAR_MASK_1,
+    VARCHAR_MASK_2,
+    NUMBER_MASK_1,
+    NUMBER_MASK_2
+
+
+
+
+
+
+
+    se temos data types repetidos,
+
+
+    ele vai nos dar 1 erro, imediatamente...
+
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE A TAG PODE SUPPORTAR 
+
+
+1 MASKING POLICY PARA CADA 
+
+DATA TYPE SUPORTADO 
+
+PELO SNOWFLAKE....
+
+
+
+
+
+
+
+
+
+
+
+--> ok...
+
+
+
+
+
+ 
+
+
+
+ --> PARA FAZER O STATEMENT RODAR 
+ COM SUCESSO,
+
+ O PROFESSOR 
+
+ O ALTERA,
+
+
+
+ESCREVE-O ASSIM:
+
+
+
+
+
+
+
+
+
+
+ALTER TAG TAG.GOVERNANCE.COMMENTS 
+SET MASKING POLICY COMMENTS_MASK,
+MASKING POLICY DATE_MASK;
+
+
+
+
+
+
+
+
+
+
+
+
+---> E ESSE STATEMENT FUNCIONA,
+
+
+PQ 
+
+
+AGORA TEMOS 2 DATA TYPES DIFERENTES 
+
+NESSAS MASKING POLICIES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+COM ESSA TAG DE "COMMENTS" APLICADA 
+EM 
+AMBAS AS TABLES (airlines e market),
+
+
+
+
+AS MASKING POLICIES TAMBÉM FORAM APLICADAS,
+
+APLICADAS 
+
+
+EM QUALQUER COLUMN EM QUE ESSAS TAGS 
+
+
+
+FORAM APLICADAS...
+
+
+
+
+
+
+
+
+
+ISSO QUER DIZER QUE:
+
+
+
+
+
+
+
+
+1) PODEMOS SIMPLESMENTE FAZER ATTACH DE NOSSAS 
+
+MASKING POLICIES NAS NOSSAS TAGS, E ENTAO:
+
+
+
+
+
+2) FAZER ATTACH DE ESSAS TAGS 
+
+NAS NOSSAS TABLES, DE ACORDO COM O QUE 
+
+QUEREMOS MASCARAR, EM QUAIS COLUMNS QUEREMOS MASCARAR...
+
+
+
+
+
+
+
+
+
+
+3) SEMPRE QUE ESSA TAG FOR APLICADA, NO FUTURO,
+
+EM OUTRAS COLUMNS EM SUAS TABLES,
+
+ESSAS POLICIES TAMBÉM SERAO APLICADAS...
+
+
+
+
+
+
+
+
+
+
+
+TUDO ISSO NOS MOSTRA COMO PODEMOS TER MAIS CONTROLE,
+
+
+QUANDO O ASSUNTO É DATA GOVERNANCE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... MAIS UMA COISA, QUE VC 
+
+TAMBÉM DEVE OBSERVAR:
+
+
+
+
+
+
+
+--> 2 MASKS FORAM APLICADAS,
+
+QUANDO APLICAMOS 
+
+ESSA TAG...
+
+
+
+
+
+
+--> MAS COMO ESSA TAG DE "COMMENTS" FOI APLICADA
+
+SOMENTE EM FIELDS QUE POSSUEM 
+
+DATA TYPE DE "VARCHAR/STRING",
+
+
+
+ESSA MASK DE "DATE" NAO FOI """REALMENTE""" APLICADA 
+
+(ela ficou tipo "triggada", mas nao foi aplicada)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ESSE PONTO FOI VISTO, NO SLIDE DO PROFESSOR,
+
+NESTE TRECHO:
+
+
+
+
+
+
+
+
+
+2) "WHEN THE DATA TYPE IN THE MASKING POLICY 
+SIGNATURE AND THE DATA TYPE __OF THE COLUMN ___ MATCH,
+THE TAGGED COLUMN IS _ AUTOMATICALLY PROTECTED BY THE
+CONDITIONS IN THE MASKING POLICY"...
+
+
+
+
+
+
+
+
+
+COMO 
+
+
+OS DATA TYPES DE "STRING" MATCHEARAM,
+
+
+
+ESSA MASKING POLICY, 
+
+DE "COMMENTS_MASK",
+
+
+
+FOI APLICADA... (E a de "date_mask" foi ignorada, 
+
+pq nenhum field/column em que aplicamos essa tag aí,
+
+com as 2 masks,
+
+teve 1 field de type "date"...
+
+)
+
+
+
+
+
+
+
+certo.... continuamos na próxima aula...

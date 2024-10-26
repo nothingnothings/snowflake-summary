@@ -1,0 +1,520 @@
+
+
+QUANDO VC TRABALHA COM O SNOWFLAKE E USA O S3 
+
+COMO STAGING AREA,
+
+
+
+É IMPORTANTE ENTENDER E UTILIZAR 
+
+O AWS CLI...
+
+
+
+
+
+
+
+---------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NESSA SECTION,
+
+TEREMOS 
+
+UMA INTRODUCTION SOBRE O AWS CLI E 
+
+COMANDOS BEM BÁSICOS...
+
+
+
+
+
+
+
+
+
+
+TEREMOS 3 ATIVIDADES:
+
+
+
+
+
+1) CONFIGURAR O AWS CLI ...
+
+
+
+
+
+
+
+2) TENTAR LISTAR AS FILES QUE TEMOS NO NOSSO BUCKET,
+
+COM A AWS CLI...
+
+
+
+
+
+
+
+3) TENTAREMOS COPIAR 1 DAS FILES DO BUCKET PARA O LOCAL SYSTEM...
+
+
+
+
+
+
+
+
+4) DEPOIS TENTAREMOS COPIAR 1 FILE DO LOCAL FILE SYSTEM 
+
+PARA DENTRO 
+
+DO AWS...
+
+
+
+
+
+
+
+
+
+
+--> OK... AGORA VAMOS NOS CONECTAR ATRAVÉS DO VSCODE...
+
+
+
+
+
+
+
+
+
+
+--> para configurar o aws cli,
+
+
+
+temos que escrever "aws configure"...
+
+
+
+
+
+
+
+
+
+
+
+--> ASSIM QUE VC FIZER ISSO, ELE VAI TE PEDIR O 
+
+"ACCESS KEY ID"...
+
+
+
+
+
+
+
+
+--> depois disso,
+
+ele pedirá o "secret key id"....
+
+
+
+
+
+
+
+
+-> para conseguirmos isso, devemos loggar no aws...
+
+
+
+
+
+
+
+
+
+
+
+--> TEMOS QUE ENTRAR NO IAM...
+
+
+
+
+
+
+--> DEPOIS CLICAMOS EM "USERS"...
+
+
+
+
+
+
+
+
+--> AÍ TEMOS O USERNAME --> 
+
+
+se ainda nao temos 1 user,
+
+temos que criar 1...
+
+
+
+
+
+
+
+
+
+
+--> clicamos no user,
+e aí 
+vamos até a parte de 
+
+
+"security credentials',
+
+
+e aí clicamos em "CREATE ACCESS KEY"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+---> isso feito,
+
+
+ELE VAI TE PEDIR PARA BAIXAR 1 CSV...
+
+
+
+
+
+
+
+
+
+COM ESSE ACESSO, ELE TAMBÉM NOS ENTREGA 1 SECRET ACCESS KEY...
+
+
+
+
+
+
+
+
+-> TEMOS QUE USAR ESSAS 2 NO TERMINAL...
+
+
+
+
+
+
+
+
+
+
+com default region,
+
+
+
+vc pode deixar como default, none...
+
+
+
+
+
+
+--> AGORA NOSSO AWS ESTARÁ CONFIGURADO, O AWS 
+CLI ESTARÁ CONFIGURADO....
+
+
+
+
+
+
+
+
+
+
+--> COM ISSO, PODEMOS LISTAR AS FILES QUE TEMOS 
+
+
+NESSE FOLDER...
+
+
+
+
+
+
+
+--> PRECISAMOS DO 
+
+S3 URL...
+
+
+
+
+
+
+
+--> BASTA COPIAR O URL DO BUCKET,
+
+E AÍ 
+
+
+
+EXECUTAR COMANDOS NO TERMINAL DO VSCODE....
+
+
+
+
+
+aí digite:
+
+
+
+
+
+
+
+
+
+
+aws s3 ls s3://new-snowflake-course-bucket/CSV/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... MAS ISSO ME DEU UM ERRO:
+
+
+An error occurred (AccessDenied) when calling the ListObjectsV2 operation: Access Denied
+
+
+
+
+
+
+
+
+
+é um erro de permissao, basicamente..
+
+
+
+
+
+
+tenho que atribuir 1 role ao meu user, eu acho... 
+
+
+
+o role de acesso ao s3, que criei anteriormente...
+
+
+
+
+
+
+
+
+
+
+AGORA DEU CERTO:
+
+
+
+
+
+
+
+
+arthur@arthur-IdeaPad-3-15ALC6:~/Desktop/PROJETO-SQL-2$ aws s3 ls s3://new-snowflake-course-bucket/CSV/
+2023-08-16 13:49:09          0 
+2023-08-16 17:21:39        871 csv_0_0_0.csv.gz
+2023-08-16 14:34:09        370 employees01.csv
+2023-08-16 14:34:09        364 employees02.csv
+2023-08-16 14:34:10        407 employees03.csv
+2023-08-16 14:34:11        375 employees04.csv
+2023-08-16 14:34:12        404 employees05.csv
+2023-08-16 15:52:09        395 employees_error_file0.csv
+2023-08-16 15:52:09        402 employees_error_file1.csv
+arthur@arthur-IdeaPad-3-15ALC6:~/Desktop/PROJETO-SQL-2$ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... COM ISSO CONSEGUI LISTAR AS FILES QUE 
+
+TEMOS NESSE FOLDER...
+
+
+
+
+
+
+
+
+
+
+
+
+--> DA MESMA FORMA,
+
+SE QUISERMOS 
+
+BAIXAR ESSAS FILES 
+
+NO NOSSO LOCAL FILE SYSTEM,
+
+
+
+PODEMOS 
+
+ESCREVER ASSIM:
+
+
+
+
+
+
+
+
+
+aws s3 cp s3://new-snowflake-course-bucket/ /home/arthur/Desktop/PROJETO-SQL-2/MODULE17-LOAD-DATA-FROM-AWS-S3/data-copied-from-aws/ --recursive
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK...
+
+
+
+
+
+
+
+
+
+
+
+
+E É CLARO QUE, SE QUISERMOS FAZER O CAMINHO INVERSO,
+
+BASTA TROCAR A ORDEM DAS COISAS...
+
+
+
+
+
+
+
+ESCREVER ASSIM:
+
+
+
+
+aws s3 cp /home/arthur/Desktop/PROJETO-SQL-2/MODULE17-LOAD-DATA-FROM-AWS-S3/data-copied-from-aws/ s3://new-snowflake-course-bucket/ --recursive
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... FAZ TOTAL SENTIDO...
+
+
+
+
+
+
+
+SE TRABALHAMOS COM O SNOWFLAKE,
+
+É BOM 
+
+MEXER 
+
+
+COM O AWS CLI..
+
+
+

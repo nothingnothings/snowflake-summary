@@ -1,0 +1,855 @@
+
+AGORA ENTENDEREMOS COMO PODEMOS 
+
+
+MASCARAR DATA COM A FEATURE DE DATA MASKING DO SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+DIGAMOS O MESMO CENÁRIO...
+
+
+
+
+
+
+
+
+
+
+--> 
+
+
+
+
+
+
+patient_name        ADDRESS                 Diagnosis       place_of_service_cd     ZIPCODE             DOB 
+
+RAJ                 some street, mumbai     CANCER          41                          123131        123131
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+table com 
+
+
+
+essas columns...
+
+
+
+
+
+
+
+--> queremos aplicar data masking....
+
+
+
+
+
+
+
+
+
+---> PODERÍAMOS CRIAR 1 VIEW EM CIMA DESSA DATA...
+
+
+
+
+
+
+
+
+
+
+--> 1 VIEW EM CIMA DESSA DATA, E AÍ 
+
+
+EDITAR OS FIELDS, OS MASCARAR...
+
+
+
+
+
+
+
+
+
+
+--> TIPO ASSIM:
+
+
+
+
+
+-- Apply policy on a specific column 
+ALTER TABLE IF EXISTS CUSTOMERS MODIFY COLUMN FULL_NAME 
+SET MASKING POLICY PHONE_POLICY;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+O CÓDIGO DE CRIACAO DO VIEW É TIPO ESTE:
+
+
+
+
+
+
+
+
+
+SELECT PATIENT,
+ADDR_REDACTION_FUNC(ADDRESS) AS ADDRESS,
+DIAGNOSIS_REDACTION_FUNC (DIAGNOSIS) DIAGNOSIS PLACE OF 
+SERVICE_CD 
+
+ZIP_REDACTION_FUNC(ZIP_CODE) ZIP_CODE,
+
+DOB_REDACTION_FUNC(DOB) DOB 
+FROM PATIENT;
+
+
+
+
+
+
+
+
+
+
+
+
+--> ISSO VAI RESULTAR EM 1 VIEW...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> EM VEZ DE CRIAR 1 NORMAL VIEW,
+
+DEVEMOS CRIAR 1 _ SECURE__ VIEW,
+
+
+PARA QUE 
+
+A PESSOA NAO CONSIGA 
+
+VER 
+
+OS DETALHES DE CRIACAO DA VIEW... (o sql text)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS DEVEMOS COMPREENDER AS DIFERENTES CHALLENGES 
+
+QUE ENFRENTAMOS 
+
+
+SE 
+
+
+SEGUIRMOS ESTE APPROACH...
+
+
+
+(
+   de criacao de views com fields 
+
+   mascarados,
+
+
+   com functions sendo usadas para mascarar os values 
+
+   nos fields... 
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DEVEMOS DISCUTIR ALGUNS DOS PROBLEMS COM VIEWS...
+
+
+
+
+
+
+
+
+
+
+PROBLEMAS:
+
+
+
+
+
+
+1) SE TEMOS 100 TABLES,
+
+PRECISAMOS CRIAR 100 VIEWS...
+
+(e views nao possuem caching)
+
+
+
+2) MAS E SE PRECISARMOS ADICIONAR 
+
+OU REMOVER 1 RULE A 1 COLUMN?
+
+
+
+---> BEM, SE ISSO ACONTECER, PRECISAMOS 
+
+MANUALMENTE __ MUDAR_ A DEFINICAO DA VIEW... ------> NESSE CASO,
+
+FAZER O MANAGE DE TODAS ESSAS DEFINICOES, NAS VIEWS,
+
+
+VAI SER UM GRANDE PROBLEMA (mt repeticao de código)...
+
+
+
+
+
+
+
+--> COM AS MASKING POLICIES DO SNOWFLAKE,
+
+
+VC FICA COM ESSE "MASKING" EM 1 LUGAR CENTRAL,
+
+O QUE PODE AJUDAR MT NO AVOID DE REPETICAO DE CÓDIGO..
+
+
+
+
+
+
+
+
+3) MANAGING OF VIEWS IS A BIG ISSUE...
+
+
+
+
+
+
+4) TAMBÉM HÁ A POSSIBILIDADE 
+
+
+DE ACABARMOS COM MÚLTIPLAS VIEWS, MÚLTIPLAS VIEWS 
+
+SENDO CRIADAS PARA 1 MESMA TABLE...
+
+
+
+
+
+
+
+
+5) O OWNER DA TABLE TERÁ "FULL CONTROL"... ----> E, SE ELE TEM 
+
+FULL CONTROL,
+ELE 
+
+PODE GO AHEAD E MANIPULAR MANUALMENTE A DEFINITION DA VIEW,
+
+
+PODE REMOVER AS FUNCTIONS QUE JÁ 
+
+APLICAMOS 
+
+NAS COLUMNS (essa possibilidade existe)...
+
+
+
+
+
+
+6) O MASKING NA COLUMN É "CODE DEPENDENT".. ->  ISSO QUER 
+
+
+DIZER QUE 
+
+__ SE PRECISARMOS REALIZAR ALGUMA CHANGE NA LÓGICA,
+
+ISSO 
+
+PRECISARÁ SER ESCRITO DIRETAMEMNTE NA VIEW...
+
+
+
+
+
+
+
+
+7) MASKING FUNCTIONS PODEM SER MANIPULATED ----> OWNER DA 
+
+VIEW OU PERSON QUE É OWNER DA TABLE 
+
+
+PODE MUDAR A VIEW DEFINITION OU A TABLE DEFINITION...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AGORA VEREMOS COMO O SNOWFLAKE RESOLVEU ESSE PROBLEMA,
+
+
+COM ACCESS CONTROL 
+
+E 
+
+A 
+
+FUNCIONALIDADE 
+
+
+DE DATA MASKING...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> SABEMOS QUE ACCESS CONTROL NO SNOWFLAKE É 
+
+
+OBTIOD POR MEIO 
+DE ROLES...
+
+
+
+
+
+
+
+
+
+
+
+
+--> SE 1 USER TEM ACESSO A 1 ROLE,
+
+
+E SE 
+
+O ROLE TIVER OS PRIVILEGES ADEQUADOS,
+
+
+ELE PODE ACESSAR 
+
+
+
+DATABASES, SCHEMAS E TABLES...
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE 
+
+EXISTEM RESTRICTIONS A ACESSO,
+
+
+NAS DATABASES E SCHEMAS,
+
+
+NOS ROLES...
+
+
+
+
+
+
+
+
+
+-> CERTO....
+
+
+
+
+
+
+
+
+
+
+--> ASSIM QUE O ACESSO à TABLE FOI PROVIDENCIADO,
+
+
+ESSE ROLE PARTICULAR PODE __ ACESSAR __ TODOS 
+
+
+OS "DATA POINTS"... ------> QUER DIZER QUE
+
+
+NAO EXISTE 
+
+NENHUMA RESTRICTION 
+
+"FROM THIS POINT ONWARDS"....
+
+
+
+
+
+
+
+
+
+--> OK... MAS PODEMOS DEFINIR MASKING POLICIES 
+
+PARA 
+
+NOSSOS ROLES,
+
+PARA QUE 
+
+O 
+
+ACESSO 
+
+AOS DATA POINTS 
+
+
+SEJA 
+
+
+ALTERADO,
+
+
+
+
+
+
+
+PARA QUE 
+
+
+
+OS VALUES 
+
+
+DAS COLUMNS SEJAM 
+
+
+MASCARADOS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE É POSSÍVEL ADICIONAR RESTRICTIONS 
+
+
+NA DATA EM SI,
+
+
+NO DATA ACCESS EM SI,
+
+
+
+COM BASE NO ROLE QUE ESTÁ ACTUALLY QUERIANDO A DATA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NESSE CASO, ATÉ MESMO PARA ACESSAR OS DATA POINTS,
+ 
+
+ A DATA ARMAZENADA NA TABLE,
+
+
+ PODEMOS ADICIONAR RESTRICTIONS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... AGORA DEVEMOS CONSIDERAR ESTE CENÁRIO:
+
+
+
+
+
+
+
+1) USER GANHOU PRIVILEGES, POR MEIO DE 1 ROLE ESPECÍFICO....
+
+
+
+
+
+
+
+
+2) SELECT EM 1 TABLE ESPECÍFICA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+---> OK...
+
+
+
+
+
+
+O QUE PODEMOS ACTUALLY FAZER, AQUI,
+
+
+
+
+
+
+
+É USAR 1 FUNCTION DO SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+
+--> PODEMOS ATTACHEAR 
+ESSA FUNCTION,
+
+ENTRE O ROLE E A TABLE....
+
+
+
+
+
+
+
+
+
+
+--> ESSA FUNCTION VAI "DICTATE"
+
+
+
+SE ESSE ROLE PODE ACESSAR TODOS OS DATA 
+
+POINTS,
+
+OU SE A DATA 
+
+VAI SER MASKED 
+
+SEMPRE QUE 
+ELE TENTAR QUERIAR ESSA TABLE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ASSIM QUE ESSA FUNCTION ESTIVER 
+
+ATTACHED,
+
+
+ESSA 
+
+FUNCTION TERÁ 
+LOGIC
+
+
+QUE DIRÁ 
+
+
+
+SE ESSE ROLE EM PARTICULAR 
+
+
+PODE OU NAO 
+
+VER 
+
+
+
+ESSA COLUMN... ( ou se essa column deve ser masked)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUANDO 1 USER COM ESSE ROLE 
+
+
+QUERIAR ESSA TABLE,
+
+O SNOWFLAKE 
+
+
+VAI TAKE CARE DA PRODUCAO 
+
+
+
+DESSA MASKED DATA, NO BACKEND...
+
+
+
+
+
+
+
+
+
+
+
+--> OK --> É POR ISSO QUE É BEM MELHOR 
+
+USAR O DATA MASKING DO SNOWFLAKE,
+
+
+QUE É 
+
+
+"METADATA-DRIVEN"
+
+
+
+EM VEZ DE 
+
+"CODE-DRIVEN"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... É ISSO QUE O SNOWFLAKE CONSEGUIU.....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... ISSO FAZ SENTIDO...
+
+
+
+
+
+
+
+
+NA PRÓXIMA LECTURE VEREMOS COMO CRIAR ESSAS MASKING FUNCTIONS 
+(MASKING POLICIES)...
+
+
+
+

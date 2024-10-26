@@ -1,0 +1,1753 @@
+
+
+
+VIMOS ESTES 2 APPROACHES:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... 
+
+
+VIMOS O METHOD 1, QUE ERA ESTE:
+
+
+
+
+
+ele NAO CONVERTEU A UNSTRUCTURED DATA (
+
+   nessa table de "variant"
+) 
+
+
+PARA UMA TABLE COMUM, PERMANENT (
+
+   e é por isso que esse approach é ruim,
+
+   ficamos dependendo dessas optimizacoes do 
+
+   snowflake em cima de unstructured data...
+)
+
+
+
+
+
+
+
+--> OU SEJA,
+
+
+
+
+OS PASSOS ERAM ESTES:
+
+
+
+
+
+
+
+
+1) data inicial está armazenada 
+
+NO AWS S3...
+
+(aws s3 external staging area)
+
+
+
+
+
+2) CRIACAO DE TABLE DO SNOWFLAKE,
+
+DE TIPO VARIANT (e de tipo TRANSIENT, para 
+nao gastar tanta storage com fail safe e time travel)...
+
+
+
+
+3) A DATA, JSON, FICA DENTRO 
+
+DESSA COLUMN DE TYPE "VARIANT",
+
+
+dentro dessa transient table...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+AGORA TEMOS O METHOD 2, CUJOS PASSOS SAO:
+
+
+
+
+
+
+
+
+
+
+1) data inicial está armazenada 
+
+NO AWS S3...
+
+(aws s3 external staging area)
+
+
+
+
+
+
+
+
+2) CRIACAO DE TABLE DO SNOWFLAKE,
+
+DE TIPO VARIANT (e de tipo TRANSIENT, para 
+nao gastar tanta storage com fail safe e time travel)...
+
+(table INCREMENTAL, pelo visto)..
+
+
+
+
+
+
+
+
+
+
+3) PARSE E LOAD DA DATA, UNSTRUCTURED,
+
+A UMA TABLE FINAL, STRUCTURED (FINAL, PERMANENT TABLE)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+AGORA TEMOS O METHOD 3,
+
+
+QUE É ESTE:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1) data inicial está armazenada 
+
+NO AWS S3...
+
+(aws s3 external staging area)
+
+
+
+1.5) PARSE E COPY DATA, DO AWS S3, PARA 
+DENTRO DO SNOWFLAKE INTERNAL TABLE STAGE (___TABLE _ STAGING _AREA).
+
+
+(copiamos, da blob storage do s3, para a blob storage 
+do snowflake, nessa internal table staging area)
+
+
+
+
+2) USO DE ESSE "INTERNAL TABLE STAGE"... 
+
+(SEM a criacao de unstructured table, de data type variant)
+
+
+
+
+2.5) executamos o comando de "COPY", com a option de 
+"ON ERROR",
+
+PARA CONTINUAR O LOAD DESSA DATA, DO INTERNAL TABLE STAGE,
+
+PARA DENTRO DA SNOWFLAKE STRUCTURED TABLE...
+
+
+3) COPY/LOAD DE DATA,
+
+DE ESSE INTERNAL STAGE,
+
+PARA DENTRO 1 STRUCTURED TABLE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+COM ESSE APPROACH, PODEMOS LEVERAGE O COMANDO DE "COPY"
+
+PARA VISUALIZAR OS REJECTED RECORDS 
+
+
+E SUAS MESSAGES DE ERROR..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+VEREMOS ESSE METHOD COM 1 EXEMPLO...
+
+
+
+
+
+--------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... COMO JÁ DISCUTIMOS,
+
+
+
+NO METHOD 3 
+
+SEGUIREMOS 3 ETAPAS...
+
+
+
+
+
+
+
+
+
+1) MANTER A DATA NA S3 LOCATION....
+
+
+
+
+
+
+
+
+2) COPIAMOS ESSA DATA 
+
+
+PARA DENTRO DA INTERNAL STAGING 
+
+AREA 
+
+
+PARA A TABLE EM QUE QUEREMOS COLOCAR ESSA DATA...
+
+
+
+
+
+
+
+
+
+3) A PARTIR DESSA TABLE STAGING AREA,
+
+
+EXECUTAMOS "COPY" COM A OPTION DE "ON_ERROR='CONTINUE'",
+
+
+
+PARA _ CARREGAR__ ESSA DATA DENTRO DA STRUCTURED TABLE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... MAS VC TALVEZ PERGUNTE:
+
+
+""MAS PQ PRECISAMOS COPIAR DATA LÁ 
+
+DA S3 __ EXTERNAL STAGING AREA _ PARA __ DENTRO __ 
+
+DA TABLE STAGING AREA, NO SNOWFLAKE??""
+
+
+
+
+
+
+
+
+
+
+--> ESSA PERGUNTA TALVEZ APAREÇA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS PQ DIABOS PRECISAMOS FAZER ISSO?
+
+
+
+
+
+
+
+
+
+O PROFESSOR EXPLICA...
+
+
+
+
+
+
+
+
+
+
+
+
+O PROFESSOR TEM O CÓDIGO COM ESTE FORMATO:
+
+
+
+
+
+
+
+
+
+
+
+
+
+COPY INTO BOOK_JSON_DATA -- our final table 
+FROM (
+    SELECT 
+    $1:"_id":"$oid" AS OID,
+    $1:"author"::array AS AUTHOR,
+    $1:"title"::array AS TITLE,
+    $1:"booktitle"::array AS BOOKTITLE,
+    $1:"year"::array AS YEAR,
+    $1:"type"::array AS TYPE
+    FROM @MY_S3_UNLOAD_STAGE/dblp.json
+    (FILE_FORMAT => JSON_FORMAT)
+)
+ON_ERROR='CONTINUE';
+
+
+
+
+
+
+
+
+
+
+--> ESSE É UM CÓDIGO QUE FAZ O COPY/LOAD DIRETAMENTE 
+
+
+DO S3 
+
+PARA DENTRO 
+
+
+DA NOSSA FINAL TABLE...
+
+
+
+
+
+
+
+A PERGUNTA É ""DEPOIS DO PARSING, PQ DIABOS 
+
+NAO É BOM CARREGAR A DATA DIRETAMENTE DO S3 
+EXTERNAL STAGING AREA, PARA DENTRO 
+DE NOSSA PERMANENT TABLE??""
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> GANHAMOS UM ERROR, IMEDIATAMENTE:
+
+
+
+
+
+
+""expression type does not match column 
+data type, expecting VARCHAR() BUT GOT ARRAY for column AUTHOR""...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE DEU FAIL,
+
+DIZENDO QUE 
+
+
+RECEBEMOS 1 VALUE DE TYPE ARRAY,
+
+
+MAS O VALUE DA COLUMN É DE VARCHAR()...
+
+
+
+
+
+
+
+--> MAS COM "ON_ERROR='CONTINUE'",
+
+
+
+
+ESPERÁVAMOS/ESPERAMOS QUE 
+
+
+""ESSE RECORD ESPECÍFICO, COM VALUE DE ARRAY, SEJA 
+
+REJEITADO,
+
+
+MAS O  RESTO DOS RECORDS VAI SER INSERIDO""..
+
+
+
+
+
+
+
+
+
+
+
+--> OU SEJA,
+
+O OBJETIVO ERA 
+
+
+QUE 
+
+
+O LOAD CONTINUASSE, MESMO COM ESSE ERROR,
+
+POR CONTA DO "ON_ERROR='CONTINUE'",
+
+
+
+MAS NAO FOI ISSO QUE ACONTECEU... (
+
+    ganhamos um ERROR,
+
+    E NADA FOI INSERIDO....
+)
+
+
+
+
+
+
+
+
+
+OU SEJA,
+
+ISSO _ NAO _ ESTÁ FUNCIONANDO...
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE 
+
+ESSA PROPRIEDADE 
+
+DE 
+
+"ON_ERROR='CONTINUE'"
+
+
+
+
+NAO É EFETIVA QUANDO TENTAMOS PARSEAR A DATA 
+ANTES 
+
+DE COPIAR 
+
+A DATA PARA DENTRO 
+DE 
+1 TABLE SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> E ESSA É UMA GRANDE ISSUE: 
+
+
+
+
+ESSENCIALMENTE,
+
+SE VC ESTÁ TENTANDO PARSEAR 1 CSV FILE OU QUALQUER 
+
+OUTRA FILE
+
+E, AO MESMO TEMPO,
+ESTÁ USANDO 
+
+ESSE "ON_ERROR='CONTINUE'",
+
+
+SEUS _ RECORDS_ _ VAO SER AUTOMATICAMENTE 
+
+
+
+REJECTED..... ----------->  SE VC ESTÁ TENTANDO 
+
+
+PARSEAR JSON DATA, XML DATA,
+
+E SE VC 
+
+ESTÁ USANDO 
+
+
+"ON_ERROR='CONTINUE'",
+
+
+
+
+
+essa propriedade "ON_ERROR"
+
+
+
+SE TORNA INEFETIVA... (doesnt do its job)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> OU SEJA,
+
+
+NAO TENTE USAR "ON_ERROR='CONTINUE'"
+
+
+se vc está, ao mesmo tempo,
+
+FAZENDO 
+
+PARSE__ (Antes de copiar)
+
+
+DE SUA 
+
+UNSTRUCTURED DATA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA SUPERAR ESSE PROBLEMA,
+
+O QUE TEMOS QUE FAZER É:
+
+
+
+
+
+
+*** EM VEZ DE PARSEAR E COPIAR A DATA 
+
+AO MESMO TEMPO, A UMA TABLE PERMANENTE/STRUCTURED,
+
+
+
+O QUE FAREMOS É DIVIDIR __ 
+
+
+
+ESSE PROCESSO EM 2 ETAPAS...
+
+
+
+
+
+
+
+
+
+AS 2 ETAPAS SERAO:
+
+
+
+
+
+
+
+
+
+
+
+
+1) O PARSE DA DATA, DIRETAMENTE 
+
+DO AWS S3 EXTERNAL STAGE:
+
+
+
+
+
+
+
+
+
+
+    SELECT 
+    $1:"_id":"$oid" AS OID,
+    $1:"author"::array AS AUTHOR,
+    $1:"title"::array AS TITLE,
+    $1:"booktitle"::array AS BOOKTITLE,
+    $1:"year"::array AS YEAR,
+    $1:"type"::array AS TYPE
+    FROM @MY_S3_UNLOAD_STAGE/dblp.json
+    (FILE_FORMAT => JSON_FORMAT)
+
+
+
+
+
+
+
+
+2) COPIAR ESSA PARSED DATA __ PARA DENTRO __ 
+
+DA SNOWFLAKE TABLE STAGING AREA,
+
+
+TIPO ASSIM:
+
+
+
+
+
+
+COPY INTO @DEMO_DB.PUBLIC.%BOOK_JSON_DATA
+    FROM ...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+FUNDINDO AS 2 ETAPAS, TEMOS ESTE CÓDIGO:
+
+
+
+
+
+
+
+COPY INTO @DEMO_DB.PUBLIC.%BOOK_JSON_DATA  --- copy into internal table staging area.
+    FROM (
+    SELECT   -- parse data from aws s3 location.
+    $1:"_id":"$oid" AS OID,
+    $1:"author"::array AS AUTHOR,
+    $1:"title"::array AS TITLE,
+    $1:"booktitle"::array AS BOOKTITLE,
+    $1:"year"::array AS YEAR,
+    $1:"type"::array AS TYPE
+    FROM @MY_S3_UNLOAD_STAGE/dblp.json
+    (FILE_FORMAT => JSON_FORMAT)
+    )
+
+
+
+
+
+
+
+QUER DIZER QUE ESSA PARSED DATA 
+
+
+
+VAI SER COPIADA PARA DENTRO 
+
+
+DA TABLE STAGING AREA... (do snowflake)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... EXECUTAMOS ESSE COMANDO...
+
+
+
+
+
+
+
+
+
+DEPOIS DE COPIARMOS 
+
+
+ESSA DATA PARA A TABLE STAGING AREA DA TABLE DE 
+
+"BOOK_JSON_DATA",
+
+
+
+
+FAREMOS O COPY DIRETO 
+
+PARA ESSA MESMA TABLE DE 
+
+"BOOK_JSON_DATA"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> FAZEMOS ISSO, NO CASO,
+
+
+APENAS PARA QUE 
+
+SEJA POSSÍVEL USAR O COMANDO DE "ON_ERROR='CONTINUE'"
+
+
+NESSA SEGUNDA PARTE,
+
+
+NESSE COPY DA "INTERNAL TABLE STAGING AREA"
+
+
+
+para dentro 
+
+
+da table de verdade, do snowflake...    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+MAS VC PODE PERGUNTAR OUTRA COISA, AQUI...
+
+
+
+
+
+
+""PQ EU PRECISO COPIAR ESSA DATA 
+
+PARA A INTERNAL TABLE STAGING AREA??""
+
+
+
+
+
+""NAO SERIA MELHOR SÓ COPIAR ESSA DATA 
+
+DA EXTERNAL TABLE STAGE PARA DENTRO 
+
+
+DA PERMANENT TABLE""??
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> VOCE PODERIA FAZER ISSO, SIM,
+
+
+MAS O PROFESSOR APONTA QUE 
+
+
+É UMA BETTER PRACTICE 
+
+
+
+COPIAR ISSO PARA A INTERNAL TABLE STAGING AREA ANTES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> CERTO... COPIADA A DATA 
+
+
+DA EXTERNAL S3 STAGING AREA 
+
+
+PARA 
+
+
+DENTRO 
+
+
+DA INTERNAL SNOWFLAKE TABLE STAGING AREA,
+
+
+
+
+
+DEVEMOS CHECAR O QUE 
+
+TEMOS NESSA TABLE STAGING AREA...
+
+
+
+
+
+
+
+
+
+
+
+--> PARA ISSO, O PROFESSOR RODA,
+
+NO SNOWSQL (snow cli),
+
+
+
+ESTE COMANDO:
+
+
+
+
+
+
+
+LIST @%BOOK_JSON_DATA;
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUANDO ELE RODA ISSO,
+
+
+
+
+PODEMOS VER 1 MONTE DE PARSED DATA -> E ESSA PARSED DATA,
+
+
+
+NO CASO,
+
+
+
+NAO ESTARÁ MAIS NO FORMATO JSON (que é o formato 
+
+das files, lá no aws s3, nesse exemplo),
+
+
+
+E SIM 
+
+
+ESTARÁ 
+
+
+
+NO FORMATO ___CSV___.... COMMA-SEPARATED-VALUES...
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... --> QUER DIZER QUE QUANDO AQUELE COMANDO 
+
+
+
+DE 
+
+
+
+'''''''
+
+
+COPY INTO @DEMO_DB.PUBLIC.%BOOK_JSON_DATA  --- copy into internal table staging area.
+    FROM (
+    SELECT   -- parse data from aws s3 location.
+    $1:"_id":"$oid" AS OID,
+    $1:"author"::array AS AUTHOR,
+    $1:"title"::array AS TITLE,
+    $1:"booktitle"::array AS BOOKTITLE,
+    $1:"year"::array AS YEAR,
+    $1:"type"::array AS TYPE
+    FROM @MY_S3_UNLOAD_STAGE/dblp.json
+    (FILE_FORMAT => JSON_FORMAT)
+    );
+
+
+
+    '''''''
+
+
+
+
+FOI EXECUTADO,
+
+
+
+
+
+A DATA, ARMAZENADA 
+
+
+NO FORMATO JSON, LÁ NA AWS S3,
+
+
+FOI CONVERTIDA 
+
+
+
+PARA O FORMATO CSV,
+
+E ENTAO 
+
+INSERIDA 
+
+
+NESSA TABLE STAGING AREA....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK...
+
+
+
+
+
+
+
+--> AGORA, EM CIMA DESSAS CSV FILES (json convertido),
+
+
+
+PODEMOS FACILMENTE USAR A PROPERTY DE 
+
+"ON_ERROR='CONTINUE'"...
+
+
+
+
+
+
+
+
+
+
+
+
+--> para copiar isso para dentro de nossa 
+
+FINAL TABLE,
+
+O PROFESSOR 
+
+
+ESCREVE ESTE SIMPLES COMANDO:
+
+
+
+
+
+
+
+
+
+
+
+COPY INTO BOOK_JSON_DATA
+FROM @DEMO_DB.PUBLIC.%BOOK_JSON_DATA
+FILE_FORMAT=(TYPE=CSV)
+ON_ERROR='CONTINUE';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+COM ISSO, ESSE COMANDO DE "ON_ERROR='CONTINUE'"
+
+
+FUNCIONARÁ,
+
+E REALMENTE NOS RETORNARÁ 
+
+REJECTED RECORDS,
+
+
+
+E VAI 
+
+NOS DEMONSTRAR QUAIS RECORDS FORAM 
+
+REJEITADOS (
+    com sua respectiva mensagem de erro...
+
+
+)
+
+
+
+
+
+
+
+
+
+
+
+
+OK... E ESSA É A GRANDE VANTAGEM DO METHOD 3,
+
+
+QUE É O MELHOR DOS 3...
+
+
+
+
+
+
+
+
+
+
+ELE TAMBÉM NOS MOSTRA QUAIS FILES FORAM "PARTIALLY LOADED",
+
+
+
+
+E AÍ PODEMOS USAR O CÓDIGO DE 
+
+
+
+"SELECT * FROM TABLE(VALIDATE(<your_table>, <your_query_id>))"
+
+
+
+PARA 
+
+
+CONSEGUIR 
+
+
+
+OS RECORDS QUE FORAM REJEITADOS,
+
+
+NA COLUMN DE "REJECTED_RECORDS"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+-----> ok... mas AINDA HÁ UMA PERGUNTA, AQUI....
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> NÓS COPIAMOS A DATA DA EXTERNAL STAGING AREA 
+PARA A INTERNAL STAGING AREA, CERTO...?
+
+
+
+
+
+
+
+
+
+
+
+--> MAS ISSO QUER DIZER,
+
+
+INDIRETAMENTE,
+
+
+
+QUE ESTAMOS ARMAZENANDO DATA EM 2 LUGARES 
+DIFERENTES (
+
+    data duplicada, em 2 lugares diferentes...
+)
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE ESTAMOS FICANDO COM 
+
+2x O STORAGE COST...
+
+
+
+
+
+
+
+
+
+
+
+--> O QUE VC PODE FAZER, PARA EVITAR ESSE STORAGE 
+
+COST,
+
+
+
+É TENTAR USAR 
+
+
+"PURGE=TRUE"
+
+
+QUANDO 
+
+
+VC 
+
+
+ESTIVER TENTANDO COPIAR A DATA PARA 
+
+DENTRO 
+
+
+DA SNOWFLAKE TABLE...
+
+
+(mas isso é perigoso, no caso)...
+
+
+
+
+
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+COPY INTO BOOK_JSON_DATA
+FROM @DEMO_DB.PUBLIC.%BOOK_JSON_DATA
+FILE_FORMAT=(
+    TYPE=CSV
+)
+ON_ERROR='CONTINUE'
+PURGE=TRUE;
+
+
+
+
+
+
+
+
+CLARO, ISSO VAI PURGEAR/REMOVER 
+
+AS FILES 
+
+
+DA SUA TABLE STAGING AREA,
+
+
+
+
+NO EXATO MOMENTO EM QUE 
+
+SUA DATA FOR EXTRAÍDA CORRETAMENTE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... ENTRETANTO, ANTERIORMENTE,
+
+
+
+
+O PROFESSOR 
+
+
+
+PERGUNTOU ""
+
+PQ NAO PODEMOS 
+
+COPIAR 
+
+
+
+A DATA DIRETAMENTE DA EXTERNAL TABLE STAGING AREA PARA 
+
+DENTRO DA TABLE PERMANENT DO SNOWFLAKE???""
+
+
+
+
+
+
+
+
+
+A RESPOSTA É:
+
+
+
+
+""DURANTE ESSE PROCESSO DE COPY,
+
+SE VC ESTIVER USANDO A OPTION DE "PURGE",
+
+E SE VC __ USOU O PURGE NO LUGAR ERRADO,
+
+VC PODE _ ACABAR_  REMOVENDO TODA A DATA 
+QUE 
+
+VC 
+TEM GUARDADA,
+
+LÁ NA EXTERNAL STAGING AREA"" ---------> E, POR MEIO 
+
+
+DO USO 
+
+
+DA INTERNAL TABLE STAGING AREA,
+
+
+EVITAMOS 
+
+ESSE PROBLEMA,
+
+PQ O QUE SERÁ PURGEADO 
+
+
+SERÁ APENAS O SET DE FILES 
+
+
+
+COPIADAS DENTRO DE NOSSA INTERNAL TABLE STAGING AREA...
+
+
+
+
+
+
+
+-> AÍ VC TERÁ CERTEZA QUE A DATA QUE SERÁ REMOVIDA 
+
+
+SERÁ A DATA ARMAZENADA NA TABLE STAGING AREA...
+
+
+(
+    ok... quer dizer que essa combinacao de comandos é boa...
+)
+
+
+
+
+
+
+
+--------> é por isso que 
+
+
+
+TEMOS ESSAS 2 ETAPAS,
+ PARA COPIAR A DATA PARA DENTRO DA STRUCTURED TABLE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ --> AGORA DEVEMOS DISCUTIR AS VANTAGENS 
+
+ E 
+
+ DESVANTAGENS DESTE METHOD:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ VANTAGENS:
+
+
+
+
+
+ 1) VOCE PODE PARSEAR DIRETAMENTE A DATA ARMAZENADA 
+
+ NO EXTERNAL STAGING AREA,
+
+ ANTES DE CARREGAR A DATA NA TABLE..
+
+
+
+
+
+
+ 2) VOCE PODE FAZER __ REJECT__ DE BAD RECORDS 
+
+ ENQUANTO VC FAZ LOAD NA FINAL TABLE (
+    com o uso de "ON_ERROR='CONTINUE'"
+ )
+
+
+ (copiando a partir da data de formato csv, armazenada 
+ na table staging area )
+
+
+
+
+
+
+
+
+ 3) DATA NA INTERNAL TABLE STAGING AREA SEMPRE FICARÁ 
+
+ ARMAZENADA EM 1 FORMATO "PARSED"... VC NAO TEM QUE 
+ DEPENDER DAS CAPACIDADES DE PARSE DE JSON/XML/PARQUET 
+
+ DO SNOWFLAKE....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ DESVANTAGENS:
+
+
+
+
+
+
+
+
+ 1) DUPLO CUSTO DE STORAGE (
+
+    YOU MAY HAVE TO STORE DATA AT TWO STAGING
+    AREAS (s3 e internal table staging area)
+ ),
+
+
+ MAS ESSA DESVANTAGEM PODE SER 
+
+AFASTADA,
+
+SE USAMOS A OPTION DE "PURGE"
+
+
+
+
+AO REALIZAR O COPY __ DA DATA___ DA "INTERNAL TABLE STAGING AREA" (csvs)
+
+PARA 
+
+DENTRO 
+
+DA PERMANENT TABLE (
+    com isso, liberamos a storage 
+    da internal table staging area...
+)
+
+
+
+
+
+
+
+
+
+
+
+--> OK... COM ISSO, VIMOS OS 3 METHODS 
+
+DE LOAD DE UNSTRUCTURED DATA 
+
+
+À PERMANENT SNOWFLAKE TABLE...
+
+
+
+
+
+
+
+
+
+

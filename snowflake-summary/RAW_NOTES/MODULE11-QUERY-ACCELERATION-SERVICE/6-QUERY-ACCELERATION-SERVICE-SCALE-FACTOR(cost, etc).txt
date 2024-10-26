@@ -1,0 +1,251 @@
+NESSA LECTURE,
+
+
+TENTAREMOS 
+
+
+
+ENTENDER QUAL É O 
+
+
+"SCALE FACTOR"
+
+
+
+DO QUERY ACCELERATION SERVICE...
+
+
+
+
+
+
+
+
+
+
+
+
+A DOCUMENTACAO DO SNOWFLAKE TEM ALGUNS DETALHES:
+
+
+
+
+
+
+
+
+""The scale factor is a COST CONTROL mechanism 
+that allows you to set an upper bound on the AMOUNT of 
+compute resources a warehouse can LEASE for query 
+acceleration. This value is used as a MULTIPLIER 
+based on WAREHOUSE SIZE and COST""...
+
+
+
+
+
+
+
+
+OK... QUER DIZER QUE PODEMOS 
+
+
+
+DEFINIR LIMITES DE COMPUTE RESOURCES "PEGADOS EMPRESTADOS"
+
+para fins de query acceleration...
+
+
+
+
+
+
+
+
+
+
+
+---> ESSE STATEMENT É SUPER IMPORTANTE.... --> QUER DIZER QUE 
+
+
+
+O SNOWFLAKE WAREHOUSE ESTÁ ACTUALLY "LEASING"
+
+ALGUMAS COMPUTE MACHINES 
+
+
+
+_ PARA O PROPÓSITO ÚNICO 
+
+
+de acelerar a QUERY RESPONSE TIME...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> por exemplo, suponha que vc tem 1 scale factor 
+
+
+
+DE ""5"" para 1 medium warehouse...
+
+
+
+
+
+
+NESSE CASO, ISSO SIGNIFICA:
+
+
+
+
+1) ESSA WAREHOUSE PODE FAZER LEASE DE COMPUTE RESOURCES 
+
+QUE SEJAM _ ATÉ __ 5 VEZES O TAMANHO DE 1 MEDIUM WAREHOUSE...
+
+
+
+2) COMO UMA MEDIUM WAREHOUSE CUSTA 4 CREDITS POR HORA,
+
+FAZER LEASE DESSES RESOURCES PODE LEVAR A UM CUSTO 
+
+ADICIONAL DE ___ 20 CRÉDITOS POR HORA___ (4 credits por warehouse * 5 vezes seu tamanho)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+quer dizer que isso é EXTREMAMENTE CARO....
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE __DEVEMOS __ tER MT cuidado
+QUANDO 
+
+ESCOLHEMOS ESSE SCALE FACTOR...
+
+
+
+
+--> E TAMBÉM DEVEMOS ENTENDER O ASPECTO DE CUSTOS
+
+QUANDO ESCOLHEMOS ESSE SERVICE...
+
+
+
+
+
+
+
+
+
+
+
+
+--> o que acontece, basicamente, é que 
+
+estamos pegando essas máquinas emprestado 
+para melhorar 
+
+
+o tempo de extract da data do remote storage...
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE O SCALE FACTOR TRABALHA COMO 1 MULTIPLIER,
+
+COM BASE 
+
+
+
+NO CURRENT WAREHOUSE SIZE QUE VC ESCOLHEU...
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE SE VC TEM 1 MEDIUM WAREHOUSE,
+
+
+E SE DEFINIU SCALE FACTOR COMO 5 VEZES,
+
+
+
+
+vc pode acabar com 1 custo bem maior...
+
+
+
+
+
+
+
+
+
+--> É IMPORTANTE PESAR BEM 
+
+
+o custo das coisas...
+
+
+
+
+
+
+
+
+--> ESSE SERVICE PODE SER MAIS 
+
+BARATO DO QUE 
+
+O 
+
+
+
+SCALE UP DE SUA WAREHOUSE,
+
+MAS DEPENDE DO CASO... 
+
+
+(
+
+    mas esse service é mais FLEXÍVEL,
+
+    PQ PODEMOS DEFINIR O SCALE FACTOR QUE SERÁ UTILIZADO,
+
+
+    se é 2x, 3x, 4x, 5x....
+)

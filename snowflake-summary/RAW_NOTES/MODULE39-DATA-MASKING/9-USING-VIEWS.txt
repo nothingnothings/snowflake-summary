@@ -1,0 +1,397 @@
+
+
+
+
+
+
+NESSA LECTURE, TENTAREMOS SOLUCIONAR O PROBLEMA QUE TÍNHAMOS COM A 
+
+
+FEATURE DE DATA MASKING DO SNOWFLAKE..
+
+
+
+
+
+
+
+
+
+
+
+
+
+PRINCIPAL LIMITACAO DO DATA MASKING DO SNOWFLAKE:::
+
+
+
+
+
+É __ O FATO __ DE QUE PODEMOS __ USAR 
+
+APENAS 1 ARGUMENTO (''val'')
+
+
+
+
+
+NA NOSSA LÓGICA DE MASK (ou seja, se estamos mascarando a "date_of_death",
+
+só podemos criar condicoes A PARTIR DESSA COLUMN,
+
+
+e nao a partir de outras columns, como "name"... ex: nao podemos "mascare 
+todas as mortes de todos os cidadaos de nome johnny", pq esse use-case tem 2 arguments)....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> NAO HÁ COMO RESOLVER ESSA LIMITACAO... A ÚNICA ALTERNATIVA 
+
+
+
+É USAR 
+
+VIEWS,
+
+
+
+
+
+CRIAR SECURE VIEWS QUE 
+
+CONSIGAM LIMITAR O ACESSO à DATA...
+
+
+
+
+
+
+
+
+
+
+
+
+PARA ISSO, ESCREVEMOS:
+
+
+
+
+
+
+
+
+1) AS FUNCTIONS QUE VAO LIMITAR O ACESSO à DATA 
+
+
+
+
+
+
+
+
+
+2) A VIEW, QUE VAI USAR ESSAS FUNCTIONS... E É MELHOR QUE SEJA UMA SECURE VIEW...
+
+
+
+
+
+
+
+
+
+
+
+
+
+-------------------------------------------
+
+
+
+
+
+
+
+GRANT CREATE FUNCTION ON SCHEMA TRIALS TO ROLE_SECURITY_OFFICER;
+
+
+
+
+
+
+
+CREATE OR REPLACE FUNCTION "DEATH_CODE_DATE_REDACT_F"("DIAGNOSIS_CODE" VARCHAR(16777216), "SERVICE_DATE" DATE)
+RETURNS DATE
+LANGUAGE SQL
+AS '
+select
+case when current_role() in (''ANALYST'',''CONTRACTOR'',''ACCOUNTADMIN'')  then 
+        case when diagnosis_code in (''G9382'',''O312'',''O3120'',''O3120X1'',''7681'',''39791'') then  service_date+uniform(5, 14, random()) 
+         else
+          service_date
+           end
+else service_date
+end service_date
+  ';
+  
+
+
+
+
+
+
+
+
+
+
+  --> essa function aceita/exige 2 values/params...
+
+
+
+
+
+
+
+  ------> ele checa se a conta é ACCOUNTADMIN...
+
+
+
+
+
+
+
+
+
+  service_date + uniform()
+
+
+
+
+
+
+
+
+
+  uniform(5, 14, random())
+
+
+  VAI ESCOLHER 1 NÚMERO aleatório ENTRE 5 E 14...
+
+
+
+
+  E ESSE VALUE É ADICIONADO NO SERVICE_DATE..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --> OK... O PROFESSOR CRIA ESSA FUNCTION,
+   E AÍ A EXECUTA NA NOSSA 
+
+
+
+   VIEW, COM ESTE CÓDIGO:
+
+
+SELECT
+PATIENT_NAME,
+DOB,
+DIAGNOSIS,
+ADR_LINE_1,
+ADR_LINE_2,
+CITY,
+ZIP,
+STATE,
+POS,
+DEATH_CODE_DATE_REDACT_F(DIAGNOSIS,SERVICE_START_DATE) SERVICE_START_DATE_REDACT,
+SERVICE_START_DATE,
+DEATH_CODE_DATE_REDACT_F(DIAGNOSIS,SERVICE_END_DATE) SERVICE_END_DATE,
+SERVICE_END_DATE,
+PROVIDER_NAME
+FROM PROD.TRAILS.PATIENT;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> O PROFESSOR EXPLICA/RESSALTA QUE PODEMOS USAR OS "ROLES",
+
+
+CONDITIONS SOBRE ROLES,
+
+
+DENTRO DE NOSSAS SQL FUNCTIONS TAMBÉM...
+
+
+
+
+(
+
+    TIPO ALI EM 
+
+
+    ""
+    case when current_role() in (''ANALYST'',''CONTRACTOR'',''ACCOUNTADMIN'')
+
+    ""
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> estamos fazendo a mesma coisa que o data masking do snowflake,
+
+
+mas com views.... e estamos fazendo LEVERAGE 
+
+
+
+DA FEATURE DE ROLES DO SNOWFLAKE,
+
+
+PARA DEIXAR 
+
+NOSSA VIDA MAIS FÁCIL (
+
+
+    só que a versao do snowflake 
+
+    tem mais optimizacoes...
+)
+
+
+
+
+
+
+
+
+
+
+COM ISSO, CONSEGUIMOS 
+
+
+USAR MÚLTIPLOS PARAMETERS PARA CRIAR NOSSAS MASKS.... (
+
+
+    com o uso de view/secure views....
+)
+
+
+
+
+
+
+COM ISSO, AFASTAMOS O USO DO OBJECT DE DATA MASKING DO SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS É CLARO QUE 
+
+AINDA USAMOS OS ROLES,
+
+
+PARA RODAR ESSAS FUNCTIONS,
+
+
+
+E AÍ 
+
+
+PODEMOS 
+
+
+CONSEGUIR 1 RESULTADO PARECIDO COM O DA DATA MASK FEATURE 
+
+DO SNOWFLAKE....
+
+
+
+
+
+
+
+
+
+
+
+A PRÓXIMA ETAPA É ACTUALLY 
+
+
+
+CRIAR A VIEW,
+
+
+E AÍ PROVIDENCIAR ACESSO, A TODOS OS ROLES (analyst, contractor, qa),
+
+A ESSA VIEW...

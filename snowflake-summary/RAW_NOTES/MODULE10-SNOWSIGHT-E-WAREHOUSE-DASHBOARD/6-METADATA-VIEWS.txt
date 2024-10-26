@@ -1,0 +1,433 @@
+
+
+
+
+
+
+
+
+PARA O EXERÍCIO DE MONITRAR WAREHOUSE UTILIZATION,
+
+
+
+VAMOS USAR ESTAS METADATA TABLES:
+
+
+
+
+
+
+
+
+
+
+
+
+1) WAREHOUSE_METERING_HISTORY 
+
+
+
+
+
+
+2) QUERY_HISTORY 
+
+
+
+
+
+
+3) WAREHOUSE_EVENTS_HISTORY...
+
+
+
+
+
+
+
+
+
+
+
+--> WAREHOUSE_METERING_HISTORY ------> É UMA VIEW,
+
+
+
+
+MAS É PRATICAMENTE UMA TABLE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> WAREHOUSE_METERING_HISTORY...
+
+
+
+
+
+
+PODEMOS VER QUANTOS CREDITS FORAM CONSUMIDOS EM 1 HORA...
+
+
+
+
+
+
+
+
+
+
+
+
+temos a view de "QUERY_HISTORY",
+
+QUE NOS DÁ 
+
+MT INFO 
+
+SOBRE 
+
+O RUN DAS QUERIES...
+
+
+
+
+
+
+
+
+
+poucas infos nao sao mencionadas 
+
+
+nessa table..
+
+
+
+
+
+
+
+
+
+
+
+
+--> POR FIM,
+
+
+TEMOS "WAREHOUSE_EVENTS_HISTORY"...
+
+
+
+
+
+
+
+
+
+
+
+--> ESSA VIEW NOS DÁ INFO SOBRE QUANDO A WAREHOUSE 
+
+
+STARTOU E QUANDO SUSPENDEU,
+
+
+
+ESSE INTERVAL DE TIME, QUE CHAMAMOS 
+
+
+DE "IDLE TIME"...
+
+
+
+
+
+
+
+
+
+agora vamos queriar essas views,
+
+para ver como 
+
+a data se parece....
+
+
+
+
+
+
+
+
+o professor roda assim:
+
+
+
+
+
+
+
+
+
+
+SELECT * FROM SNOWFLAKE_ACCOUNT_USAGE.WAREHOUSE_METERING_HISTORY;
+
+
+
+
+
+--> SÓ PODEMOS VISUALIZAR ESSA VIEW 
+
+
+COM A CONTA DE "ACCOUNTADMIN"...
+
+
+
+
+
+
+
+
+--> podemos usar essa info para 
+
+CALCULAR 
+
+OS TOTAL CREDITS CONSUMED... 
+
+
+
+--> PODEMOS MÚLTIPLICAR ISSO POR * 2, *3 ,
+
+
+
+DEPENDENDO DO CUSTO DE DOLARES DOS CREDITS 
+
+DE NOSSO PLAN.. (standard, enterprise, business critical, )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> depois temos este:
+
+
+
+
+
+
+
+
+SELECT * FROM SNOWFLAKE_ACCOUNT_USAGE.QUERY_HISTORY;
+
+
+
+
+
+
+
+
+
+
+
+--> ISSO NOS DÁ 1 SET DE METADATA INFO BEM RICO...
+
+
+
+
+
+
+
+
+"PERCENTAGE_SCANNED_FROM_CACHE"....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+""bytes_spilled_to_local_storage"" --> ISSO TE AJUDA 
+
+A ENTENDER A QUERY PERFORMANCE...
+
+
+
+
+
+
+
+
+
+
+
+SE __MUITOS BYTES ESTAO SENDO SPILLADOS 
+
+
+
+EM "LOCAL STORAGE" E "REMOTE STORAGE",
+
+
+ELA É 
+
+MT 
+
+PERFORMANCE INTENSIVE...
+
+
+
+
+
+
+
+
+
+
+PODEMOS RODAR ESTA QUERY:
+
+
+
+
+
+
+
+
+
+SELECT * FROM SNOWFLAKE_ACCOUNT_USAGE.WAREHOUSE_EVENTS_HISTORY
+ORDER BY TIMESTAMP ASC;
+
+
+
+
+
+
+
+
+
+--> COM ISSO, PODEMOS VER QUANDO NOSSA WAREHOUSE FOI RESUMIDA,
+QUANDO FOI SUSPENSA, ETC...
+
+
+
+
+
+
+--> podemos ver essa info 
+
+
+para saber quanto tempo 
+
+essa warehouse está sendo usada,
+
+quanto tempo está sendo suspensa, etc...
+
+
+
+podemos ver se estamos usando nossas warehouses 
+
+apropriadamente...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ESSA É UMA DAS 2 GRANDES CAPABILITIES DO SNOWFLAKE:
+
+
+
+
+
+
+
+
+1) WAREHOUSE DECOUPLED FROM STORAGE,
+
+
+SEMPRE DISPONÍVEL..
+
+
+
+
+
+
+2) EXCELENTE STORAGE DE METADATA INFORMATION (
+    podemos CRIAR 1 DASHBOARD 
+
+    SUPER BOM,
+
+
+    PARA QUE VC CONSIGA
+
+    LEVERAGE E USE ESSA METADATA DO SNOWFLAKE 
+
+    COM MT EFICIENCIA...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+NA PRÓXIMA AULA VEREMOS COMO PODEMOS USAR 
+
+
+ESSA METADATA PARA CRIAR DASHBOARDS 
+
+MT BONS, no snowflake...

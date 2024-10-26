@@ -1,0 +1,344 @@
+
+
+AGORA TENTAREMOS CRIAR 1 DATABASE,
+
+
+COM O ROLE DE 
+
+"MY_ROLE"...
+
+
+
+
+
+
+
+
+
+
+
+
+--> tipo assim:
+
+
+
+
+
+
+
+
+
+
+
+--- LETS TRY TO CREATE DATABASE ---
+
+
+
+CREATE OR REPLACE DATABASE my_db;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> AO TENTARMOS RODAR ISSO, GANHAMOS 1 
+
+ERROR 
+
+
+"INSUFFICIENT PRIVILEGES TO OPERATE ON ACCOUNT SADADS">..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--------> quer dizer que 
+
+
+TER 1 USER E 1 WAREHOUSE NAO É 
+
+O BASTANTE PARA CRIAR 1 DATABASE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA CRIARMOS 1 DATABASE, PRECISAMOS DE PERMISSION...
+
+
+
+
+
+
+
+
+
+-> PARA ISSO, TENTAMOS CONSEGUIR ESSA PERMISSION LÁ 
+DO SECURITYADMIN,
+
+tipo assim:
+
+
+
+
+
+
+
+
+
+
+
+----- GIVE GRANT TO CREATE DATABASE ----
+
+
+
+
+
+USE ROLE SECURITYADMIN;
+
+
+
+GRANT CREATE DATABASE ON ACCOUNT TO ROLE MY_ROLE;
+
+
+
+
+
+
+
+
+
+
+
+ENTRETANTO, NOVAMENTE,
+
+
+RECEBEREMOS 1 ERROR,
+
+
+ERRO 
+
+DE 
+
+
+"INSUFFICIENT PRIVILEGES"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ISSO QUER DIZER QUE __ o SECURITYADMIN 
+
+
+NAO PODE DAR GRANT/PRIVILEGE DE CRIAR DATABASES 
+
+
+PARA OUTROS ROLES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA DAR GRANT DE "CREATE DATABASE" PARA OUTROS 
+
+
+ROLES,
+
+
+
+
+É NECESSÁRIO USAR OU O "SYSADMIN" 
+
+
+OU O 
+
+"ACCOUNTADMIN"...
+
+
+
+
+
+
+
+
+
+
+
+
+POR ISSO RODAMOS:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+USE ROLE SYSADMIN;
+
+
+
+
+GRANT CREATE DATABASE ON ACCOUNT TO ROLE MY_ROLE;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> COM ISSO,
+
+PODEMOS CRIAR DATABASES,
+
+
+COM ESSE ROLE DE MY_ROLE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE DATABASE MY_DB;
+
+
+
+
+
+
+
+
+
+
+CONCLUSOES:
+
+
+
+
+
+
+
+
+1) WITHOUT PERMISSION, ROLE __ CANT_ CREATE DATABASE.....
+
+
+(precisamos de permission, vinda do SYSADMIN/accountadmin)
+
+
+
+
+
+2) apenas o SYSADMIN E o accountADMIN 
+
+podem 
+
+
+dar 
+
+GRANTS PARA CRIAR DATABASES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK, MAS QUAIS SAO AS IMPLICATIONS 
+
+DE ENTREGAR 
+
+ESSE GRANT DE "CREATE DATABASE"
+
+
+A 1 GIVEN ROLE... ------> MAS TEREMOS ESSA DISCUSSION NA 
+
+PRÓXIMA LECTURE...

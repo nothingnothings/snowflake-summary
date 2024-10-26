@@ -1,0 +1,762 @@
+
+
+
+
+
+
+
+AGORA RECEBEMOS OUTRA ACTIVITY,
+
+
+
+EM QUE TEMOS QUE BAIXAR DATA LÁ DO SNOWFLAKE,
+
+
+
+
+TIPO EM 1 FORMATO CSV,
+
+
+PARA QUE ENTAO ESSA DATA SEJA REPASSADA A UM ANALYST...
+
+
+
+
+
+
+
+
+
+
+
+--> ASSUMA O SEGUINTE CENÁRIO --> TEMOS ANALYSTS QUE 
+
+NAO POSSUEM ACESSO AO SNOWFLAKE... --> MAS ELE QUER 
+
+A DATA 
+DO SNOWFLAKE,
+
+POR ISSO ELE QUER QUE VC BAIXE A DATA 
+
+DO SNOWFLAKE E REPASSE A ELE...
+
+
+
+
+
+
+
+
+
+
+
+-> 
+
+
+
+
+BASICAMENTE ELE QUER QUE PEGUEMOS A DATA DA TABLE DE "emp_basic_local"...
+
+
+
+
+
+
+
+
+
+EX:
+
+
+
+
+
+
+-- Unload/download data, scenario 1 --
+
+
+SELECT * FROM demo_db.public.emp_basic_local;
+
+
+
+
+COPY INTO DEMO_DB.PUBLIC.EMP_BASIC_LOCAL 
+FROM @DEMO_DB.PUBLIC.%EMP_BASIC_LOCAL 
+FILE_FORMAT=(
+    TYPE=CSV
+    FIELD_OPTIONALLY_ENCLOSED_BY='"'
+);
+
+
+
+
+
+
+
+
+
+ISSO VAI COPIAR 25 RECORDS PARA DENTRO DE NOSSA TABLE...
+
+
+
+
+
+
+
+
+
+
+
+-> BEM, QUANDO TEMOS DATA NO SNOWFLAKE,
+
+HÁ 2 MANEIRAS DE BAIXAR ESSA DATA...
+
+
+
+
+
+
+
+
+
+
+
+1a maneira) RODAMOS 1 QUERY (tipo SELECT *, se somos malucos),
+
+E AÍ 
+
+CLICAMOS 
+
+NO BOTAO DE "DOWNLOAD", NO RESULT SET 
+
+DESSA QUERY... --> ISSO VAI BAIXAR 
+
+A FILE EM 1 FORMATO CSV...
+
+
+
+--> MAS AQUI TEMOS 1 PROBLEMA... --> SE A SUA DATA ULTRAPASSA 
+
+100 MEGABYTES,
+
+VC NAO PODERÁ FAZER O DOWNLOAD DESSA DATA diretamente do 
+
+web console...
+
+
+
+
+
+
+
+
+
+
+
+2a maneira) A SEGUNDA MANEIRA, BEM MELHOR,
+
+ENVOLVE O USO DO SNOWSQL,
+
+
+
+da command line interface....
+
+
+
+
+
+
+
+--> nesse approach, vc usa 
+
+o CLI para baixar a data....
+
+
+
+
+
+
+--> PARA CONSEGUIR BAIXAR A DATA,
+USANDO O SNOWSQL,
+
+
+VC PRECISA 
+
+
+DO COMANDO DE "get"...
+
+
+
+
+
+
+
+
+
+
+ENTRETANTO... ANTES DE CONSEGUIRMOS FAZER DOWNLOAD 
+
+DESSAS "fILES",
+
+É NECESSÁRIO 
+
+
+__ AS CRIAR... ----------> PARA CRIAR ESSAS FILES,
+
+
+VC PRECISA FAZER O """UNLOAD""" de data do snowflake...
+
+
+
+
+
+
+
+OU SEJA,
+PRECISAMOS PEGAR A DATA DE 1 TABLE DO SNOWFLAKE 
+
+
+E __ CONVERTER__ EM 1 CSV, manualmente...
+
+
+
+
+
+MAS COMO FAZEMOS ISSO?
+
+
+
+
+
+
+
+
+
+
+
+
+BEM, BASTA __ RODAR O COMANDO DE "COPY INTO" AO CONTŔARIO,
+
+COPIANDO 
+
+""DA TABLE PARA A STAGING AREA"",
+
+
+EM VEZ "DA STAGING AREA PARA A TABLE""...
+
+
+
+
+
+
+
+
+
+
+tipo assim:
+
+
+
+
+
+
+
+
+
+
+
+-- Unload/download data, scenario 1 --
+
+
+SELECT * FROM demo_db.public.emp_basic_local;
+
+-- copies FROM TABLE STAGE INTO SNOWFLAKE TABLE
+COPY INTO DEMO_DB.PUBLIC.EMP_BASIC_LOCAL 
+FROM @DEMO_DB.PUBLIC.%EMP_BASIC_LOCAL 
+FILE_FORMAT=(
+    TYPE=CSV
+    FIELD_OPTIONALLY_ENCLOSED_BY='"'
+);
+
+
+
+
+-- copies FROM TABLE (tabular data) INTO TABLE STAGING AREA (csv files, parquet data, json, etc)...
+COPY INTO @DEMO_DB.PUBLIC.EMP_BASIC_LOCAL 
+FROM DEMO_DB.PUBLIC.%EMP_BASIC_LOCAL 
+FILE_FORMAT=(
+    TYPE=CSV
+    FIELD_OPTIONALLY_ENCLOSED_BY='"'
+);
+
+
+-- downloads the data, in csv/json/parquet format, now residing in table staging area.
+get @demo_db.public.%emp_basic_local
+file:///path/to/your/local/file/storage/that/will/receive/the/file;
+
+
+
+
+--------------------------
+
+
+
+
+
+CERTO...
+
+
+agora vou tentar baixar isso, com o get...
+
+
+
+
+--> quero baixar o arquivo 
+
+data_0_0_0.csv.gz, que foi criado por meio desse copy 
+que fizemos....
+
+
+
+
+OK, MAS QUAL É A SINTAXE DO GET?
+
+
+
+
+
+É ASSIM:
+
+
+
+GET @<external_stage>/<file_name>
+TO <local_path>;
+
+
+
+
+
+
+
+
+
+
+OU SEJA,
+
+
+TIPO ASSIM:
+
+
+-- must be used inside of SNOWSQL (doesnt work in snowflake web console)...
+GET @demo_db.public.%emp_basic_local/data_0_0_0.csv.gz 
+file:///home/arthur/Downloads;
+
+
+
+
+
+
+
+
+
+
+certo...
+
+
+
+
+
+
+agora entendi...
+
+
+
+é:
+
+
+
+1) GET 
+
+
+
+2) NOME DO STAGE DE ONDE VC ESTÁ PEGANDO O ARQUIVO (ou todos 
+arquivos)
+
+
+
+
+3) O local, na sua máquina,
+
+em que 
+
+esses arquivos deverao ser baixados (
+
+    como 
+
+    "" file:///home/arthur/Downloads;""
+)
+
+
+
+
+
+
+
+
+
+
+--------
+
+
+
+
+
+
+
+
+
+É CLARO QUE PODEMOS FAZER UNLOAD DE APENAS 
+
+ALGUMAS COLUMNS ESPECÍFICAS,
+
+
+CRIAR ARQUIVOS CSV COM APENAS ALGUMAS COLUMNS 
+
+ESPECÍFICAS,
+TIPO ASSIM:
+
+
+
+
+
+
+-- create csv file based on only a few columns of table...
+COPY INTO @DEMO_DB.PUBLIC.%EMP_BASIC_LOCAL
+FROM (
+    SELECT
+    FIRST_NAME,
+    LAST_NAME,
+    EMAIL
+    FROM  DEMO_DB.PUBLIC.EMP_BASIC_LOCAL
+)
+FILE_FORMAT=(
+    TYPE=CSV
+    FIELD_OPTIONALLY_ENCLOSED_BY='"'
+)
+OVERWRITE=TRUE;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> SE NAO QUISERMOS DEFINIR O 
+
+OVERWRITE COMO TRUE, PODEMOS TENTAR CRIAR 1 NOVO FILE...
+
+
+
+
+
+-> temos que criar 1 novo arquivo,
+
+
+com 1 file_name diferente...
+
+
+
+tipo assim:
+
+
+-- create csv file based on only a few columns of table...
+COPY INTO @DEMO_DB.PUBLIC.%EMP_BASIC_LOCAL/File2 -- eis o código em questao.
+FROM (
+    SELECT
+    FIRST_NAME,
+    LAST_NAME,
+    EMAIL
+    FROM  DEMO_DB.PUBLIC.EMP_BASIC_LOCAL
+)
+FILE_FORMAT=(
+    TYPE=CSV
+    FIELD_OPTIONALLY_ENCLOSED_BY='"'
+)
+OVERWRITE=TRUE;
+
+
+
+
+
+
+
+
+
+--> POR FIM, O PROFESSOR PEGA A DATA 
+
+DA TABLE STAGING AREA, DESSES ARQUIVOS,
+
+
+E BAIXA-A (ou seja, os arquivos) NA NOSSA LOCAL MACHINE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> O CD TAMBÉM FUNCIONA NO SNOWSQL,
+
+
+E SUA SINTAXE É TIPO ASSIM:
+
+
+
+
+
+cd @%emp_basic_local/test_folder/
+
+
+
+
+(no caso, entramos dentro desse TEST_FOLDER)....
+
+
+
+
+
+
+
+
+TAMBÉM PODEMOS FAZER LIST DESSE FOLDER, ASSIM:
+
+
+
+ls @%emp_basic_local/test_folder/
+
+
+
+
+
+
+-------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-------_> QUER DIZER QUE PODEMOS UNLOAD A DATA 
+
+DENTRO DE 1 FOLDER ESPECÍFICO...
+
+
+
+
+
+
+
+
+
+
+
+--> MAS QUANDO USAMOS O TABLE STAGING AREA,
+
+
+GERALMENTE NAO CRIAMOS ESSES FOLDERS...
+
+
+
+
+
+
+
+MAS AGORA ENTENDEMOS COMO PODEMOS 
+
+
+
+"uNCOPY/UNLOAD" 
+
+A 
+
+DATA 
+
+
+LÁ DAS TABLES SNOWFLAKE, NA DIRECAO 
+
+
+DAS STAGING AREAS (como 
+
+a table staging area)
+
+
+
+
+
+
+
+
+
+
+
+
+A ÚLTIMA ETAPA, AGORA,
+
+É BAIXAR 
+
+ESSA DATA,
+
+DA TABLE STAGING AREA,
+
+
+
+NO NOSSO LOCAL SYSTEM...
+
+
+
+
+
+
+
+
+
+
+--> TEMOS O COMANDO DE GET,
+
+
+COMO ANTES:
+
+
+
+
+
+
+
+GET @demo_db.public.%emp_basic_local -- stage and file inside of stage, TABLE STAGING AREA...
+file:///home/arthur/Downloads; 
+
+
+
+
+
+
+
+
+
+
+
+OK... QUER DIZER QUE SOMOS CAPAZES DE FAZER UNLOAD DESSA DATA...
+
+
+
+
+
+
+
+
+com isso, podemos baixar qualquer volume de data 
+
+
+no nosso local system, e aí 
+
+podemos 
+
+
+
+repassar essa data 
+
+a qualquer pessoa que quiser...
+
+
+
+
+
+
+
+-> esses cenários sao incomuns,
+
+mas baixar data do snowflake para 
+
+
+o local system é algo que pode ocorrer,
+
+
+
+no caso...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> RESUMO DO QUE APRENDEMOS:
+
+
+
+
+1) COMO USAR O COMANDO DE "GET" 
+
+
+
+2) COMO FAZER UNLOAD DE APENAS ALGUMAS 
+
+COLUMNS PARA DENTRO DA TABLE STAGING AREA (
+
+    com uso daquele select statement dentro da subquery...
+)
+
+
+
+
+3) VIMOS COMO PODEMOS USAR A OPTION DE "OVERWRITE",
+
+
+e como podemos criar files com nomes diferentes...
+
+
+
+
+
+4) VIMOS A SINTAXE DO COMANDO DE COPY PARA FAZER "uNLOAD"
+
+DE DATA (é o caminho contrário do 
+
+comando de copy comum/default.... ou seja,
+
+em vez de "COPY FROM @<stage> INTO <table>", escrevemos 
+
+
+"COPY FROM <table> INTO <stage>"
+")

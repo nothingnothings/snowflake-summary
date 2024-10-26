@@ -1,0 +1,244 @@
+
+
+
+
+
+
+STAGES...
+
+
+
+
+
+
+
+
+
+
+--> VEREMOS O QUE SAO STAGES NO SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PRIMEIRA COISA QUE 
+
+TEMOS QUE SABER É QUE 
+
+o SNOWFLAKE 
+
+STAGING AREA 
+
+
+
+
+__ NAO É A MESMA COISA __ QUE 
+
+
+
+""DATABASE STAGING AREA"...
+
+
+
+
+
+
+
+
+
+RESUMINDO:
+
+
+"DON'T CONFUSE STAGING AREA OF SNOWFLAKE 
+WITH DATA WAREHOUSE STAGING AREA"...
+
+
+
+
+
+
+
+
+
+
+
+
+ok, mas o que é o "staging",
+
+
+no snowflake?
+
+
+
+
+
+
+
+
+
+
+
+
+
+STAGING AREA NO SNOWFLAKE É:
+
+
+
+
+
+
+
+1) UMA BLOB STORAGE AREA, EM QUE 
+VC CARREGA TODAS SUAS RAW FILES,
+
+
+ANTES DE AS CARREGAR (load) PARA DENTRO 
+DE 1 SNOWFLAKE DATABASE...
+
+
+
+
+
+
+2) QUAIS BLOB STORAGE AREAS VC PODE USAR?
+
+        a) AWS S3 
+
+
+        b) AZURE BLOB STORAGE 
+
+
+        c) GOOGLE CLOUD STORAGE...
+
+
+
+
+ESSAS ÁREAS SAO CHAMADAS DE 
+
+"SNOWFLAKE EXTERNAL STAGING AREAS"...
+
+
+
+
+
+--> OK, MAS E SE EU N TIVER SUBSCRIPTION 
+
+
+A ESSAS CLOUD STORAGE AREAS?
+
+
+
+
+
+
+
+
+-> NESSE CASO, VC PODE USAR O 
+
+
+"SNOWFLAKE INTERNAL STAGING AREA"...
+
+
+
+
+
+
+
+
+
+
+""SNOWFLAKE INTERNAL STAGING AREA""...
+
+
+
+
+
+
+
+---> essa staging AREA 
+
+
+TAMBÉM __ É UMA BLOB STORAGE,
+
+BLOB STORAGE QUE É MANAGEADA 
+
+PELO SNOWFLAKE... (essa é a diferenca)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+MAS ALGUNS POINTS QUE VC 
+
+
+
+DEVE TER EM MENTE, COM RELACAO A STAGES DO SNOWFLAKE:
+
+
+
+
+
+
+
+1) SNOWFLAKE STAGES ___NAO __ SAO __ 
+DATA WAREHOUSE __ STAGES...
+
+
+
+
+
+
+2) TEMOS 2 TIPOS DE STAGING AREAS 
+
+NO SNOWFLAKE:   
+
+        a) external staging area (aws s3, gcs, azure)....
+
+        b) internal staging area (MANAGED BY SNOWFLAKE, ALSO BLOB STORAGE)...
+
+
+
+
+
+
+
+
+
+
+ok... 
+
+
+
+
+ERA ISSO...
+
+
+
+
+
+
+
+
+
+

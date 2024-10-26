@@ -1,0 +1,178 @@
+
+
+
+
+
+
+O QUE É ISSO...
+
+
+
+
+
+NESSE TIPO DE ARCHITECTURE,
+
+TEMOS 
+
+1
+ ÚNICO "SHARED DISK",
+
+
+
+
+
+ QUE É 
+
+ ACESSADO 
+
+
+ POR MÚLTIPLAS DATABASE NODES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+ --> CADA DATABASE NODE VAI 
+
+ TENTAR FAZER 
+
+
+ READ 
+
+ DESSE ÚNICO SHARED DISK....
+
+
+
+
+
+
+
+
+
+ --> CADA DATABASE NODE TAMBÉM 
+
+ VAI TENTAR 
+ FAZER WRITE DE DATA 
+
+ A
+  ESSE ÚNICO SHARED DISk..
+
+
+
+
+
+
+
+
+
+
+
+  QUAL É O PROBLEMA DESSA 
+
+
+  ARCHITECTURE?
+
+
+
+
+
+
+
+
+
+
+  1o PROBLEMA ----> ESCALABILIDADE...
+
+  ASSIM QUE O NÚMERO DE NODES AUMENTA,
+
+  FICA CADA VEZ MAIS DIFÍCIL PARA TODOS 
+
+
+  OS DATABASE NODES
+
+  acessar esse único shared disk..
+
+  (
+
+    ISSO PQ O SHARED DISK VAI SE TORNAR 1 
+    "BOTTLENECK"...
+
+  )
+            (
+                quer dizer que 
+
+                A ESCALABILIDADE É LIMITADA...
+            )
+
+
+
+
+
+
+
+
+2o PROBLEMA --> fica difícil manter 
+
+DATA CONSISTENTEMENTE AO LONGO DO CLUSTER...
+
+
+
+
+(se 1 ou mais database nodes 
+tentam fazer read e write 
+
+AO MESMO TEMPO em cima de 1 mesmo shared disk,
+
+fica bem difícil manter "data consistency")
+
+
+
+
+
+
+
+
+
+
+
+3o PROBLEMA --> bottleneck de COMUNICACAO 
+
+COM O SHARED DISK...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> VEREMOS, NA PRÓXIMA AULA,
+
+
+COMO 
+
+A 
+
+"SHARED NOTHING" architecture 
+
+
+NOS AJUDA A RESOLVER ESSES PROBLEMAS...

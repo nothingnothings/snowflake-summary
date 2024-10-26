@@ -1,0 +1,2296 @@
+
+
+
+
+
+
+CONSIDERE UM CENÁRIO EM QUE __ VAMOS:
+
+
+
+
+
+1) PASSAR O TABLE NAME à PROCEDURE...
+
+
+
+
+
+2) A PROCEDURE VAI CONSEGUIR O "FILL RATE" DE CADA COLUMN...
+
+
+
+
+
+
+
+EX:
+
+
+
+--COLUMN_NAME	FILL_RATE
+--    ABC	    0.98
+--    DEF	    0.81
+--    GHK	    0.27
+
+-- To calculate fill rate first we divide the total record count from column count negating null values.
+
+-- (Column not null count)/(Total record count)
+
+-- In the following procedure we will pass table name. Get total record count and return the record count.
+
+-- We will consider table CREATE TRANSIENT TABLE CUSTOMER as select * from  "SNOWFLAKE_SAMPLE_DATA"."TPCH_SF1"."CUSTOMER";
+
+
+
+
+
+
+
+
+
+
+
+--> ok.... a procedure vai retornar 
+
+
+todas as columns,
+
+com o fill rate 
+
+delas....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+---------> durante sua construcao, entenderemos 
+
+todos os conceitos de building procedures 
+
+
+no snowflake...
+
+
+
+
+
+
+
+
+
+
+--> PARA CALCULAR O FILL RATE,
+
+TEMOS QUE DIVIDIR 
+
+
+
+O COUNT DE COLUMNS NOT NULL PELO NÚMERO TOTAL DE RECORDS...
+
+
+
+
+
+
+
+
+OU SEJA, USAREMOS "COUNT()" EM CADA 1 DAS COLUMN....
+
+
+
+
+
+
+
+
+
+
+
+NESSA LECTURE, CONSTRUÍREMOS APENAS __ PARTE DA PROCEDURE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+RODAMOS ASSIM:
+
+
+
+
+
+
+
+
+CREATE TRANSIENT TABLE CUSTOMER
+AS 
+SELECT * FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.CUSTOMER;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NOSSA PROCEDURE É ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE PROCEDURE COLUMN_FILL_RATE_1(TABLE_NAME VARCHAR)
+    RETURNS VARCHAR
+    LANGUAGE JAVASCRIPT
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ESSA PROCEDURE VAI PEGAR O TABLE NAME,
+
+E AÍ 
+
+DEVE RETORNAR APENAS O NÚMERO DE RECORDS DAQUELA TABLE...
+
+
+(
+    ou seja,
+    ainda nao vamos rodar aquele cálculo inteiro...
+)
+
+
+
+
+
+
+
+
+
+EX:
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE PROCEDURE COLUMN_FILL_RATE_1(TABLE_NAME VARCHAR)
+    RETURNS VARCHAR
+    LANGUAGE JAVASCRIPT
+    AS 
+    $$
+    var my_sql_command =  "SELECT COUNT(*) FROM " + TABLE_NAME;
+
+    var statement1 = snowflake.createStatement({ sqlText: my_sql_command });
+    
+    var result_set1 = statement1.execute();
+
+    result_set1.next();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ESCREVI TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE PROCEDURE COLUMN_FILL_RATE_1(TABLE_NAME VARCHAR)
+    RETURNS VARCHAR
+    LANGUAGE JAVASCRIPT
+    AS 
+    $$
+
+    var my_sql_command =  "SELECT COUNT(*) FROM " + TABLE_NAME;
+
+    var statement1 = snowflake.createStatement({ sqlText: my_sql_command });
+    
+    var result_set1 = statement1.execute();
+
+    result_set1.next();
+
+    $$;
+
+
+
+
+
+-- TEST PROCEDURE:
+CALL COLUMN_FILL_RATE_1('DEMO_DB.PUBLIC.CUSTOMER');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ENTRETANTO, AO CHAMAR ESSA PROCEDURE,
+
+COM "CALL",
+
+
+
+
+
+
+
+
+ELA ME RETORNOU "NULL"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> DETALHE: O SNOWFLAKE NAO PERMITE O IMPORT DE OUTROS 
+
+PACKAGES DENTRO DE 1 PROCEDURE....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+COM O "$$",
+
+
+STARTAMOS A PROCEDURE....
+
+
+
+
+
+
+
+
+
+
+
+CRIAMOS ESSE COMANDO,
+
+
+EM QUE CONTAMOS O NÚMERO DE RECORDS 
+
+
+NESSE TABLE NAME...
+
+
+
+
+
+
+
+
+
+
+--> 1) USAMOS O ARGUMENTO DE "TABLE_NAME" 
+
+
+DENTRO DO CÓDIGO....
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> 2) ESTAMOS USANDO AQUELE OBJECT DO SNOWFLAKE,
+
+
+COM "snowflake.createStatement()",
+
+
+QUE CRIA 1 STATEMENT OBJECT...
+
+
+
+
+
+
+
+
+3) ESSE STATEMENT OBJECT É EXECUTADO COM 
+
+
+"statement1.execute()"...
+
+
+
+
+
+
+
+--> 4) AÍ TEMOS 
+
+
+"result_set1.next()"...
+
+
+
+
+(isso INICIALIZA OS STORED RESULTS, STORED RESULT SET)
+
+
+
+
+
+--> 5) POR FIM,
+
+ESCREVEMOS 
+
+
+
+
+"row_count = result_set1.getColumnValue(1);
+
+
+return row_count;"
+
+
+
+
+
+
+
+
+
+--> ISSO VAI RETORNAR O VALUE DAQUELE RESULT QUE FOI RETORNADO...
+
+
+
+
+
+
+
+
+
+EX:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE PROCEDURE COLUMN_FILL_RATE_1(TABLE_NAME VARCHAR)
+    RETURNS VARCHAR
+    LANGUAGE JAVASCRIPT
+    AS 
+    $$
+
+    var my_sql_command =  "SELECT COUNT(*) FROM " + TABLE_NAME;
+
+    var statement1 = snowflake.createStatement({ sqlText: my_sql_command });
+    
+    var result_set1 = statement1.execute();
+
+    result_set1.next();
+
+
+
+    row_count = result_set1.getColumnValue(1);
+
+
+    return row_count;
+
+    $$;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+FICOU TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE PROCEDURE COLUMN_FILL_RATE_1(TABLE_NAME VARCHAR)
+    RETURNS VARCHAR
+    LANGUAGE JAVASCRIPT
+    AS 
+    $$
+    var row_count;
+    var my_sql_command =  "SELECT COUNT(*) FROM " + TABLE_NAME;
+
+    var statement1 = snowflake.createStatement({ sqlText: my_sql_command });
+    
+    var result_set1 = statement1.execute();
+
+    result_set1.next();
+
+
+
+    row_count = result_set1.getColumnValue(1);
+
+
+    return row_count;
+
+    $$;
+
+
+
+
+
+
+
+-- TEST PROCEDURE:
+CALL COLUMN_FILL_RATE_1('DEMO_DB.PUBLIC.CUSTOMER');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> COM ISSO, ESTÁ SENDO RETORNADO 
+
+
+O 
+
+NÚMERO DE RECORDS DA NOSSA TABLE...
+
+
+
+
+
+
+
+
+
+150000...
+
+
+
+
+
+
+
+
+
+
+
+
+ISSO ESTÁ FINE, SIM,
+
+
+MAS AQUI ESTAMOS COM 1 PROBLEMA...
+
+
+
+
+
+
+
+
+--> O PROBLEMA É QUE ESTAMOS DEFININDO O RETURN TYPE COMO "VARCHAR"..
+
+
+
+
+
+
+
+
+"RETURNS VARCHAR"...
+
+
+
+
+
+
+
+
+
+--> DEVEMOS TROCAR,
+COLOCAR "NUMBER",
+
+tipo assim:
+
+
+
+
+
+
+
+
+CREATE OR REPLACE PROCEDURE COLUMN_FILL_RATE_1(TABLE_NAME VARCHAR)
+    RETURNS NUMBER
+    LANGUAGE JAVASCRIPT
+    AS 
+    $$
+    var row_count;
+    var my_sql_command =  "SELECT COUNT(*) FROM " + TABLE_NAME;
+
+    var statement1 = snowflake.createStatement({ sqlText: my_sql_command });
+    
+    var result_set1 = statement1.execute();
+
+    result_set1.next();
+
+
+
+    row_count = result_set1.getColumnValue(1);
+
+
+    return row_count;
+
+    $$;
+
+
+
+
+
+
+
+-- TEST PROCEDURE:
+CALL COLUMN_FILL_RATE_1('DEMO_DB.PUBLIC.CUSTOMER');
+
+
+
+
+
+
+
+
+
+
+
+
+
+ISSO FEITO,
+
+
+VAMOS GANHAR UM ___ERROR:
+
+"""language JAVASCRIPT does not support type NUMBER for argument 
+
+or return type"""...
+
+
+
+
+
+
+
+
+
+QUER DIZER QUE O SNOWFLAKE NAO SUPORTA O RETURN 
+
+DE NUMBERS... DEVEMOS SEMPRE RETORNAR VARCHARS....
+
+
+
+
+
+
+
+
+--> TROCAMOS DE VOLTA PARA "VARCHAR"...
+
+
+
+
+
+
+
+
+--> DEVEMOS DAR 1 RÁPIDA OLHADA 
+
+
+
+EM ""HOW DATA TYPES ARE MAPPED, FROM 
+SNOWFLAKE DATA TYPES TO JAVASCRIPT DATA TYPES""..
+
+
+
+
+------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+PARA ISSO, DEVEMOS OBSERVAR ESTE ESQUEMA:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+INCOMPATIBLE SQL DATA TYPE     COMPATIBLE SQL DATA TYPE
+
+INTEGER                             FLOAT
+NUMBER, NUMERIC, DECIMAL            FLOAT 
+BINARY                              Uint8Array
+OBJECT                              Uint8Array 
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE SE NOSSO __ DATA TYPE É INTEGER,
+
+
+DEVEMOS __ MENCIONAR ISSO COMO "FLOAT"
+
+NO JAVASCRIPT...
+
+
+
+
+
+
+
+--> MESMA COISA SE NOSSO DATA TYPE FOR DE "NUMBER",
+
+"NUMERIC", "DECIMAL"... devemos sempre mencionar 
+
+esses data types como FLOAT, no javascript....
+
+
+
+
+
+
+
+
+
+
+
+--> OU SEJA,
+
+
+EM RETURNS,
+
+
+
+VOCê TEM ESTAS OPÇÕES:
+
+
+
+
+
+1) VARCHAR 
+
+
+2) FLOAT 
+
+
+
+
+3) Uint8Array
+
+
+
+
+
+
+
+
+
+
+
+--> ESSE "Uint8Array" É MAIS AVANÇADO, NAO O ESTUDAREMOS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> É POR ISSO QUE ADAPTAMOS NOSSO CÓDIGO,
+
+
+DEIXAMO-NO ASSIM:
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE PROCEDURE COLUMN_FILL_RATE_1(TABLE_NAME VARCHAR)
+    RETURNS FLOAT
+    LANGUAGE JAVASCRIPT
+    AS 
+    $$
+    var row_count;
+    var my_sql_command =  "SELECT COUNT(*) FROM " + TABLE_NAME;
+
+    var statement1 = snowflake.createStatement({ sqlText: my_sql_command });
+    
+    var result_set1 = statement1.execute();
+
+    result_set1.next();
+
+
+
+    row_count = result_set1.getColumnValue(1);
+
+
+    return row_count;
+
+    $$;
+
+
+
+
+
+
+
+-- TEST PROCEDURE:
+CALL COLUMN_FILL_RATE_1('DEMO_DB.PUBLIC.CUSTOMER');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> COM ISSO CONSEGUIMOS O RESULT,
+
+
+QUE É DE 150000....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CERTO.... MAS AGORA TEMOS QUE ENTENDER:
+
+
+
+
+
+1) O OBJECT DE "SNOWFLAKE.createStatement()"...
+
+
+
+2) O OBJECT DE "STATEMENT.EXECUTE()"...
+
+
+
+
+
+3) O OBJECT DE "RESULT SET"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AGORA TENTAREMOS ENTENDER ESSES OBJECTS...
+
+
+
+
+
+
+
+
+
+
+
+--> O PROFESSOR VAI EM FRENTE E CRIA ESTA PROCEDURE:
+
+
+
+
+
+
+
+CREATE OR REPLACE PROCEDURE COLUMN_FILL_RATE_STATEMENT_OBJECT(TABLE_NAME VARCHAR)
+    RETURNS VARCHAR
+    LANGUAGE JAVASCRIPT
+    $$
+    var my_sql_command = 'SELECT COUNT(*) FROM ' + TABLE_NAME;
+
+
+    var statement1 = snowflake.createStatement({sqlText: my_sql_command});
+
+
+    return statement1;
+    $$
+
+
+
+
+CALL COLUMN_FILL_RATE_1('DEMO_DB.PUBLIC.CUSTOMER');
+
+
+
+
+--> O QUE ISSO VAI FAZER, ESSENCIALMENTE,
+
+É RETORNAR 
+O "STATEMENT OBJECT"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS COMO SE PARECE O RESULT DISSO, O RESULTADO RETORNADO?
+
+
+
+
+
+
+
+
+
+FICOU ASSIM:
+
+
+
+
+
+
+[object Object]
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE A COISA QUE FOI RETORNADA 
+
+
+
+É UM OBJECT... MAS O SNOWFLAKE 
+
+NAO NOS INFORMA 
+
+
+SOBRE __ QUAIS __ METHODS__ EXISTEM DENTRO 
+
+DESSE 
+
+OBJECT...
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS PQ ELE NAO INFORMOU OS METHODS QUE EXISTEM NO INTERIOR DO OBJECT?
+
+
+
+
+
+
+
+
+
+--> É PQ __ ESTAMOS MANTENDO O DATA TYPE DE "RETURNS" COMO "VARCHAR",
+
+
+
+
+o que impossibilita 
+
+
+o formato desse object no result set....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> aí o professor fala:
+
+
+
+""ASSUMING THAT THE RETURNED OBJECT WILL ALWAYS 
+
+BE IN A JSON FORMAT, 
+
+
+LETS CHECK HOW THE JSON WILL BE MAPPED IN PROCEDURE""...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+TEMOS ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DATA TYPES:
+
+
+
+
+
+
+
+
+""THE FOLLOWING TABLE SHOWS THE SNOWFLAKE SQL DATA TYPES AND 
+THE CORRESPONDING JAVASCRIPT DATA TYPES""...
+
+
+
+
+
+
+
+
+
+
+
+
+
+SQL DATA TYPE           JAVASCRIPT DATA TYPES
+
+
+ARRAY                       JSON
+
+
+BOOLEAN                     boolean
+
+DATE                        DATE
+
+
+
+REAL, FLOAT, FLOATS,
+FLOAT4, DOUBLE,             NUMBER
+DOUBLE PRECISION 
+
+
+
+TIME                        STRING
+
+
+
+
+
+TIMESTAMP,
+TIMESTAMP_LTZ,              DATE or SFDATE
+TIMESTAMP_NTZ,
+TIMESTAMP_TZ
+
+
+
+
+VARCHAR, CHAR,
+CHARACTER, STRING,            STRING
+TEXT 
+
+
+
+
+
+
+
+VARIANT                       JSON 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK.... QUER DIZER QUE 
+
+
+SE VAMOS RETORNAR 1 JSON OBJECT, COM 1 PROCEDURE,
+
+
+
+
+
+DEVEMOS MENCIONAR O RETURN TYPE COMO "VARIANT"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... PARA A MESMA LÓGICA,
+
+
+SE ESTAMOS RETORNANDO 1 STRING OBJECT,
+
+
+DEVEMOS 
+
+
+
+
+COLOCAR O RETURN TYPE COMO "VARCHAR", "CHAR", CHARACTER, STRING, TEXT, ETC...
+
+
+
+(
+    como estamos fazendo agora....
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OS JSON TAMBÉM PODEM SER MENCIONADOS COMO "ARRAY",
+
+
+no return type...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NOVAMENTE, ADAPTAMOS NOSSO CÓDIGO,
+
+COLOCAMOS O RETURN TYPE COMO "VARIANT",
+
+
+PARA QUE ELE CONSIGA RETORNAR O OBJECT/JSON...'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE PROCEDURE COLUMN_FILL_RATE_STATEMENT_OBJECT(TABLE_NAME VARCHAR)
+    RETURNS VARIANT NOT NULL 
+    LANGUAGE JAVASCRIPT
+    $$
+    var my_sql_command = 'SELECT COUNT(*) FROM ' + TABLE_NAME;
+
+
+    var statement1 = snowflake.createStatement({sqlText: my_sql_command});
+
+
+    return statement1;
+    $$
+
+
+
+
+CALL COLUMN_FILL_RATE_1('DEMO_DB.PUBLIC.CUSTOMER');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+O PROFESSOR DEIXA "NOT NULL" PQ 
+
+ELE 
+
+
+
+NAO ESPERA (expect)
+
+QUE 
+
+NENHUM 
+
+DOS VALUES RETORNADOS DENTRO DO JSON SERÁ "NULL"...
+
+
+
+
+
+
+
+RECRIAMOS A PROCEDURE,
+
+E A REEXECUTAMOS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+COM ISSO, O VALUE RETORNADO FICOU ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{
+  "_c_resultSet": {
+    "columnCount": 1,
+    "getColumnDescription": {},
+    "getColumnName": {},
+    "getColumnScale": {},
+    "getColumnSfDbType": {},
+    "getColumnValue": {},
+    "getColumnValueInternalRep": {},
+    "getColumnValueStringRep": {},
+    "getColumnsName": {},
+    "isColumnNullable": {},
+    "next": {},
+    "rowCount": 1,
+    "status": 0
+  },
+  "_updateStatementWithNewResult": {},
+  "columnCount": 1,
+  "execute": {},
+  "executeAsync": {},
+  "getColumnCount": {},
+  "getColumnName": {},
+  "getColumnScale": {},
+  "getColumnSqlType": {},
+  "getColumnType": {},
+  "getNumDuplicateRowsUpdated": {},
+  "getNumRowsAffected": {},
+  "getNumRowsDeleted": {},
+  "getNumRowsInserted": {},
+  "getNumRowsUpdated": {},
+  "getPersistedStatus": {},
+  "getQueryId": {},
+  "getRequestId": {},
+  "getRowCount": {},
+  "getSqlText": {},
+  "getStatementId": {},
+  "getStatus": {},
+  "isColumnArray": {},
+  "isColumnBinary": {},
+  "isColumnBoolean": {},
+  "isColumnDate": {},
+  "isColumnNullable": {},
+  "isColumnNumber": {},
+  "isColumnObject": {},
+  "isColumnText": {},
+  "isColumnTime": {},
+  "isColumnTimestamp": {},
+  "isColumnVariant": {},
+  "isDml": {},
+  "queryId": "01aea239-0001-4fe1-0004-6d2a000420da",
+  "resultSet": {
+    "COUNT(*)": 150000,
+    "getColumnCount": {},
+    "getColumnDescription": {},
+    "getColumnName": {},
+    "getColumnScale": {},
+    "getColumnSqlType": {},
+    "getColumnType": {},
+    "getColumnValBoxedType": {},
+    "getColumnValue": {},
+    "getColumnValueAsString": {},
+    "getNumRowsAffected": {},
+    "getQueryId": {},
+    "getRowCount": {},
+    "getSqlcode": {},
+    "isColumnArray": {},
+    "isColumnBinary": {},
+    "isColumnBoolean": {},
+    "isColumnDate": {},
+    "isColumnNullable": {},
+    "isColumnNumber": {},
+    "isColumnObject": {},
+    "isColumnText": {},
+    "isColumnTime": {},
+    "isColumnTimestamp": {},
+    "isColumnVariant": {},
+    "isDml": {},
+    "next": {},
+    "setCResultSet": {}
+  },
+  "rowCount": 1,
+  "wait": {}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+---> OU SEJA, A PROCEDURE RETORNOU 1 OBJECT...
+
+
+
+
+
+
+
+
+
+COMO É A ESTRUTURA DESSE OBJECT?
+
+
+
+
+
+
+
+
+
+
+
+QUAIS SAO ALGUNS DOS METHODS QUE FICAM DISPONÍVEIS,
+
+DENTRO 
+
+
+DESSE 
+
+
+
+OBJECT,
+
+CRIADO A PARTIR 
+
+
+
+DO "SNOWFLAKE.createStatement()"?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> bem, o method mais importante,
+
+QUE JÁ USAMOS ANTERIORMENTE,
+
+É JUSTAMENTE ".execute()",
+
+
+
+
+
+
+
+
+
+E LÁ ESTÁ ELE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> TEMOS OUTROS METHODS,
+
+
+
+COMO 
+
+
+"getColumnValue()",
+
+
+
+"getColumnScale()",
+
+
+
+
+"next()"....
+
+
+
+
+
+
+"isDml()"...
+
+
+
+
+
+
+TEMOS MTOS OUTROS METHODS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+"getQueryId()"...
+
+
+
+
+
+
+
+
+
+
+
+BASICAMENTE, ESSES METHODS PODEM SER USADOS 
+
+
+DE DIVERSAS MANEIRAS PARA 
+
+"LEVERAGE" 
+
+NOSSOS DIFERENTES PROCESSOS....
+
+
+
+
+
+
+
+
+
+
+
+
+---> QUANDO CRIAMOS NOSSA PROCEDURE,
+
+ESSES METHODS COME VERY HANDY...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> POR EXEMPLO,
+O "getQueryId()"... -->  COM ELE,
+
+VC PODE 
+
+IMEDIATAMENET PEGAR 
+
+
+O ID DA SUA QUERY SQL,
+
+
+E AÍ 
+
+
+
+
+PEGAR VÁRIOS DETALHES 
+
+
+
+COMO 
+
+
+
+""HOW MUCH TIME THAT PARTICULAR QUERY TOOK",
+
+
+
+"WHICH WAREHOUSE IT USED",
+
+
+
+
+"HOW MUCH TIME THAT PARTICULAR WAREHOUSE RUN"...
+
+
+
+
+
+
+
+
+
+
+--> PODEMOS USAR ESSES DETALHES PARA CALCULAR COST, TAMBÉM....
+
+
+
+
+
+
+
+
+
+
+
+
+--> também temos 
+
+
+
+"getNumDuplicateRowsUpdated()"...
+
+
+
+
+
+
+
+
+
+
+
+--> PODEMOS LEVERAGE TODOS ESSES METHODS,
+
+
+PARA NOSSA VANTAGEM...
+
+
+
+
+
+
+
+
+
+
+
+
+--> TEMOS MAIS UM METHOD/OBJECT AQUI DENTRO,
+
+
+
+QUE É IMPORTANTE...
+
+
+
+
+
+
+
+
+É O "resultSet"...
+
+
+
+
+
+
+
+-----> quer dizer que o STATEMENT OBJECT 
+
+
+também retorna um "RESULT SET" object...
+
+
+
+
+
+
+
+
+O OBJECT É ESTE:
+
+
+
+
+
+
+
+"resultSet": {
+    "COUNT(*)": 150000,
+    "getColumnCount": {},
+    "getColumnDescription": {},
+    "getColumnName": {},
+    "getColumnScale": {},
+    "getColumnSqlType": {},
+    "getColumnType": {},
+    "getColumnValBoxedType": {},
+    "getColumnValue": {},
+    "getColumnValueAsString": {},
+    "getNumRowsAffected": {},
+    "getQueryId": {},
+    "getRowCount": {},
+    "getSqlcode": {},
+    "isColumnArray": {},
+    "isColumnBinary": {},
+    "isColumnBoolean": {},
+    "isColumnDate": {},
+    "isColumnNullable": {},
+    "isColumnNumber": {},
+    "isColumnObject": {},
+    "isColumnText": {},
+    "isColumnTime": {},
+    "isColumnTimestamp": {},
+    "isColumnVariant": {},
+    "isDml": {},
+    "next": {},
+    "setCResultSet": {}
+  },
+
+
+
+
+
+
+
+
+
+
+
+  TEMOS TODOS ESSES METHODS, PORTANTO...
+
+
+
+
+
+
+
+
+
+
+
+  --> todos esses methods podem ser chamados 
+
+  desse object, também...
+
+  (
+
+    ou seja,
+
+    DEPOIS DA EXECUTION DO 
+
+    "STATEMENT.execute()",
+
+
+    ainda podemos chamar esses methods,
+
+
+    mas entao EM CIMA DE ESSE RESULT SET OBJECT...
+  )
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --> USAREMOS MTOS DESSES METHODS NA NOSSA PROCEDURE...
+
+  VAO NOS AJUDAR A LEVERAGE AS CAPACIDADES 
+
+
+  DAS STORED PROCEDURES DO SNOWFLAKE....
+
+
+
+
+
+
+
+
+
+
+
+  --> PARA CONSEGUIRMOS APENAS O RESULT SET,
+
+  RODAMOS ASSIM:
+
+
+
+
+  create or replace procedure column_fill_rate_result_obj(TABLE_NAME varchar)
+-- returns varchar
+returns VARIANT NOT NULL
+language javascript
+as     
+$$  
+  var my_sql_command = "select count(*) from "+ TABLE_NAME +";"
+  
+  var statement1 = snowflake.createStatement( {sqlText: my_sql_command} );
+  var result_set1 = statement1.execute();
+  result_set1.next()
+  
+  row_count = result_set1.getColumnValue(1);
+  
+     
+return result_set1; 
+$$
+;
+
+call column_fill_rate_result_obj('CUSTOMER');
+
+
+
+
+
+
+
+
+
+------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK, MAS AGORA DEVEMOS VER RAPIDAMENTE 
+
+OUTRA 
+
+COISA IMPORTANTE,
+
+
+A RESPEITO 
+
+
+
+
+DOS ARGUMENTS QUE PASSAMOS A ESSA PROCEDURE...
+
+
+
+
+
+
+
+
+TEMOS TAMBÉM ESTE AVISO:
+
+
+
+
+-- Argument names are case-insensitive in the SQL PORTION OF 
+-- THE STORED PROCEDURE CODE, BUT ARE CASE-SENSITIVE 
+-- IN THE JAVASCRIPT PORTION
+
+
+
+
+
+
+
+
+
+PARA DEMONSTRAR ISSO, O PROFESSOR 
+
+
+
+
+ESCREVEU 1 DUMMY PROCEDURE, EM QUE ELE FAZ PASS 
+
+DO ARGUMENT:
+
+
+
+
+
+
+#Argument names are case-insensitive in the SQL portion of the stored procedure code, but are case-sensitive in the JavaScript portion.
+
+call column_fill_rate_result_obj('Customer')
+
+#Using uppercase identifiers (especially argument names) consistently across your SQL statements and JavaScript code tends to reduce silent errors
+
+CREATE OR REPLACE PROCEDURE f(argument1 VARCHAR)
+RETURNS VARCHAR
+LANGUAGE JAVASCRIPT
+AS
+$$
+
+var local_variable2 = ARGUMENT1;  // Correct
+
+var local_variable1 = argument1;  // Incorrect
+
+return local_variable2
+$$;
+
+call f('prad')
+
+
+
+
+
+
+
+
+
+
+
+
+como vc pode perceber,
+
+
+
+
+
+
+devemos escrever os params OBTIDOS DO SQL 
+
+
+EM UPPERCASE,
+
+
+
+e nao em lowercase...
+
+
+
+
+
+
+
+
+
+
+
+
+--> A BEST-PRACTICE POSSÍVEL,
+
+QUANDO VC ESTÁ ESCREVENDO 
+
+STORED PROCEDURES 
+
+
+É 
+
+
+""ALWAYS MAKE SURE YOU
+ARE PASSING YOUR SQL ARGUMENTS IN CAPITAL LETTERS,
+DONT USE SMALL LETTERS IN ANY PORTION OF YOUR REFERENCES 
+TO SQL CODE/ARGUMENTS""...
+
+
+
+
+
+
+
+
+
+
+
+
+ A VERSAO CORRETA É ESTA:
+
+
+
+
+
+
+
+
+#Argument names are case-insensitive in the SQL portion of the stored procedure code, but are case-sensitive in the JavaScript portion.
+
+call column_fill_rate_result_obj('Customer')
+
+#Using uppercase identifiers (especially argument names) consistently across your SQL statements and JavaScript code tends to reduce silent errors
+
+CREATE OR REPLACE PROCEDURE f(argument1 VARCHAR)
+RETURNS VARCHAR
+LANGUAGE JAVASCRIPT
+AS
+$$
+
+var local_variable2 = ARGUMENT1;  // Correct
+
+var local_variable1 = ARGUMENT1;  // Now correct.
+
+return local_variable2
+$$;
+
+call f('prad')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... QUER DIZER QUE SEMPRE É MELHOR 
+
+PASSAR SEUS ARGUMENTS EM UPPERCASE,
+
+
+NA STORED PROCEDURE...
+
+
+
+
+
+
+
+
+
+
+
+
+RESUMINDO A AULA:
+
+
+
+
+
+
+
+
+
+
+1) APRENDEMOS STORED PROCEDURE SYNTAX...
+
+
+
+
+
+
+
+2) APRENDEMOS "DATA TYPES CONVERSION",
+
+enquanto CRIAMOS STORED PROCEDURES...
+
+
+
+
+
+
+3) APRENDEMOS OS DIFERENTES 
+
+STORED PROCEDURE METHODS (
+
+    dentro do statement object,
+    mas também 
+
+    dentro do RESULT SET object (que é criado a partir do 
+    statement object, com "statement.execute()"
+    
+    )
+
+)
+
+
+
+
+
+
+4) VIMOS ALGUMAS DAS CONSTRAINTS 
+
+DE ARGUMENT, QUANDO 
+ESCREVEMOS AS STORED PROCEDURES (
+
+    diferença/limitacao entre smallcase e uppercase...
+)

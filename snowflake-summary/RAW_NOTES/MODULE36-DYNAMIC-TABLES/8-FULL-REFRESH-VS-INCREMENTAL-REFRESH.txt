@@ -1,0 +1,1115 @@
+
+
+
+
+
+
+
+
+
+
+NESSA LECTURE,
+
+TENTAREMOS 
+
+ENTENDER 
+
+
+
+DYNAMIC TABLE REFRESH TYPES...
+
+
+
+
+
+
+
+
+
+
+
+
+TEMOS 2 TIPOS DE REFRESH TYPES:
+
+
+
+
+
+
+
+
+
+
+1) FULL REFRESH...
+
+
+
+
+
+
+
+
+
+2) INCREMENTAL REFRESH...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> DEVEMOS ENTENDER QUANDO 
+
+
+CADA 1 DELES ACONTECE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA ISSO,
+
+TEMOS 1 EXAMPLE:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+----- DYNAMIC TABLE REFRESH --------
+
+
+
+
+
+CREATE TABLE DEMO_DB.PUBLIC.CALL_CENTER_2 CLONE DEMO_DB.PUBLIC.CALL_CENTER;
+
+
+
+
+
+
+
+CREATE OR REPLACE DYNAMIC TABLE
+ DEMO_DB.PUBLIC.CALL_CENTER_DYNAMIC_REFRESH 
+TARGET_LAG='1 MINUTE'
+WAREHOUSE=compute_wh
+AS 
+SELECT * FROM DEMO_DB.PUBLIC.CALL_CENTER
+UNION 
+SELECT * FROM DEMO_DB.PUBLIC.CALL_CENTER_2 WHERE 
+CC_STATE='TN';
+
+
+
+
+
+ALTER DYNAMIC TABLE DEMO_DB.PUBLIC.CALL_CENTER_DYNAMIC_REFRESH
+REFRESH;
+
+
+
+
+SELECT * FROM DEMO_DB.PUBLIC.CALL_CENTER_2;
+
+
+
+
+
+
+
+
+
+
+
+
+
+COM ISSO, O PROFESSOR CRIA 1 DYNAMIC TABLE 
+
+POR MEIO DA UNION DE 2 TABLES
+
+
+(call_center e call_center_2)...
+
+
+
+
+
+
+
+
+
+
+
+NA SEGUNDA TABLE TEMOS 13 RECORDS..
+
+
+
+
+
+
+
+
+
+
+
+
+------> QUANDO FAZEMOS A UNION,
+
+
+
+DEVEMOS FICAR COM 58 RECORDS...
+
+
+
+
+
+
+
+
+
+
+
+-- PQ 58?
+
+
+
+
+
+
+
+
+--> É PQ __ QUANDO RODAMOS "uNION" NORMAL,
+
+
+
+OS RECORDS DUPLICADOS SAO IGNORADOS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CERTO... CRIAMOS ESSA DYNAMIC TABLE,
+
+
+
+DE 58 RECORDS...
+
+
+
+
+
+
+SETTAMOS 1 TARGET_LAG DE 1 MINUTO...
+
+
+
+
+
+
+
+
+
+
+
+
+AÍ O PROFESSOR REFRESHA ESSA TABLE,
+
+MANUALMENTE..
+
+
+
+
+
+
+
+
+
+
+
+ALTER DYNAMIC TABLE DEMO_DB.PUBLIC.CALL_CENTER_DYNAMIC_REFRESH;
+
+
+
+
+
+AÍ CHECAMOS O PROFILE 
+
+
+NO BACKGROUND...
+
+
+
+
+
+
+
+
+
+
+-->  NA REFRESH HISTORY,
+
+
+
+VIMOS QUE  58 RECORDS...
+
+
+
+
+
+
+
+
+
+
+--> AÍ O PROFESSOR VISUALIZA A QUERY PROFILE..
+
+
+
+
+
+
+
+
+--> O QUE ACONTECEU?
+
+
+
+
+
+
+
+
+1) UM TABLE SCAN DE "CALL_CENTER"...
+
+
+
+
+
+
+
+2) ESTAMOS FAZENDO UM UNION...
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS UMA COISA QUE ESTAMOS OBSERVAR É QUE 
+
+
+
+ESTÁ ACONTECENDO UM "TRUNCATE" AQUI...
+
+
+
+
+
+
+
+
+
+
+
+--> AÍ SE VAMOS ATÉ O GRAPH E CHECAMOS OS DETALHES,
+
+FICAMOS COM ALGO CURIOSO:
+
+
+
+O REFRESH MODE DESSA TABLE ESTÁ COMO 
+
+
+""FULL""....
+
+
+
+
+
+
+
+--> SE COLOCAMOS O MOUSE EM CIMA,
+
+FICAMOS COM MAIS DETALHES:
+
+
+
+
+
+""REFRESH MODE: FULL
+
+CHANGE TRACKING IS ___NOT SUPPORTED___ ON QUERIES 
+WITH JOINS OF TYPE [UNION]""
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> RESUMINDO:
+
+
+SE ESTAMOS USANDO "UNION",
+
+NOSSA DYNAMIC TABLE SEMPRE VAI FAZER 
+
+__FULL REFRESHES,
+
+ELA NUNCA 
+
+
+VAI TENTAR O INCREMENTAL REFRESH....
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> E É __ JUSTAMENTE POR CONTA DISSO 
+
+
+QUE VIMOS 
+
+AQUELA STEP DE "TRUNCATE" ANTERIORMENTE (esvaziou 
+toda a data da table),
+
+
+
+
+PQ REALMENTE 
+
+
+TODA A DATA É LIMPA,
+
+E AÍ 
+
+
+
+DEPOIS REALMENTE 
+
+
+ACONTECE 1 FULL TABLE SCAN,
+
+PARA AÍ 
+
+
+INSERIR A DATA 
+
+NA DYNAMIC TABLE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- FULL REFRESH --> FAZ EXATAMENTE ISSO,
+
+ELE __ tRUNCA TUDO, ANTES, PARA SÓ 
+
+DEPOIS 
+
+COPIAR 
+
+
+__TODA___ A DATA, para dentro da dynamic table...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE FULL REFRESHES SAO BEM 
+
+
+MAIS PESADOS..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-------> SE CHECAMOS OS DOCS 
+
+DO SNOWFLAKE,
+
+TEMOS:
+
+
+
+
+
+
+
+
+"""DYNAMIC TABLES CURRENTLY ONLY SUPPORT INNER JOINS,
+OUTER JOINS AND __cROSS JOINS__ FOR INCREMENTAL REFRESHES""...
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE UNIONS NAO SAO SUPPORTADAS 
+
+POR 
+
+
+INCREMENTAL REFRESHES (
+
+
+
+    quer dizer que 
+
+    ELES VAO TRIGGAR FULL TABLE REFRESHES...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... O PROFESSOR,
+
+
+CONSIDERANDO O QUE LEMOS NOS DOCS,
+
+
+
+
+TENTA FAZER 1 DELETE,
+
+
+
+O DELETE DE 1 RECORD 
+
+DA TABLE "CALL_cENTER_2"...
+
+
+
+
+
+
+
+--> AÍ, ISSO FEITO,
+
+O PROFESSOR REFRESHA 
+
+
+A 
+
+DYNAMIC TABLE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> NOVAMENTE, COM ISSO,
+
+ACONTECERÁ UM FULL REFRESH;
+
+
+FORÇARÁ UM TRUNCATE ANTERIOR,
+
+PARA SÓ DEPOIS REALIZAR FULL TABLE SCANS E INSERIR 
+
+A DATA TUDO DE NOVO...
+
+(
+
+    o que é péssimo, em termos 
+
+    de custo de storage e performance...
+
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OU SEJA,
+
+
+
+TENTE NAO USAR UNIONS COM DYNAMIC TABLES...
+
+
+
+
+
+
+
+
+-----------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CERTO... MAS AGORA O PROFESSOR
+TROCA OS COMANDOS,
+
+USA 
+
+"UNION ALL"
+
+
+EM VEZ DE "UNION".. (
+
+    com isso, ficamos com mais records....
+)
+
+
+
+
+
+
+EX:
+
+
+
+
+
+
+CREATE OR REPLACE DYNAMIC TABLE
+ DEMO_DB.PUBLIC.CALL_CENTER_DYNAMIC_REFRESH 
+TARGET_LAG='1 MINUTE'
+WAREHOUSE=compute_wh
+AS 
+SELECT * FROM DEMO_DB.PUBLIC.CALL_CENTER
+UNION ALL
+SELECT * FROM DEMO_DB.PUBLIC.CALL_CENTER_2 WHERE 
+CC_STATE='TN';
+
+
+
+
+
+
+
+
+-_> É CLARO QUE MTOS DESSES RECORDS SERAO DUPLICATAS....
+
+
+
+
+
+
+
+-> E É CLARO QUE NAO PRECISAMOS DE MTOS DESSES RECORDS...
+
+
+
+
+
+
+
+--> MAS COMO ESSAS DUPLICATAS SERAO HANDLADAS PELO 
+
+SNOWFLAKE?
+
+
+
+
+
+
+FICAMOS COM 72 RECORDS...
+
+
+
+
+
+
+
+
+
+
+--> PODEMOS VER A QUERY PROFILE...
+
+
+
+
+
+
+
+
+
+
+
+
+-> PERCEBEMOS QUE, APESAR DE 
+
+TERMOS REALIZADO UNION ANTES,
+
+
+
+ELE TAMBÉM HAVIA RODADO O UNION ALL ANTES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> RESUMINDO:
+
+
+""MESMO SE USARMOS UNION, 
+
+
+O SNOWFLAKE VAI EXECUTAR 1 __ UNION__ ALL,
+
+LÁ NO BACKGROUND""...
+
+(
+    quer dizer que ficaremos com duplicatas...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... MAS O QUE O PROFESSOR FAZ, AGORA,
+
+
+É 
+
+CRIAR ESSA DYNAMIC TABLE
+
+
+
+COM "uNION ALL"..
+
+
+
+
+
+
+
+--> ELE VAI USAR UNION ALL....
+
+
+
+
+
+
+
+
+
+--> MAS A DATA VAI SER PROCESSADA 
+
+
+COM "INCREMENTAL REFRESH" NO BACKGROUND 
+
+(ao contrário 
+
+de UNION, que sempre toma FULL REFRESH)...
+
+
+
+
+
+
+
+
+
+
+
+--> O USO EXPLÍCITO DE "UNION ALL" AFASTA 
+
+OS FULL TABLE REFRESHES...
+
+(voce fica com INCREMENTAL REFRESHES)
+
+
+
+
+
+
+
+
+--> JÁ O USO DE "UNION" FAZ 
+
+COM QUE 
+
+
+VC FIQUE COM FULL TABLE REFRESHES...
+
+
+
+
+
+
+
+
+
+
+
+----------------------
+
+
+
+
+
+
+
+
+
+
+TEMOS SÓ MAIS 1 CASO:
+
+
+
+
+
+
+
+
+
+
+
+DELETAMOS 1 RECORD DA TABLE 2,
+
+ASSIM:
+
+
+
+
+
+
+
+
+
+
+DELETE FROM DEMO_DB.PUBLIC.CALL_CENTER_2 
+WHERE CC_CALL_CENTER_SK=2;
+
+
+
+
+
+
+
+
+
+
+
+
+--> COM ESSE RECORD DELETADO,
+
+
+
+
+
+FAZEMOS 1 REFRESH...
+
+
+
+
+
+
+
+
+--> O REFRESH FOI FULL REFRESH,
+
+OU FOI 
+
+INCREMENTAL REFRESH...?
+
+
+
+
+
+
+
+
+
+--> FOI FULL REFRESH...
+
+
+
+
+ A MENSAGEM QUE RECEBEMOS é
+
+
+ ""CHANGE TRACKING IS NOT SUPPORTED ON 
+ QUERIES WITH UNION ALLs THAT 
+ WOULD PRODUCE __ CONFLICTING ROW_IDs...""
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ -> OU SEJA,
+
+ TENTE NAO USAR 
+
+
+
+ UNION E UNION ALL COM 
+
+
+ DYNAMIC TABLES...
+
+
+
+
+
+
+
+
+
+
+
+ --> DYNAMIC TABLES SUPPORT UNION ALL...
+
+
+
+
+
+
+
+
+
+
+RESUMO:
+
+
+
+
+
+1) INCREMENTAL REFRESHES SAO MELHORES,
+
+
+E VC DEVE BUSCÁ-LOS...
+
+
+
+
+
+
+
+2) FULL REFRESHES SAO RUINS,
+
+
+E ACONTECEM COM UNION ALLS E UNIONS...
+
+
+
+
+
+
+
+
+--> SE O NEGÓCIO ESTÁ FICANDO COM FULL REFRESH,
+
+
+NAO FAZ NENHUM SENTIDO 
+
+USAR ESSE MODO DE DYNAMIC TABLE(
+
+    pq o negócio vai 
+
+    LER TODA A DATA DAS 
+    TABLES,
+
+    E SÓ ENTAO VAI 
+
+    CRIAR O RESULT... ISSO É A MESMA COISA QUE 
+
+    CRIAR 1 VIEW EM CIMA DESSAS 2 TABLES,
+
+
+    E SUBMITTAR A QUERY... NENHUM GANHO DE PERFORMANCE...
+
+
+
+)
+
+
+
+
+
+
+
+
+SEMPRE BUSQUE INCREMENTAL REFRESHES....
+
+
+
+

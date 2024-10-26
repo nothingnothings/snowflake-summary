@@ -1,0 +1,802 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... AGORA TENTAREMOS 
+
+
+
+
+ENTENDER A OPTION DE 
+
+
+
+"TARGET_LAG=DOWNSTREAM";
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... NO MOMENTO EM QUE CONFERIMOS VALUE 
+
+AO TARGET_LAG,
+
+PODEMOS 
+
+
+
+DEFINIR:
+
+
+
+
+
+
+
+1 DAY, 2 DAY,
+
+
+30 SECONDS,
+
+
+1 MINUTE, ETC...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> A SEGUNDA OPTION É MENCIONAR O TARGET_LAG COMO 
+
+
+"DOWNSTREAM"...
+
+
+
+
+
+
+
+
+
+-> AGORA VEREMOS O QUE É ESSA PROPRIEDADE..
+
+
+
+
+
+
+
+
+
+
+
+--> DIGAMOS QUE TEMOS 
+
+
+ESTE ESQUEMA:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+STAGE TABLE 1------------
+                        i
+                        i
+                        i
+                        i
+                        i
+                        DYNAMIC TABLE 1 ----------->  DYNAMIC TABLE 2...
+                        i
+                        i
+
+                        i
+                        i
+STAGE TABLE 2 ----------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... TEMOS ESSAS 2 DYNAMIC TABLES..
+
+
+
+
+
+DIGAMOS QUE COLOCAMOS 
+
+O 
+
+
+
+"TARGET_LAG=DOWNSTREAM"
+
+
+
+
+COMO OPTION 
+
+DA PRIMEIRA DYNAMIC TABLE (dynamic table 1)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+O QUE ISSO SIGNIFICA, NO CASO,
+
+É QUE 
+
+
+___sEMPRE QUE 1 REFRESH ACONTECER 
+
+NA 
+
+
+
+
+
+
+
+
+
+
+
+
+____ SEGUNDA___ DYNAMIC TABLE (conectada a essa dynamic table 1),
+
+
+
+
+
+
+
+___ SOMENTE__ A PRIMEIRA DYNAMIC TABLE SERÁ REFRESHED...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+VOCE NAO DEVE SE CONFUNDIR COM A EXPRESSAO "DOWNSTREAM"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> aqui a ideia é 
+
++ ou - 
+
+
+que 
+
+
+""QUANDO AS DOWNSTREAM TABLES SAO REFRESHED,
+
+
+A TABLE/TABLES QUE FICAM NO _ 'UPSTREAM' ACABAM 
+
+REFRESHED __ TAMBÉM""...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> DEVEMOS MOSTRAR COMO ISSO FUNCIONA, COM A AJUDA DE 1 
+
+
+
+EXEMPLO...
+
+
+
+USAREMOS 1 EXEMPLO PARECIDO COM 
+
+
+OS DAS ÚLTIMAS LICOES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> COM ESTE CÓDIGO, DE CRIACAO 
+
+
+DE DYNAMIC TABLE (no caso, será A __pRIMEIRA__ DYNAMIC TABLE,
+
+
+É NELA QUE COLOCAREMOS A OPTION DE "TARGET_LAG=DOWNSTREAM")
+
+
+
+
+
+
+
+
+
+
+TIPO ASSIM:
+
+
+
+
+
+
+CREATE OR REPLACE DYNAMIC TABLE DEMO_DB.PUBLIC.INTERMEDIATE_CUST_DATA_DYN_REFRESH
+  TARGET_LAG = 'DOWNSTREAM' -- eis a option em questao.
+  WAREHOUSE = compute_wh
+  AS
+    SELECT A.C_CUSTKEY, A.C_NAME, A.C_ADDRESS,B.O_ORDERSTATUS,B.O_ORDERPRIORITY,B.o_orderkey FROM 
+    DEMO_DB.PUBLIC.CUSTOMER_STG A
+    INNER JOIN
+    DEMO_DB.PUBLIC.ORDERS_STG B
+    ON A.C_CUSTKEY = B.O_CUSTKEY;
+
+
+
+
+
+
+----------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... CRIADA ESSA TABLE,
+
+
+
+TEMOS A OUTRA DYNAMIC TABLE,
+
+
+
+
+
+que __depende__ dessa primeira table (dependency),
+
+
+justamente por conta de seu JOIN:
+
+
+
+
+
+
+
+
+
+
+
+CRAETE OR REPLACE DYNAMIC TABLE DEMO_DB.PUBLIC.CUST_ORDER_LINEITEM_DYN
+TARGET_LAG='1 minute'
+WAREHOUSE=compute_wh 
+AS 
+SELECT
+A.C_CUSTKEY,
+A.C_NAME,
+A.C_ADDRESS,
+A.O_ORDERSTATUS,
+A.O_ORDERPRIORITY
+FROM DEMO_DB.PUBLIC.INTERMEDIATE_CUST_DATA_DYNAMIC_REFRESH AS A  --- dependency on other dynamic table...
+INNER JOIN 
+DEMO_DB.PUBLIC.LINEITEM AS B 
+ON A.o_orderkey = B.L_ORDERKEY;
+
+
+
+
+
+
+
+-----------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-------> OLHAMOS A QUERY PROFILE..
+
+
+
+
+
+
+--> NO DIAGRAMA,
+
+
+PERCEBEMOS QUE 
+
+
+
+
+TEMOS A MESMA RELACAO DE DEPENDENCY DA 
+
+
+DYNAMIC TABLE 2 
+
+COM A DYNAMIC TABLE 1,
+
+
+
+
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+STAGE TABLE 1------------
+                        i
+                        i
+                        i
+                        i
+                        i
+                        DYNAMIC TABLE 1 ----------->  DYNAMIC TABLE 2...
+                        i                                 ^
+                        i                                 i
+                        i                                 i
+                        i                                 i
+                        i                                 i
+STAGE TABLE 2 ----------                                  i
+                                                          i
+                                                          i
+                                                          i
+                        LINEITEM --------------------------
+                        (table normal)....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ENTRETANTO, SE COLOCARMOS O MOUSE 
+
+
+NA TABLE 1,
+
+VEREMOS UMA DIFERENÇA,
+
+PQ AGORA 
+
+O 
+
+
+TARGET_LAG
+
+
+
+SERÁ "DOWNSTREAM",
+
+
+e nao 1 tempo específico...
+
+
+
+
+
+------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-----> OK... COMO VC PODE PERCEBER,
+
+
+É USADA TAMBÉM 1 TABLE 
+
+DE "LINEITEM"
+
+
+
+
+
+em 1 join, para a criacao da DYNAMIC TABLE 2....
+
+
+
+
+
+
+
+
+
+
+
+
+--> DIGAMOS QUE APLICAMOS 1 CHANGE NESSA TABLE DE 
+
+LINE ITEM... --> isso vai, por sua vez,
+
+
+
+causar 
+
+1 
+
+
+REFRESH DA DYNAMIC TABLE 2....
+
+
+
+
+
+
+
+
+
+--> COMO CONSEQUENCIA DISSO,
+
+
+
+POR TERMOS DEFINIDO "TARGET_LAG=DOWNSTREAM",
+
+
+
+
+
+
+A _ _DYNAMIC TABLE 1 __ TAMBÉM _ SERÁ REFRESHADA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> DELETAMOS ALGUNS RECORDS DA TABLE DE "LINEITEM",
+
+
+
+PARA TESTAR....
+
+
+
+
+
+
+
+
+
+
+--> com isso, a dynamic table 1 foi refreshada (
+    mas nenhuma change aconteceu nela, a partir disso,
+
+    pq a data continuou igual...
+)
+
+
+
+
+
+
+--> MAS O QUE INTERESSA É QUE O REFRESH REALMENTE ACONTECE NA 
+
+PARENT TABLE... (
+
+    quer dizer que 
+
+    O REFRESH VAI EM UMA "BACKWARD DIRECTION"...
+)
+
+
+
+
+
+
+
+
+
+--> os refreshes vao no SENTIDO CONTRÁRIO, PORTANTO;
+
+
+VÃO TIPO 
+
+"CHILD -> PARENT"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+MAS QUANDO VC 
+
+
+USA O DOWNSTREAM,
+
+VC DEVE TER MT CUIDADO...
+
+
+
+
+
+
+
+
+
+
+
+DEVE TER CUIDADO PQ O NOME É ENGANOSO... 
+
+
+
+
+O NOME SUGERE QUE "AS TABLES CHILD VAO SER REFRESHADAS",
+
+
+
+MAS É O CONTŔARIO,
+
+SAO AS "TABLES PARENT QUE SAO REFRESHADAS,
+
+A PARTIR DOS REFRESHES DAS TABLES CHILD"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OU SEJA,
+
+
+NUNCA DEFINA "DOWNSTREAM" EM 1 DYNAMIC TABLE QUE NAO TEM 
+
+NENHUM CHILD DYNAMIC TABLE EM RELACAO A SI (
+
+    pq, se vc fizer isso,
+
+    essa dynamic table, que é um "PARENT SEM CHILD",
+
+
+    NUNCA VAI SER REFRESHADA, pois nao tem 
+
+    nenhuma child 
+
+    DEPENDENTE DE SI...
+)
+
+
+
+
+
+
+
+
+
+
+
+--> É POR ISSO QUE DEVEMOS TER MT CUIDADO COM O USO DESSA PROPERTY...
+
+
+
+
+
+resumo:
+
+QUANDO VC ESTÁ 
+
+
+
+COLOCANDO DOWNSTREAM COMO TARGET_LAG,
+
+COLOQUE ISSO 
+
+
+
+NA TABLE QUE POSSUI CHILDREN,
+
+e nao na table que é a child em si (e que, como parent, nao possui children)...

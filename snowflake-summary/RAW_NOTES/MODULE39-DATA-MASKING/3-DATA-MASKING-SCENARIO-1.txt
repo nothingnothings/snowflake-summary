@@ -1,0 +1,348 @@
+
+
+
+
+
+
+
+
+
+
+
+NESSA LECTURE,
+
+VEREMOS COMO APLICAR MASKING POLICY NA TABLE...
+
+
+
+
+
+
+
+
+
+
+--> A SINTAXE DE CRIACAO DAS MASKING POLICIES É ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE MASKING POLICY EMPLOYEE_MASK_1
+AS 
+(VAL STRING) RETURNS STRING -> 
+    CASE 
+        WHEN CURRENT_ROLE() IN ('ROLE_1', 'ROLE_2') THEN VAL 
+        ELSE CONCAT(LEFT(val, 2), '********')
+        END;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DEPOIS DISSO, PRECISAMOS APLICAR ESSA MASKING POLICY EM ALGUMA COLUMN,
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE TABLE EXAMPLE (
+
+    SSN_NUMBER STRING MASKING POLICY DEMO_DB.PUBLIC.EMPLOYEE_MASK_1,
+    SSN_NUMBER 2 STRING
+);
+
+
+
+
+
+
+
+
+
+
+
+E É CLARO QUE PODEMOS DEFINIR ESSA MASKING POLICY POSTERIORMENTE,
+
+
+TIPO ASSIM:
+
+
+
+
+ALTER TABLE IF EXISTS CUSTOMERS MODIFY COLUMN FULL_NAME 
+SET MASKING POLICY PHONE_POLICY;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-->  é claro que 
+
+
+ESSA MASK SÓ É APLICADA PARA OS ROLES QUE 
+
+NAO ESTIVEREM ELENCADOS
+ 
+
+
+ NAQUELE "WHEN CURRENT_ROLE() IN ('SYSADMIN') THEN VAL">..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ OK... MAS AGORA DEVEMOS COMPREENDER COMO ESSA 
+ QUERY É 
+
+ EXECUTADA, LÁ NO BACKEND...
+
+
+
+
+
+
+
+
+
+
+
+
+
+ ------> queriamos a table inteira,
+
+ assim:
+
+
+
+ SELECT * FROM EXAMPLE LIMIT 100;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ --> CLICAMOS EM "TABLE SCAN",
+
+
+ E AÍ 
+
+ TEMOS OS ATTRIBUTES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ -> TEMOS 2 COLUMNS... --> DE ESSAS 2 COLUMNS,
+
+
+
+ ELE ESTÁ TENTANDO QUERIAR O "SSN_NUMBER_2"...
+
+
+
+
+
+
+
+ --> A PRIMEIRA COLUMN NAO ESTÁ SENDO QUERIADA, ESSENCIALMENTE...
+
+
+
+
+
+
+ --> PQ NAO ESTÁ SENDO QUERIADA?
+
+
+
+
+
+
+
+
+
+ --> É PQ __o  SNOWFLAKE __ 
+
+
+ PERCEBE/DETECTA 
+
+
+ QUE A MASKING LOGIC FOI DE 
+
+ "mASK ALL DATA COMING FROM THAT COLUMN" --> AÍ O SNOWFLAKE 
+
+
+
+ WENT AHEAD E NEM MESMO QUERIOU AQUELA COLUMN,
+
+ IGNOROU COMPLETAMENTE A PRIMEIRA COLUMN,
+
+
+
+
+ PQ NENHUM DE SEUS VALUES SERÁ USADO,
+
+ MESMO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> O SYSADMIN ROLE
+
+
+
+
+
+NAO DEVE VER A EXPRESSION QUE FOI APLICADA,
+
+
+
+
+apenas os roles que possuem permissao 
+
+
+podem ver a expression aplicada...
+
+
+
+
+
+
+
+
+
+
+SE RODAMOS ESSA MESMA QUERY COM O ROLE ADEQUADO,
+
+
+
+
+
+
+VEREMOS QUE AMBAS COLUMNS SERÃO ESCANEADAS....
+
+
+
+
+
+
+
+
+
+
+
+
+OK... ESSE É UM CENÁRIO.... DEVEMOS VER MAIS ALGUNS CENÁRIOS...
+
+
+
+
+
+
+--> É ASSIM QUE CRIAMOS E APLICAMOS 1 MASKING POLICY EM 1 TABLE....
+
+
+
+
+
+
+
+
+
+--> E VIMOS COMO ESSAS POLICIES SAO INTERPRETADAS NO BACKEND,
+
+TAMBÉM...

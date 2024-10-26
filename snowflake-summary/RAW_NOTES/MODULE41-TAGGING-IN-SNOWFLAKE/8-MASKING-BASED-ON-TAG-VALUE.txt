@@ -1,0 +1,759 @@
+
+
+
+
+
+
+
+
+VAMOS CONTINUAR NOSSA DISCUSSAO...
+
+
+
+
+ANTERIORMENTE,
+
+
+
+APRENDEMOS QUE 
+
+
+PODEMOS:
+
+
+
+
+
+
+
+
+1) CRIAR 1 TAG 
+
+
+
+
+2) APLICAR ESSA TAG AO LONGO DE MÚLTIPLAS COLUMNS distintas,
+
+MÚLTIPLAS TABLES distintas...
+
+
+
+
+
+3) PODEMOS ATRIBUIR DIFERENTES VALUES,
+PARA 1 MESMA TAG...
+
+(
+
+
+    EX: PARA 1 MESMA TAG DE "DATE",
+
+
+    "DATE_TAG",
+
+    podemos ter diferentes values,
+
+
+    como "promotion_date",
+
+    "birth_date",
+
+    "join_date"...
+
+)
+
+
+
+
+
+
+
+
+
+
+
+--> CONTINUANDO... A TAG SERÁ A MESMA,
+
+
+MAS QUANDO APLICAMOS ESSA TAG A DIFERENTES VALUES,
+
+
+PODEMOS MANTER DIFERENTES TAG VALUES....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> SIMILARMENTE,
+
+
+PODEMOS:
+
+
+
+
+
+4) CRIAR 1 MASKING POLICY,
+
+E ENTAO ATTACHEAR 
+
+ESSA MASKING POLICY __ A ESSA TAG DE "DATE"...
+
+
+
+
+(aí, quando essa tag é adicionada a alguma table/column,
+
+A MASKING POLICY É APLICADA TAMBÉM...
+)
+
+
+
+
+
+
+
+VIMOS ISSO AO LONGO DAS AULAS ANTERIORES,
+
+
+ESSA COMBINACAO 
+
+
+DE "MASK + TAG"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+------> AGORA DIGAMOS QUE, QUANDO APLICO 
+
+ESSA MASKING POLICY 
+
+A ESSA TAG DE "DATE", 
+
+
+
+EU ___ 
+
+
+NAO_ VOU __ QUERER __ QUE ESSA POLICY 
+
+
+
+SEJA APLICADA 
+
+
+
+
+PARA __ AS TAGS COM VALUE DE 
+
+"BIRTH_DATE" E "JOIN_DATE"...
+
+
+
+
+
+
+
+
+
+EX:
+
+
+
+
+
+
+
+
+PROMOTION DATE  (SIM)
+
+BIRTH DATE  (NAO)
+
+
+JOIN DATE (NAO)
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE 
+
+SÓ QUEREMOS QUE ISSO SEJA
+APLICADO 
+
+
+
+NAS COLUMNS/TABLES EM QUE TEMOS 
+
+
+"date='PROMOTION_DATE'"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE QUEREMOS 
+APLICAR/DEIXAR DE APLICAR 
+
+
+
+O MASKING EM 1 COLUMN/TABLE 
+
+
+
+A DEPENDER DO VALUE DE SUA TAG...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> NA ÚLTIMA AULA,
+
+
+VIMOS QUE 
+
+CONSEGUIMOS APLICAR AQUELA POLICY DE "date_mask"
+
+
+por meio de uma tag,
+
+
+
+começando com a criacao da policy,
+
+com este código:
+
+
+
+
+
+
+
+
+CREATE OR REPLACE MASKING POLICY DATE_MASK 
+AS 
+(VAL DATE) RETURNS DATE -> 
+CASE
+    WHEN CURRENT_ROLE() IN ('ACCOUNTADMIN') THEN '1900-01-01'
+    ELSE VAL 
+END;
+
+
+
+
+
+
+
+
+
+
+--> AÍ NÓS TÍNHAMOS ASSIGNADO 
+
+ESSA MASKING POLICY NA NOSSA TAG,
+
+COM ESTE CÓDIGO:
+
+
+
+
+
+
+
+
+CREATE OR REPLACE TAG TAG.GOVERNANCE.DATE
+    SET MASKING POLICY DATE_MASK, -- O ASSIGN EM QUESTAO....
+        MASKING POLICY NAME_MASK;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NO CASO DA CRIACAO DA NOSSA POLICY,
+
+A ÚNICA REGRA QUE TÍNHAMOS ADICIONADO ERA ESTA:
+
+
+
+
+
+
+
+CREATE OR REPLACE MASKING POLICY DATE_MASK 
+AS 
+(VAL DATE) RETURNS DATE -> 
+CASE
+    WHEN CURRENT_ROLE() IN ('ACCOUNTADMIN') THEN '1900-01-01'
+    ELSE VAL 
+END;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+no caso, oo "current_role() IN (xxx)"....
+
+
+
+
+
+
+
+
+EX:
+
+
+
+
+
+
+
+
+CREATE OR REPLACE MASKING POLICY DATE_MASK 
+AS 
+(VAL DATE) RETURNS DATE -> 
+CASE
+    WHEN CURRENT_ROLE() IN ('ACCOUNTADMIN') THEN '1900-01-01'
+    ELSE VAL 
+END;
+
+
+
+
+
+QUER DIZER QUE APENAS O ROLE ESTAVA SENDO CONSIDERADO,
+
+PARA APLICAR (OU NAO) A MASKING POLICY...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... MAS AGORA PODEMOS APLICAR A MASKING POLICY 
+
+
+___  A PARTIR/CONSIDERANDO O 
+
+
+VALUE _ DA NOSSA TAG,
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE MASKING POLICY DATE_MASK2 
+AS (VAL STRING) RETURNS STRING ->
+    CASE 
+        WHEN SYSTEM$get_tag_on_current_column('TAG.GOVERNANCE.DATE)='promotiondate'
+        THEN '***MASKED***'
+    ELSE VAL 
+END;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK, COMO APLICAR MASKING POLICY A PARTIR 
+
+DO TAG VALUE?
+
+
+
+
+
+
+
+
+
+
+
+
+recapitulando:
+
+
+
+
+
+
+
+
+CREATE OR REPLACE MASKING POLICY DATE_MASK2 
+AS (VAL STRING) RETURNS STRING ->
+    CASE 
+        WHEN SYSTEM$get_tag_on_current_column('TAG.GOVERNANCE.DATE)='promotiondate' THEN '***MASKED***'
+    ELSE VAL 
+END;
+
+
+
+
+
+
+
+
+
+
+
+
+
+""
+
+WHEN SYSTEM$get_tag_on_current_column('TAG.GOVERNANCE.DATE)='promotiondate' THEN '***MASKED***'
+
+""
+
+
+
+
+
+
+
+OU SEJA, 
+
+
+USAMOS A METADATA DO SNOWFLAKE,
+
+
+
+COM
+
+
+
+"SYSTEM$get_tag_on_current_column()",
+
+
+
+
+PARA CONSEGUIR O VALUE 
+
+
+
+DA TAG APLICADA NESSA COLUMN....
+
+
+
+
+
+
+
+
+
+
+
+
+SE O VALUE FOR DE "promotiondate",
+
+
+
+
+
+
+ A MASK SERÁ APLICADA (values nos fields aparecerao 
+ 
+ como "***MASKED***")
+
+
+
+
+
+
+ TODOS OS OUTROS CASES, COM A TAG DE "DATE",
+
+
+
+
+ NAO SERÁ APLICADA ESSA MASK... (a mask de 
+ 
+ "DATE_MASK")....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... QUER DIZER QUE APLICAMOS A MASKING POLICY 
+
+
+A PARTIR DO 
+
+
+VALUE DA TAG...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+PODEMOS FAZER A MESMA COISA COM "rOW ACCESS POLICY"...
+
+
+
+
+
+
+
+
+
+
+
+
+--> PODEMOS APLICAR "ROW ACCESS POLICIES"
+
+
+
+COM BASE ___ NOS VALUES DE SUAS TAGS...
+
+
+
+
+
+
+
+(mas o professor nao nos mostrará isso)...
+
+
+
+
+
+
+
+
+
+
+
+
+-> A FUNCTION IMPORTANTE PARA 
+
+
+PEGAR O VALUE DE SUA TAG
+
+
+
+
+É 
+
+
+"SYSTEM$get_tag_on_current_TABLE()"
+
+
+
+
+
+
+E 
+
+
+
+"SYSTEM$get_tag_on_current_column()"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+QUANTO AO APPLY DE ROW ACCESS POLICIES, TEMOS ISTO:
+
+
+
+
+
+-- create a row access policy BASED ON THE TAG VALUE
+create or replace row access policy selected_date_mask4 as (DATE varchar)
+returns boolean ->
+system$get_tag_on_current_table('TAG.GOVERNANCE.DATE') = 'promotiondate'
+--and 'TAG_ADMIN'=current_role()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> O PROFESSOR EXPLICA QUE 
+
+
+ROW ACCESS POLICIES NAO PODEM SER ASSIGNADAS A TAGS... 
+
+
+AS ROW ACCESS POLICIES DEVEM SER ATTACHED DIRETAMENTE 
+
+NAS SUAS TABLES, APENAS ISSO É SUPORTADO PELO SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+mas isso é super situacional...
+
+
+
+
+
+
+acabamos com esta lecture...
+
+
+
+
+É ASSIM QUE PODEMOS APLICAR 
+
+MASKING POLICY COM BASE 
+
+NO STRING VALUE 
+
+DEFINIDO NAS SUAS TAGS (o value de cada 1  de suas tags)...
+
+
+

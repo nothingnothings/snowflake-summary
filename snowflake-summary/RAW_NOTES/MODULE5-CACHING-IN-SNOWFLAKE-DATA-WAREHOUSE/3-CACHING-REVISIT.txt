@@ -1,0 +1,411 @@
+
+
+
+
+
+
+
+
+
+
+REVISITAR O QUE FIZEMOS:
+
+
+
+
+
+STEP 1 
+
+
+
+
+
+CRIAMOS 1 EXTRA SMALL SIZE WAREHOUSE
+
+
+
+
+
+
+
+EXECUTAMOS 
+
+
+SELECT * FROM SUPPLIER;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+QUANDO EXECUTAMOS ESSA QUERY, VIMOS COMO 
+
+
+A DATA FOI TIRADA 
+
+
+
+
+
+
+
+DO DATA STORAGE LAYER PARA O 
+
+
+
+VIRTUAL WAREHOUSE LAYER,
+
+
+
+E VIMOS COMO O RESULT 
+
+
+FOI RETORNADO 
+
+
+AO LAYER 
+
+
+AO LAYER DE "CLOUD SERVICES"....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+BYTES WRITTEN TO RESULT --> 5.33GB --> data retornada 
+
+
+ao cloud services layer... é cacheada lá também...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+STEP 2:
+
+
+
+
+
+
+
+
+
+
+
+EXECUTAMOS A MESMA QUERY, 
+
+
+E A QUERY 
+
+RETORNOU 
+EM POUCOS ms....
+
+
+
+--> O RESULT SET FOI REUTILIZADO, POR CONTA 
+
+
+DO LAYER DE CLOUD SERVICES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+STEP 3:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DESABILITAMOS O CLOUD SERVICE CACHE,
+
+E AÍ 
+
+EXPECTAMOS QUE A QUERY USASSE 
+
+
+A CACHING AREA 
+
+
+
+DA VIRTUAL WAREHOUSE...
+
+
+
+
+
+
+
+
+
+
+
+
+--> ENTRETANTO, A QUERY RODOU POR MT TEMPO...
+
+
+
+
+
+
+
+
+-> A RAZAO PARA ISSO É QUE 
+
+
+
+O CACHE DAS VIRTUAL WAREHOUSES É __ PURGEADA__ 
+
+
+SEMPRE QUE 
+
+VIRTUAL WAREHOUSES 
+
+
+SAO SUSPENSAS...(depois de 180 segundos, por default)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+STEP 4:
+
+
+
+
+
+
+
+
+
+
+
+
+
+EXECUTAMOS A MESMA QUERY,
+
+
+
+
+AGORA ELA AINDA DEMOROU BASTANTE,
+
+PQ 
+A 
+
+
+DATA FOI ESCRITA DE VOLTA AO 
+
+
+LAYER DE "CLOUD SERVICES",
+
+
+
+
+MAS REALMENTE, PELO MENOS 
+
+
+
+O CACHE DAS VIRTUAL WAREHOUSES FOI UTILIZADO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+----> MAS PQ DEMOROU TANTO TEMPO, ENTAO?
+
+
+
+
+
+
+
+
+
+--> DEMOROU TANTO TEMPO PQ 
+
+
+__ TODA A DATA RETIRADA 
+
+
+DO DATA STORAGE LAYER FICA EM UM FORMATO 
+
+""COLUMN COMPRESSED"",
+
+
+E ESTARÁ EM 1 FORMATO ENCRIPTADO --> QUANDO ESSA DATA 
+
+
+É PULLADA 
+
+
+
+LÁ DO DATA STORAGE LAYER PARA O VIRTUAL WAREHOUSE LAYER,
+
+
+
+ELA 
+
+
+ACABA UNCOMPRESSED E ARMAZENADA NO LOCAL HARD DISK 
+
+
+
+DO VIRTUAL WAREHOUSE (local disk cache, esse é o nome)...
+
+
+
+
+
+--> OK.... MAS ENCRYPTED DATA SERÁ 
+
+
+__DECRIPTADA__ APENAS NA MEMÓRIA __ 
+
+
+
+DA VIRTUAL WAREHOUSE 
+
+
+QUANDO FILES FOREM LIDAS DESSES NODES 
+
+
+
+DO VIRTUAL WAREHOUSE...
+
+
+
+
+
+
+
+
+
+
+--> ASSIM QUE AS FILES SAO LIDAS,
+
+
+O CONTEÚDO DELAS É ENCRIPTADO __ MAIS UMA VEZ__,
+
+
+e aí 
+
+ 
+ é enviado pela network, até o cloud services 
+
+ layer...
+
+
+
+
+
+
+ ESSE PROCESSO TODO DE "DECRYPT FILES,
+
+ ENCRYPT FILES MAIS UMA VEZ PARA AS ENVIAR 
+
+NA NETWORK, PARA AÍ DECRYPTAR DE NOVO",
+
+
+
+
+isso tudo demorou 62% do tempo...
+
+
+
+
+
+
+
+
+
+
+--> NA PRÓXIMA AULA 
+
+DISCUTIREMOS ALGUMAS DAS COISAS APRENDIDAS 
+
+
+NESSA AULA...

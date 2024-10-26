@@ -1,0 +1,231 @@
+
+
+
+
+
+
+
+
+
+
+
+COMO É A SCALING POLICY....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+""
+
+
+HOW MANY QUERIES DOES SNOWFLAKE QUEUES 
+
+
+BEFORE IT SPINS UP ADDITIONAL CLUSTER?
+
+
+
+
+
+
+""
+
+
+
+
+
+
+
+
+
+
+
+
+
+WHAT IS THE TRIGGER TO SUSPEND A CLUSTER,
+
+IF NO LOAD IS PRESENT?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+HOW MANY QUERIES DOES SNOWFLAKE QUEUES 
+
+
+BEFORE IT SPINS UP ADDITIONAL CLUSTER?
+
+
+
+
+
+
+
+
+
+
+
+temos 2 scaling policies,
+
+"standard"
+
+
+e 
+
+
+"economy"....
+
+
+
+
+
+
+
+
+
+
+
+standard --> NO MOMENTO EM QUE 1 QUERY ENTRA 
+
+NA QUEUE, QUANDO EXISTIR 1 QUERY,
+
+
+O SNOWFLAKE JÁ VAI SPIN UP 
+
+
+CÓPIAS DE SEUS CLUSTERS,
+
+PARA 
+
+ACABAR COM ESSA FILA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+STANDARD:  
+
+
+
+""IMMEDIATELY WHEN EITHER A QUERY IS QUERIED,
+
+OR THE SYSTEM DETECTS THAT THERE'S ONE MORE QUERY 
+THAN THE CURRENTLY-RUNNING CLUSTERS CAN EXECUTE""...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ECONOMY:
+
+
+ONLY IF THE SYSTEM ESTIMATES THERE'S ENOUGH 
+QUERY LOAD TO KEEP THE CLUSTER 
+BUSY FOR ____aT LEAST___ 6 MINUTES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+WHAT IS THE TRIGGER TO SUSPEND A CLUSTER IF NO LOAD IS PRESENT:
+
+
+
+
+
+
+
+
+
+
+standard:
+
+        AFTER 2 TO 3 CONSECUTIVE 
+        SUCCESSFUL checks (performed at 1-minute intervals),
+        WHICH DETERMINE WHETHER THE LOAD ON THE LEAST-LOADED 
+        CLUSTER COULD BE REDISTRIBUTED TO THE OTHER 
+        CLUSTERS WITHOUT SPINNING UP 
+        THE CLUSTER AGAIN..
+
+
+
+
+
+
+ECONOMY:
+
+        After 5 to 6 consecutive SUCCESSFUL checks 
+        (1 minute intervals),
+        WHICH DETERMINE THE LOAD ON THE LEAST-LOADED 
+        CLUSTER COULD BE REDISTRIBUTED 
+
+        TO OTHER CLUSTERS WITHOUT SPINNING UP THE 
+        CLUSTER AGAIN....
+
+
+
+
+
+
+        
+
+
+

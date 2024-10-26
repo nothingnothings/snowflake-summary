@@ -1,0 +1,428 @@
+
+
+
+
+
+
+
+
+
+
+
+--> OK...
+
+
+
+
+
+
+NESSA LICAO, FALAREMOS SOBRE SHARED NOTHING ARCHITECTURE...
+
+
+
+
+
+
+
+
+
+
+
+TEMOS 3 COMPUTE NODES, 
+
+
+
+QUE COMPARTILHAM DE 1 MESMO SHARED DISK.....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> NESSE CASO, DA "SHARED DISK ARCHITECTURE",
+
+ficamos 
+
+
+
+COM 1 BOTTLENECK,
+
+que é esse SHARED DISK...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA RESOLVER ESSE PROBLEMA,
+
+
+
+
+NA SHARED NOTHING ARCHITECTURE,
+
+
+
+NÓS ASSIGNAMOS __ STORAGE__ 
+
+PARA __ CADA 
+
+
+COMPUTE NODE....
+
+
+
+
+
+
+
+
+
+
+
+CADA COMPUTE NODE TEM SUA PRÓPRIA 
+
+STORAGE...
+
+
+
+
+
+
+QUAIS SAO AS VANTAGENS DESSA ARCHITECTURE?
+
+
+
+
+
+
+
+
+
+
+
+
+
+1) ESSA ARCHITECTURE 
+
+__eSCALA__ PROCESSING E COMPUTE 
+POWER EM 1 ÚNICO BLOCO...
+
+
+(subsets de data sao distribuídos 
+AO LONGO DE TODOS OS NODES 
+NO SISTEMA)
+
+
+(
+    ISSO ELIMINA O BOTTLENECK 
+    DE COMUNICACAO COM 1 ÚNICO 
+    SHARED DISK...
+)
+
+
+
+
+
+2) ESSE TIPO DE ARCHITECTURE 
+
+MOVE A STORAGE PARA PERTO 
+
+DO "COMPUTE"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK, MAS QUAIS SAO ALGUNS DOS __ PROBLEMAS___ 
+
+
+que podem surgir,
+
+
+devido à natureza dessa architecture...
+
+
+
+
+
+
+
+
+
+
+
+
+
+ASSIM QUE O DATA VOLUME AUMENTA,
+
+
+
+O NÚMERO DE NODES AUMENTA...
+
+
+
+
+
+
+
+
+
+
+
+
+--> E CADA NODE É RESPONSÁVEL 
+
+
+APENAS PELA DATA ARMAZENADA EM SEU PRÓPRIO 
+DISK...
+
+
+
+
+
+
+
+
+--> SE 1 NODE QUER 
+
+SE "REFER" a data DE 1 NODE DIFERENTE,
+
+
+
+
+a data terá de ser "shuffled"
+
+ao longo dos nodes...
+
+
+
+
+
+
+
+
+
+
+
+
+OK, MAS O QUE ACONTECE SE 1 NODE FALHA?
+
+
+
+DATA ARMAZENADA 
+ NESSE NODE TEM DE SER 
+
+
+TRANSFERIDA 
+
+
+
+PARA OS OUTROS NODES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ESSAS FAILURES AFETAM 
+
+
+A PERFORMANCE DO SISTEMA INTEIRO...
+
+
+
+
+
+
+
+
+--> à MEDIDA QUE 
+O DATA VOLUME AUMENTA,
+ISSO
+ 
+
+ VAI SE TORNANDO UM PROBLEMA SÉRIO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> TAMBÉM, ESCOLHER O BALANCE 
+
+ENTRE STORAGE E COMPUTE 
+
+É ALGO DIFÍCIL...
+
+
+
+
+
+
+
+
+
+
+SE VC QUER AUMENTAR STORAGE SEM AUMENTAR 
+
+COMPUTE,
+
+VC NAO PODE FAZÊ-LO...
+
+
+
+
+
+
+
+
+
+
+
+
+--> SE VC QUER AUMENTAR COMPUTE 
+
+SEM ADICIONAR STORAGE,
+VC NAO PODE FAZÊ-LO...
+
+
+
+
+
+
+
+
+
+
+ISSO PQ "STORAGE" E "COMPUTE",
+
+
+NESSA ARCHITECTURE,
+
+SAO "TIGHTLY COUPLED TOGETHER"...
+
+
+
+
+
+
+
+
+
+
+
+RESUMINDO, VIMOS 3 PROBLEMAS NESSA ARCHITECTURE::
+
+
+
+
+
+
+
+
+
+
+
+1) DATA DISTRIBUÍDA AO LONGO DO CLUSTER
+REQUER 
+
+SHUFFLING AO LONGO DOS NODES...
+
+
+(e isso se torna 1 problema sério quando o número 
+de nodes aumenta)
+
+
+
+
+
+
+
+2) PERFORMANCE É ALTAMENTE DEPENDENTE DE 
+
+COMO A DATA É DISTRIBUÍDA 
+
+AO LONGO DOS NODES NO SISTEMA...
+
+
+
+
+
+
+
+
+3) COMPUTE NAO CONSEGUE SER "SIZED" 
+
+
+de maneira independente de storage...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+MAS EXISTEM OUTROS PROBLEMAS,
+
+EM NÍVEL DE HARDWARE E CONFIGURATION...
+
+

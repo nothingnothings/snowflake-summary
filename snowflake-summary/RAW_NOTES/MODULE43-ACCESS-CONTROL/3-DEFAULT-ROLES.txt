@@ -1,0 +1,940 @@
+
+
+
+
+
+
+NESSA AULA, TENTAREMOS APRENDER SOBRE SECURITYADMIN, USERADMIN 
+
+
+E SYSADMIN...
+
+
+-----------------------
+
+
+
+
+
+
+
+
+
+LEMOS ESTE STATEMENT:
+
+
+
+
+
+
+SECURITYADMIN (security administrator)
+
+
+
+
+--> ROLE THAT CAN MANAGE ANY OBJECT GRANT GLOBALLY,
+
+AS WELL AS CREATE, MONITOR AND MANAGE USERS AND ROLES.
+
+
+--> MORE SPECIFICALLY, THIS ROLE:
+
+
+
+
+1) IS GRANTED THE "MANAGE GRANTS" security privilege,
+to be able to modify ANY GRANT, also REVOKE any grant.
+
+
+
+
+2) Inherits the privileges of the USERADMIN role,
+
+via the system role hierarchy (USERADMIN role is granted 
+
+to SECURITYADMIN)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE ELE É USADO PARA CREATE, MANAGE E MONITOR 
+
+
+USERS E ROLE...
+
+
+
+
+
+
+
+
+
+
+-> AGORA VEREMOS O QUE ELE PODE FAZER, E O QUE ELE NAO PODE FAZER...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> temos assim:
+
+
+
+
+
+
+
+
+
+
+
+----- What it CAN DO ---- 
+
+
+
+USE ROLE SECURITYADMIN;
+
+
+
+CREATE OR REPLACE ROLE my_role;
+
+
+
+
+CREATE OR REPLACE ROLE my_role_2;
+
+
+
+
+GRANT ROLE my_role TO my_role_2;
+
+
+
+
+
+
+
+
+
+
+
+
+
+OU SEJA, ELE PODE CRIAR ROLES, E AÍ 
+
+
+INCORPORAR ROLES UNS AOS OUTROS...
+
+
+
+
+
+
+
+
+
+
+COM ISSO, INSERIMOS OS PRIVILEGES DE 
+
+"my_role"
+
+também no role "my_role_2"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> o professor entao faz mais 1 coisa,
+
+ele tenta CRIAR 1 DATABASE, USANDO O SECURITYADMIN...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+----- WHAT IT __CANT___ DO -----
+
+
+
+
+CREATE OR REPLACE DATABASE my_db;
+
+
+
+CREATE WAREHOUSE my_warehouse;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ELE NAO VAI CONSEGUIR CRIAR ESSES OBJECTS...
+
+
+
+
+
+
+
+
+
+
+
+ELE RECEBE O ERROR "INSUFFICIENT PRIVILEGES TO OPERATE 
+ON ACCOUNT GE3421"...
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE ELE NAO TEM PRIVILEGES PARA CRIAR DATABASES,
+
+E NEM WAREHOUSES....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ISSO PQ O SECURITYADMIN 
+
+SÓ TEM PERMISSAO PARA 
+
+"CREATE, MONITOR AND MANAGE" users e roles...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> também nao temos permission para criar warehouses...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> SECURITYADMIN -----> PODEMOS APENAS CRIAR, MANAGEAR
+
+
+
+E REMOVER ROLES...
+
+
+
+
+
+
+
+
+também podemos CONFERIR GRANTS E REVOGAR (Revoke) grants...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> NAO PODEMOS CRIAR DATABASE-RELATED 
+
+OBJECTS COM O SECURITYADMIN (nem warehouses)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AGORA TEMOS O SYSADMIN:
+
+
+
+
+
+
+
+
+
+
+
+
+""ROLE THAT HAS PRIVILEGES TO CREATE WAREHOUSES 
+AND DATABASES (and other objects) IN AN ACCOUNT""....
+
+
+
+
+
+
+
+
+
+
+
+
+""AND OTHER OBJECTS"" --> QUANDO DIZEMOS "OTHER OBJECTS",
+
+
+
+
+QUEREMOS DIZER SCHEMAS E SCHEMA-LEVEL OBJECTS,
+
+
+COMO TABLES, VIEWS,
+
+MATERIALIZED VIEWS,
+
+
+STREAM OBJECTS,
+
+TASKS,
+
+ETC...
+
+
+
+
+
+
+
+
+
+
+
+
+-> COM O SYSADMIN ROLE,
+
+
+PODEMOS CRIAR DATABASES E DATABASE-RELATED OBJECTS,
+
+
+nessas databases...
+
+
+
+
+
+-----------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+O PROFESSOR TROCA PARA O SYSADMIN,
+
+
+
+e primeiramente checa o que ELE __NAO __PODE FAZER___...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--- What it CAN'T DO ----
+
+
+
+
+
+CREATE OR REPLACE ROLE my_role;
+
+
+
+CREATE OR REPLACE ROLE my_role_2;
+
+
+GRANT ROLE my_role TO ROLE my_role_2;
+
+
+CREATE OR REPLACE USER testuser PASSWORD='ABC123';
+
+
+
+
+
+
+
+-- What it can do -- 
+
+
+
+
+
+CREATE OR REPLACE DATABASE my_db;
+
+
+CREATE OR REPLACE WAREHOUSE my_warehouse;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-_> QUANDO TENTAMOS CRIAR OS ROLES, USANDO O SYSADMIN,
+
+
+RECEBEMOS UM ERROR,
+
+DIZENDO QUE 
+
+NAO TEMOS 
+
+
+
+PRIVILEGES SUFICIENTES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> TAMBÉM NAO PODEMOS FAZER GRANT DE 1 ROLE A OUTRO ROLE...
+
+
+
+
+
+
+
+
+--> TAMBÉM NAO PODEMOS CRIAR USERS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS PODEMOS CRIAR DATABASES E SCHEMA-LEVEL OBJECTS 
+(tables, views, streams, stages, etc)....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ESSA É A DIFERENÇA ENTRE O SECURITYADMIN E O SYSADMIN...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AGORA VEREMOS O "USERADMIN"...
+
+
+
+
+
+
+
+
+-> O QUE ELE PODE FAZER, E O QUE NAO PODE FAZER...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--- What it can do? ---- 
+
+
+
+
+
+CREATE OR REPLACE USER testuser PASSWORD='ABC123';
+
+
+
+
+
+
+
+---- What IT CANT DO ----
+
+
+
+CREATE OR REPLACE ROLE MY_ROLE;
+
+
+CREATE OR REPLACE ROLE MY_ROLE_2;
+
+
+
+GRANT ROLE MY_ROLE TO ROLE MY_ROLE_2;
+
+
+
+CREATE DATABASE MY_DB;
+
+
+
+CREATE WAREHOUSE MY_WAREHOUSE;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+O "USERADMIN"
+
+
+consegue CRIAR E MANAGEAR 
+
+
+
+USERS,
+
+
+MAS NAO CONSEGUE CRIAR ROLES ( e nem schema-level objects,
+
+
+nem databases)...
+
+
+
+
+
+
+
+
+TAMBÉM NAO PODE CONFERIR GRANTS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> O QUE TEMOS QUE SABER, NO CASO,
+
+É QUE 
+
+
+
+O "USERADMIN"
+
+É UM __CHILD ROLE__ 
+
+
+EM RELACAO AO SECURITYADMIN (Que tem seus privileges + os privileges 
+
+de create role, manage role e manage de grants)..
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE 
+
+o
+ useradmin tem APENAS A RESPONSABILIDADE 
+
+
+
+
+ DE CRIAR O USER...
+
+
+
+
+
+
+
+
+ apesar de ficar debaixo do securityadmin,
+
+
+ ele nao pode criar 
+
+
+
+ roles e managear grants...
+
+
+
+
+
+
+
+
+
+
+
+
+ --> ele também nao pode criar databases,
+
+ nem warehouses...
+
+
+
+ ------------------------------
+
+
+
+
+
+
+
+
+
+ O QUE PODEMOS APRENDER, DESSA DISCUSSAO?
+
+
+
+
+
+
+
+
+
+
+
+
+ 1) USANDO O SECURITYADMIN, 
+
+ VOCE PODE CRIAR ROLES E VC PODE 
+
+ CONFERIR PRIVILEGES NOS ROLES, MAS NAO PODE CRIAR 
+ QUAISQUER 
+ DATABASE OBJECTS ou WAREHOUSE OBJECTS, 
+
+
+ e nao pode criar nenhum outro system-related object...
+
+
+
+
+
+
+ 2) COM O SYSADMIN, VOCE NAO PODE 
+
+
+ CRIAR NENHUM ROLE E NAO PODE 
+
+ REALIZAR NENHUM GRANT a 1 role,
+
+
+
+ e nao pode criar 1 user...
+
+
+
+--> COM ELE, VC APENAS PODE CRIAR 
+DATABASES, WAREHOUSES E OUTROS 
+SYSTEM-RELATED OBJECTS...
+
+
+
+
+
+
+
+
+
+
+
+3) COM O USER ADMIN, VC PODE CRIAR E MANAGEAR 
+USERS,
+
+MAS VC NAO PODE CRIAR QUAISQUER ROLES,
+
+NAO PODE DAR GRANT DE 1 ROLE A OUTRO ROLE,
+
+E NAO 
+
+PODE 
+
+
+CRIAR NENHUMA DATABASE OU WAREHOUSE...
+
+
+
+
+
+
+
+
+
+
+
+CERTO...
+
+
+esse era o básico sobre esses roles...
+
+
+
+
+
+
+
+
+
+
+-> outra coisa que vc tem que saber/entender é que 
+
+TODAS AS COISAS QUE ESSES ROLES SAO CAPAZES 
+
+DE FAZER,
+
+o
+
+ACCOUNTADMIN É CAPAZ TAMBÉM...
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE A RESPONSIBILITY DO ACCOUNTADMIN 
+
+
+É DISTRIBUÍDA 
+
+
+ENTRE O "SECURITY ADMIN" (e useradmin) e "SYSADMIN"...
+
+
+
+
+
+
+
+--> NA PRÓXIMA AULA, VEREMOS ALGUNS SCENARIOS,
+TENTAR 
+COMPREENDER ESSES ROLES, DE OUTRA PERSPECTIVA....

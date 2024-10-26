@@ -1,0 +1,498 @@
+
+
+
+
+
+
+
+
+AGORA, CONSIDEREMOS O SCENARIO DO CREATE DE 1 DATABASE...
+
+
+
+
+
+
+
+
+
+AO EXAMINARMOS ESSE SCENARIO, TEREMOS 1 MELHOR ENTENDIMENTO 
+
+SOBRE  SYSADMIN, SECURITYADMIN E USERADMIN....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> DE NOSSA AULA ANTERIOR,
+
+JÁ CRIAMOS O ROLE 
+
+
+"MY_ROLE"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> TENTAREMOS USAR ESSE ROLE PARA CRIAR 1 DATABASE...
+
+
+
+
+
+
+
+--> PARA ISSO, ESSE ROLE PRECISA DOS PRIVILEGES APROPRIADOS...
+
+
+
+
+
+
+----------------------------------------
+
+
+
+
+DIGAMOS QUE ESTAMOS NO ROLE DE "SECURITYADMIN"...
+
+
+
+
+--> agora, queremos entrar no role "my_role",
+
+para criarmos a database...
+
+
+
+
+
+
+
+
+
+-_> TROCAMOS PARA O ROLE DE "MY_ROLE",
+
+
+mas imediatamente ficamos com 1 error...
+
+
+
+
+
+
+
+--> FICAMOS COM 1 ERROR PQ __ ESSE ROLE NAO FOI ASSIGNADO 
+
+A NENHUM USER (
+    nem mesmo a nossa conta, que tem o accountadmin...
+)
+
+
+
+
+
+
+
+--> PARA CONSEGUIRMOS USAR ESSE ROLE,
+
+PRECISAMOS 
+
+
+
+DE 
+
+
+1 COMANDO COMO 
+
+
+
+
+
+
+
+
+
+GRANT ROLE MY_ROLE TO USER PRADEEP;
+
+
+
+
+
+
+E, DEPOIS DISSO, PRECISAMOS 
+
+
+
+VINCULAR ESSE ROLE AO ROLE DE "SYSADMIN",
+
+
+PQ ESSA É A BEST PRACTICE....
+
+
+
+
+
+
+
+
+
+
+por isso fazemos algo assim:
+
+
+
+
+
+
+
+
+USE ROLE SECURITYADMIN;
+
+
+CREATE OR REPLACE ROLE MY_ROLE;
+
+
+GRANT ROLE MY_ROLE TO ROLE SYSADMIN;
+
+
+GRANT ROLE MY_ROLE TO USER PRADEEP;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PRECISAMOS FAZER ISSO PQ 
+
+
+""UM USER TEM QUE ESTAR ANEXADO A 1 ROLE, 
+
+PARA QUE ELE SEJA CAPAZ DE USAR ESSE ROLE""...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> para demonstrar a diferença entre roles,
+
+
+o professor usa 
+
+o 
+
+ROLE DE 
+
+"USERADMIN",
+
+
+
+
+e entao 
+
+
+tenta 
+
+
+
+ATTACHEAR ESSE ROLE DE "MY_ROLE" 
+
+
+
+AO USER "PRADEEP" (e isso falhará, é claro... pq o useradmin só tem 
+permissao para CRIAR E MANAGEAR USERS)...
+
+
+
+
+
+
+
+
+
+
+USE ROLE USERADMIN 
+
+GRANT ROLE MY_ROLE TO USER PRADEEP;
+
+
+
+
+
+
+
+
+GANHAMOS UM ERROR:
+
+
+
+
+
+
+
+
+""GRANT NOT EXECUTED: INSUFFICIENT PRIVILEGES""...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+RESUMO: 
+
+
+
+O USERADMIN SÓ PODE CRIAR USERS,
+
+
+MAS NAO PODE GRANT ROLES AOS USERS....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... O PROFESSOR ENTAO TROCA PARA "SECURITYADMIN",
+
+
+
+que é o PARENT ROLE, em relacao 
+
+
+ao "USERADMIN"...
+
+
+
+
+
+
+ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+
+USE ROLE SECURITYADMIN;
+
+
+GRANT ROLE MY_ROLE TO USER PRADEEP;
+
+
+
+
+
+
+
+
+
+
+
+
+-> E ISSO FUNCIONOU...
+
+
+
+
+
+
+
+
+
+--> AGORA PODEMOS USAR ESSE ROLE,
+
+
+
+COM 
+
+
+
+
+
+
+
+
+
+USE ROLE MY_ROLE;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+COM ISSO, O USER "PRADEEP" FICOU CAPAZ DE 
+
+
+
+USAR O ROLE "MY_ROLE", que foi criado 
+
+pelo SECURITYADMIN....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CONCLUSAO:
+
+
+
+
+
+APEMAS O "SECURITYADMIN" E O "ACCOUNTADMIN"
+
+
+PODEM ASSIGNAR 1 USER A 1 ROLE... (ou 1 role a 1 user)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+PONTOS:
+
+
+
+
+
+
+
+1) YOU CAN'T GRANT ROLE TO USER, USING USERADMIN....
+
+
+
+
+2) YOU CAN GRANT ROLE TO A USER ONLY BY __sECURITYADMIN...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> COM ISSO, ACABAMOS COM O LEVEL 1 DE 
+
+CREATE DATABASE....
+
+
+
+
+
+
+
+
+
+
+FALAREMOS MAIS SOBRE PERMISSIONS NECESSÁRIAS NAS PRÓXIMAS AULAS...
+
+
+
+

@@ -1,0 +1,690 @@
+NESSA SECTION,
+
+
+TENTAREMOS ENTENDER O QUE SAO DYNAMIC TABLES,
+
+
+E QUAL SUA IMPORTANCIA...
+
+
+
+
+
+
+
+
+1) SIGNIFICANCE OF DYNAMIC TABLES...
+
+
+
+
+
+
+
+
+2) COMO DYNAMIC TABLES FUNCIONAM....
+
+
+
+
+
+
+3) SUAS VANTAGENS...
+
+
+
+
+
+
+
+
+
+
+
+--> ANTES DE COMPREENDERMOS ESSAS TABLES,
+
+
+TEMOS QUE COMPREENDER UM POUCO MAIS SOBRE 
+
+VIEWS E MATERIALIZED VIEWS...
+
+
+
+
+
+
+
+
+--> TIPO UMA REVISAO...
+
+
+
+
+
+
+
+
+
+
+
+TEMOS 1 TABLE NA SNOWFLAKE_SAMPLE_DATA,
+
+
+
+cujo nome é "call_center"...
+
+
+
+
+
+
+
+
+
+
+
+--> RODAMOS ALGUMAS QUERIES, TIPO ASSIM:
+
+
+
+
+
+
+
+
+CREATE OR REPLACE TABLE DEMO_DB.PUBLIC.CALL_CENTER
+AS 
+SELECT * FROM SNOWFLAKE_SAMPLE_DATA.TPCDS_SF100TCL.CALL_CENTER;
+
+
+
+CREATE OR REPLACE VIEW DEMO_DB.PUBLIC.CALL_CENTER_VW
+AS 
+SELECT * FROM SNOWFLAKE_SAMPLE_DATA.TPCDS_SF100TCL.CALL_CENTER
+WHERE CC_DIVISION='6';
+
+
+
+
+SELECT * FROM SNOWFLAKE_SAMPLE_DATA.TPCDS_SF100TCL.CALL_CENTER
+WHERE CC_DIVISION='6';
+
+
+
+
+
+
+UPDATE DEMO_DB.PUBLIC.CALL_CENTER
+SET CC_EMPLOYEES='88807687'
+WHERE CC_DIVISION='6';
+
+
+
+
+
+SELECT * FROM DEMO_DB.PUBLIC.CALL_CENTER_VW;
+
+
+
+
+
+
+
+
+
+
+COMO VC PODE OBSERVAR,
+
+DEPOIS DE CRIARMOS AQUELA TABLE,
+
+CRIAMOS UMA VIEW 
+
+EM CIMA DA TABLE, tbm...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+QUANDO CRIAMOS ESSA VIEW,
+
+
+
+SE QUALQUER 
+
+
+CHANGE 
+
+
+ACONTECER NA TABLE ORIGINAL,
+
+
+ESSAS CHANGES 
+
+
+SAO IMEDIATAMENTE 
+
+
+CAPTURADAS 
+
+
+NA NOSSA VIEW (pq a view é, na verdade,
+
+apenas 1 reproducao de lógica... é apenas 
+
+1 query "congelada")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> CERTO... AÍ TENTAMOS UPDATAR 
+
+TODOS OS VALUES 
+
+DA TABLE,
+
+
+TIPO ASSIM:
+
+
+
+
+
+UPDATE DEMO_DB.PUBLIC.CALL_CENTER
+SET CC_EMPLOYEES='88807687'
+WHERE CC_DIVISION='6';
+
+
+
+
+
+
+
+--> SE QUERIARMOS A VIEW,
+
+COM ISTO:
+
+
+
+
+
+
+SELECT * FROM DEMO_DB.PUBLIC.CALL_CENTER_VW;
+
+
+
+
+
+
+
+
+
+
+PERCEBEMOS QUE 
+
+
+
+
+TODAS AS MUDANÇAS NA TABLE ORIGINAL SÃO REFLETIDAS NESSA VIEW...
+
+
+
+
+
+
+
+
+
+
+
+É CLARO QUE VIEWS NAO PRODUZEM NENHUMA PERFORMANCE BONUS...
+
+
+
+
+
+
+
+
+
+--> APENAS MATERIALIZED VIEWS NOS DÃO GANHOS DE PERFORMANCE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+----> PODEMOS AFIRMAR QUE A VIEW CAPTURA QUALQUER 
+
+CHANGE 
+
+
+QUE ACONTECE NA TABLE ORIGINAL...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-_> QUANDO 1 PESSOA RODA 1 VIEW,
+
+
+
+ESSA PESSOA RODA 1 QUERY EM 1 TABLE (ou múltiplas tables,
+
+se estivermos usando joins, aggregates, etc)...
+
+
+
+
+
+
+
+
+-> OK.... O RESULTADO DA QUERY VAI SER REFLETIDO 
+
+
+NA VIEW...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CERTO.... MAS 1 PROBLEMAO, AQUI,
+
+É QUE 
+
+
+""QUANDO ALGUÉM RODAR ESSA QUERY E RECEBER O RESULT DE VOLTA,
+
+
+ESSE RESULT __ NAO __ VAI PERSIST""""...
+
+
+
+
+
+
+
+
+
+
+
+
+como assim?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+BEM.... --> SEMPRE QUE 1 QUERY É EXECUTADA,
+
+
+A QUERY VAI SER PROCESSADA EM CIMA 
+
+
+DAS TABLES ORIGINÁRIAS,
+
+
+E AÍ O RESULT VAI RETORNAR AO USER...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> COM AS VIEWS, AO CONTRÁRIO,
+
+CADA VEZ EXISTIRÁ 1 QUERY PROCESS,
+
+
+MAS __ O RETURNED RESULT __ NAO PERSISTE....
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS SE OLHARMOS DE OUTRO MODO... -> TODAS AS CHANGES 
+
+
+REALIZADAS NAS TABLES __ SERAO __aUTOMATICAMENTE 
+
+
+CAPTURADAS, DINAMICAMENTE,
+
+
+
+PELA VIEW...
+
+
+
+
+
+
+
+
+
+
+------> ISSO QUER DIZER QUE 
+
+
+O "QUERY RESULT IS NOT PERSISTED",
+
+nessa view, o que 
+
+
+
+QUER DIZER QUE __ ELA SEMPRE TEM DE SER PROCESSADA 
+
+DE NOVO,
+
+E ISSO SEMPRE 
+
+VAI ADICIONAR 
+
+CUSTOS...
+
+
+
+
+
+
+
+
+
+
+
+
+---> PARA SOLUCIONAR O PROBLEMA DE CUSTO DA VIEW (
+    que nunca GUARDA RESULT SETS, basicamente;
+
+    nunca guarda result sets no CLOUD SERVICES LAYER
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> O CHAT GPT NOS EXPLICA:
+
+https://chat.openai.com/share/4b600f12-5276-45e2-b52a-33db059a2df3
+
+
+
+
+
+
+
+
+in snowflake sql, do views ever store
+ result sets in the cloud services layer
+
+
+
+
+
+
+
+
+
+
+
+
+No, in Snowflake SQL, views do not store result
+ sets in the cloud services layer. Snowflake 
+ is an architecture designed for cloud-based 
+ data warehousing, and it uses a unique approach
+  to separate storage and compute, providing elasticity,
+   scalability, and performance.
+
+When you create a view in Snowflake, it's essentially 
+a virtual table that defines a SQL query. The query
+ associated with the view is not materialized or 
+ precomputed in the cloud services layer. Instead, 
+ when you query a view, Snowflake's query optimization
+  engine dynamically generates a query plan and executes
+   it on the compute resources available at that moment.
+    This means that the view's query is executed against
+     the underlying data in real-time, and the results 
+     are generated on-the-fly as if you had written the
+      query directly.
+
+The separation of storage and compute 
+in Snowflake allows you to scale your compute resources
+ independently from the storage resources, ensuring optimal
+  performance for varying workloads. It also eliminates the
+   need to manually manage materialized views and ensures that
+    you're always working with up-to-date data.
+
+So, to summarize, Snowflake views do not store
+ result sets in the cloud services layer; instead, 
+ they dynamically generate results by executing the 
+ associated query against the actual data stored in 
+ Snowflake's storage layer.
+
+
+
+
+
+
+
+ So, in a few words, views will never use cached results?
+
+
+
+
+
+
+That's correct. In Snowflake, 
+views do not use cached results. 
+They dynamically execute the associated query
+ against the underlying data each time they are
+  queried, ensuring that you always get the most up-to-date results.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA RESOLVER ESSE PROBLEMA DE 
+
+
+"NUNCA CACHEAR NADA",
+
+
+
+
+inventou-se o conceito de MATERIALIZED VIEW 
+
+no snowflake...
+
+
+
+O QUERY RESULT NAO PERSISTE....
+
+
+
+
+
+--> QUER DIZER QUE 
+
+TEMOS QUE SEMPRE RE-RODAR A QUERY,
+
+
+ADICIONANDO AO CUSTO,
+
+
+E TAMBÉM 
+
+
+
+TEMOS QUE ESPERAR BEM MAIS (sem cached results)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AGORA TENTAREMOS ENTENDER MAIS SOBRE MATERIALIZED 
+
+VIEWS,
+
+
+AS VANTAGENS E DESVANTAGENS 
+
+das materialized views..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK.... E AINDA QUE AS CHANGES 
+REALIZADAS NA TABLE ORIGINAL SEJAM __ REALMENTE_ 
+CAPTURADAS, EM TEMPO REAL,
+
+PELA 
+
+
+VIEW,
+
+
+
+NAO É POSSÍVEL/CORRETO 
+
+
+CHAMAR A NORMAL VIEW DE UMA "DYNAMIC TABLE"... 
+(
+    veremos a razao disso na próxima aula...
+)

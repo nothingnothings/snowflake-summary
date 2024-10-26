@@ -1,0 +1,649 @@
+
+
+
+VEREMOS COMO CONECTAR O SNOWFLAKE COM O SPARK,
+
+
+EM "LOCAL MODE"...
+
+
+
+
+Apache Spark is an open-source 
+unified analytics engine for large-scale data 
+processing. Spark provides an interface for 
+programming clusters with implicit data 
+parallelism and fault tolerance. 
+Originally developed at the University of California, 
+Berkeley's AMPLab, the Spark codebase was 
+later donated to the Apache Software Foundation,
+ which has maintained it since.
+
+
+
+
+
+
+
+
+
+
+
+ --> PARA ISSO, O PROFESSOR CRIOU 1 DOCKER IMAGE...
+
+
+
+
+
+
+
+
+
+
+--> VEREMOS COMO QUERIAR DATA DO SNOWFLAKE,
+
+
+COM ESSA IMAGE...
+
+
+
+
+
+
+
+
+
+
+
+O PROFESSOR NAO ENTRARÁ EM DETALHES SOBRE 
+
+
+O CREATE DE TABLES, WRITE E READ DATA DO AWS S3...
+
+
+
+
+
+
+-> QUER QUE NÓS EXPLOREMOS...
+
+
+
+
+
+
+
+
+
+--> OK, MAS COMO SPIN UP 1 CONTAINER,
+
+E QUERIAR DATA NO SNOWFLAKE?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+PARA STARTAR O CONTAINER,
+
+PRECISAMOS 
+
+RODAR ESTE COMANDO:
+
+
+
+
+
+-- Run spark notebook
+
+docker run -u root -it --rm -p 8080:8080  pradeephc0671/snowflakespark   /spark/spark-2.4.6-bin-hadoop2.7/bin/pyspark --master local[2] --jars /spark/snowflake-jdbc-3.4.2.jar,/spark/spark-snowflake_2.11-2.2.8-spark_2.0.jar --packages org.apache.hadoop:hadoop-aws:3.2.1
+
+
+
+
+
+
+
+
+
+
+
+
+ESSE COMANDO VAI PULLAR A DOCKER IMAGE DO DOCKERHUB...
+
+
+
+
+
+
+
+
+--> esse comando vai ABRIR A SHELL DO SPARK..
+
+
+
+
+
+
+
+
+
+
+-> E ESSA IMAGE JÁ VEM PRÉ-CONFIGURADA 
+
+
+COM O SNOWFLAKE DRIVER DO SPARK...
+
+
+
+
+é bem maluco...
+
+
+
+
+
+
+
+
+
+--> com a shell do spark aberta,
+
+
+
+
+o professor explica que ele tem 1 table no snowflake....
+
+
+
+
+
+
+
+
+ELE CRIOU A TABLE ASSIM:
+
+
+
+
+
+SELECT * FROM DEMO_DB.PUBLIC.CUSTOMER
+
+CREATE OR REPLACE TRANSIENT TABLE DEMO_DB.PUBLIC.CUSTOMER
+AS
+SELECT * FROM "SNOWFLAKE_SAMPLE_DATA"."TPCH_SF001"."CUSTOMER";
+
+
+
+
+
+É A TABLE "CUSTOMER"...
+
+
+
+
+
+
+
+
+
+
+
+
+O QUE O PROFESSOR TENTARÁ FAZER, AGORA, É 
+
+QUERIAR ESSA DATA, DE DENTRO 
+
+
+
+DA SHELL DO SPARK...
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA ISSO, TEMOS ESTES COMANDOS:
+
+
+
+
+
+from pyspark import SparkConf, SparkContext
+from pyspark.sql import SQLContext
+from pyspark.sql.types import *
+from pyspark import SparkConf, SparkContext
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+COLAMOS ISSO NO TERMINAL, NA SHELL DO SPARK,
+
+E AÍ APERTAMOS ENTER...
+
+
+
+
+
+
+ISSO VAI IMPORTAR ALGUMAS COISAS DOS PACOTES do spark...
+
+
+
+
+
+
+
+
+
+
+ISSO FEITO,
+
+
+
+
+o professor 
+
+
+executa esta linha:
+
+
+
+
+
+spark = SQLContext(sc)
+
+
+
+
+
+
+
+
+
+
+
+DEPOIS,
+
+
+
+ELE DEFINE 1 OBJECT ESTRANHO,
+
+ESTE AQUI:
+
+
+
+
+
+sfOptions = {
+  "sfURL" : "ega46122.us-east-1.snowflakecomputing.com",
+  "sfUser" : "pradeep",
+  "sfPassword" : “<your pwd >“,
+  "sfDatabase" : "DEMO_DB",
+  "sfSchema" : "PUBLIC",
+  "sfWarehouse" : "COMPUTE_WH"
+}
+
+
+
+
+esse object é as nossas credentials do snowflake...
+
+
+
+precisamos:
+
+
+1) da nossa url do snowflake 
+
+
+2) do user  usado na nossa snowflake account 
+
+
+3) do password desse user 
+
+4) da database 
+
+
+5) do schema 
+
+
+6) da warehouse...
+
+
+
+
+
+
+--> já a table nao é necessária...
+
+
+
+
+
+--> ASSIM QUE VC MENCIONAR TUDO ISSO,
+
+
+
+voce 
+
+PRECISA CRIAR UMA "DATA FRAME"....
+
+
+
+
+
+
+
+
+
+
+o código de criacao de 1 data frame é este:
+
+
+
+
+
+
+
+
+
+
+
+
+df = spark.read.format(SNOWFLAKE_SOURCE_NAME) \
+  .options(**sfOptions) \
+  .option("query",  "SELECT * FROM DEMO_DB.PUBLIC.CUSTOMER") \
+  .load()
+  
+  
+
+
+
+
+
+
+
+
+
+  --> VAMOS USAR ESSA QUERY AÍ NA TABLE...
+
+
+
+
+
+
+  --> ESSA QUERY VAI FICAR ARMAZENADA NESSA DATA FRAME...
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --> COMO O PROFESSOR JÁ EXECUTOU ESSES COMANDOS,
+
+  
+
+
+
+
+  ELE VISUALIZA O OUTPUT NO DOCKER...
+
+
+
+
+
+
+
+
+
+  O OUTPUT É UMA TABLE NORMAL...
+
+
+
+
+
+
+
+
+
+
+
+  --> OK... AGORA SE O PROFESSOR QUISER VISUALIZAR 
+
+
+  A DATA NO SNOWFLAKE,
+
+
+  ELE 
+
+  PODE USAR O COMANDO 
+
+
+
+  "df.show()"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+  "df.show()" ---> ISSO VAI TRIGGAR 1 JOB...
+
+
+
+
+
+
+
+
+
+  --> aí ele vai nos mostrar a data no terminal,
+
+
+  data extraída do snowflake...
+
+
+
+
+
+
+
+
+  -> o professor nao entrará em detalhes 
+
+  sobre o create 
+
+  de tables e o push dessa data toda para o s3,
+
+
+
+
+
+
+  pq ele só quer mostrar o básico...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> E ESSA IMAGE VEM PRÉ-CONFIGURADA COM JUPYTER NOTEBOOK..
+
+
+
+
+
+
+
+--> PARA ABRIR O JUPYTER NOTEBOOK, RODE ASSIM:
+
+
+
+
+docker run -it --rm -p 8888:8888 pradeephc0671/snowflakespark jupyter notebook --allow-root --ip 0.0.0.0
+
+
+
+
+
+
+
+
+
+
+
+
+--> copie a url, e aí 
+
+você terá esse notebook...
+
+
+
+
+
+
+
+
+
+-> se vc quer escrever algum código spark,
+
+vc pode fazer isso...
+
+
+
+
+
+
+
+
+--> abra um notebook python...
+
+
+
+
+
+--> depois copie este código (python), que importa 
+o spark nesse python notebook:
+
+
+
+
+import findspark
+findspark.init("/spark/spark-2.4.6-bin-hadoop2.7")
+
+import pyspark
+sc = spark.SparkContext(appName = "Test")
+sc.master
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+AÍ ELE RODA ESTAS LINHAS:
+
+
+
+
+
+import findspark
+findspark.init("/spark/spark-2.4.6-bin-hadoop2.7")
+
+from pyspark import SparkConf, SparkContext
+from pyspark.sql import SQLContext
+from pyspark.sql.types import *
+from pyspark import SparkConf, SparkContext
+
+sc = SparkContext("local", "Simple App")
+spark = SQLContext(sc)
+
+
+
+
+
+
+
+
+
+
+
+COM ISSO, TENTAMOS CRIAR 1 CONTEXT DO SPARK...
+
+
+
+
+
+
+
+---> com "sc",
+
+
+podemos ver o nosso spark context...
+
+
+
+
+
+
+
+AÍ PODEMOS ESCREVER QUALQUER CÓDIGO SPARK QUE DESEJAMOS,
+
+
+
+NO QUE DIZ RESPEITO AO LOCAL MODE...

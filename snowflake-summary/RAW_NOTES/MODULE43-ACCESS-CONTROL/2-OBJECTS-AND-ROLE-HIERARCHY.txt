@@ -1,0 +1,385 @@
+
+
+
+
+
+
+
+
+NESSA AULA,
+
+TEREMOS 1 HIGH-LEVEL OVERVIEW 
+
+
+DA SNOWFLAKE DATABASE E SUA OBJECT HIERARCHY E ROLE HIERARCHY...
+
+
+
+
+
+
+
+
+
+
+
+
+O PROFESSOR TEM ESTE ESQUEMA:
+
+
+
+
+
+
+
+                      ORGANIZATION 
+                        
+
+                  ACCOUNT-LEVEL OBJECTS
+
+
+
+USER ROLE  DATABASE    WAREHOUSE     OTHER ACCOUNT OBJECTS
+                        
+
+                  SCHEMA-LEVEL OBJECTS
+
+
+TABLE VIEW  STAGE   STORED PROCEDURE    UDF   OTHER SCHEMA OBJECTS 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> user, role, database, warehouse e other account objects,
+
+
+TODOS ESSES SAO "ACCOUNT-LEVEL OBJECTS"...
+
+
+
+
+
+
+
+
+
+
+
+
+--> TEMOS TAMBÉM OS "SCHEMA-LEVEL OBJECTS",
+
+
+como tables, views, stages, stored procedures, UDFs e 
+
+
+OUTROS SCHEMA OBJECTS,
+
+
+COMO 
+
+STREAMS E ETC...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ESSA OBJECT HIERARCHY É CONSTANTE,
+
+E NUNCA MUDA...
+
+
+
+
+
+
+
+
+
+
+--> QUANTO À ROLE HIERARCHY,
+
+
+TEMOS 
+
+
+ESTAS REGRAS PRÉ-DEFINIDAS PELO SNOWFLAKE:
+
+
+
+
+
+
+
+
+
+
+
+
+
+                    ACCOUNT ADMIN 
+
+            SECURITYADMIN         SYSADMIN 
+
+            
+                USERADMIN
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SABER A DISTINCAO ENTRE ELES É MT IMPORTANTE....
+
+
+
+
+
+
+
+
+
+
+--> SE QUISERMOS CONSTRUIR HIERARCHIES,
+
+
+precisamos saber a diferenca entre eles...
+
+
+
+
+
+
+
+
+--> DEVEMOS TER 1 HIGH-LEVEL OVERVIEW 
+
+
+SOBRE ESSES ROLES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DE ACORDO COM OS Docs, temos:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ACCOUNTADMIN: (aka ACCOUNT ADMINISTRATOR)...
+
+
+
+
+
+--> ROLE THAT ENCAPSULATES THE SYSADMIN AND SECURITYADMIN 
+SYSTEM-DEFINED ROLES. IT IS THE TOP-LEVEL ROLE IN THE SYSTEM,
+AND SHOULD BE GRANTED TO ONLY A LIMITED/CONTROLLED 
+NUMBER OF USERS IN YOUR ACCOUNT.
+
+
+
+
+
+
+
+
+
+
+
+
+SECURITYADMIN (security administrator)
+
+
+
+
+--> ROLE THAT CAN MANAGE ANY OBJECT GRANT GLOBALLY,
+
+AS WELL AS CREATE, MONITOR AND MANAGE USERS AND ROLES.
+
+
+--> MORE SPECIFICALLY, THIS ROLE:
+
+
+
+
+1) IS GRANTED THE "MANAGE GRANTS" security privilege,
+to be able to modify ANY GRANT, also REVOKE any grant.
+
+
+
+
+2) Inherits the privileges of the USERADMIN role,
+
+via the system role hierarchy (USERADMIN role is granted 
+
+to SECURITYADMIN)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+USERADMIN (aka USER AND ROLE ADMINISTRATOR)
+
+
+
+
+
+--> role that is dedicated to USER and ROLE management only. More 
+specifically, this role:
+
+
+
+1) IS GRANTED THE "CREATE USER" and "CREATE ROLE" security privileges
+
+
+
+2) Can create users and roles in the account.
+
+
+
+
+
+
+--> this role can ALSO manage users and roles that it owns. Only the 
+role with the OWNERSHIP privilege on an object (ex: user or role),
+
+or a higher role, can modify the object's properties...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SYSADMIN (aka System Administrator)
+
+
+
+
+
+--> Role that has privileges to CREATE WAREHOUSES and DATABASES (and other objects)
+
+IN AN ACCOUNT.
+
+
+
+if, AS RECOMMENDED, you create a role hierarchy that ultimately 
+assigns all custom roles to the SYSADMIN ROLE,
+
+
+this role also has the ability to grant privileges on warehouses,
+databases and other objects to other roles.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PODE CRIAR USERS E ROLES NA ACCOUNT...
+
+
+
+
+
+
+
+nas próximas aulas, discutiremos 
+
+
+o
+
+
+significado de cada 1 desses statements...
+
+

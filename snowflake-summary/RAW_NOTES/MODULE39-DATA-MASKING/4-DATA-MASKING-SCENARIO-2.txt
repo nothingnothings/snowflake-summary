@@ -1,0 +1,466 @@
+
+
+
+
+
+
+
+
+OK, AGORA TEMOS 1 SEGUNDO EXEMPLO....
+
+
+
+
+
+
+
+
+
+
+DEVEMOS ESCLARECER 1 NEGÓCIO:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--. TEMOS ESTE CÓDIGO:
+
+
+
+
+
+
+
+
+
+
+
+--- PARTIAL MASK ---- 
+
+
+
+CREATE OR REPLACE MASKING_POLICY DEMO_DB.PUBLIC.EMPLOYEE_MASK_4 
+AS 
+(VAL STRING) RETURNS STRING -> 
+    CASE 
+        WHEN CURRENT_ROLE() IN ('SYSADMIN') THEN 
+        CASE WHEN VAL='25-247-272-2878' THEN 'ABDEFGH' ELSE VAL
+    END 
+ELSE '*******'
+END;
+
+
+
+
+
+
+
+
+--> COM ISSO, FICAMOS COM 1 NESTING DE CONDITIONS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE TABLE EMPLOYEE_EXAMPLE_4 (
+    SSN_NUMBER STRING MASKING POLICY DEMO_DB.PUBLIC.EMPLOYEE_MASK,
+    SSN_NUMBER STRING
+);
+
+
+
+
+
+SELECT SSN_NUMBER, SUBSTRING(SSN_NUMBER_2, 1, 2)
+FROM DEMO_DB.PUBLIC.EMPLOYEE_EXAMPLE_4;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ANTES DE MAIS NADA, DEVEMOS ESCLARECER:
+
+
+
+
+
+
+
+1) QUANDO VC 
+
+DEFINIR ESSA FUNCTION/MASKING POLICY,
+
+ESSA FUNCTION SERÁ TRANSFORMADA 
+
+
+
+EM 1 QUERY NO BACKEND...  ------->  E ESSAS EXPRESSIONS/RUN DAS 
+
+FUNCTIONS 
+
+
+NAO SERAO 
+
+EVALUATED 
+
+NO "CLOUD SERVICES LAYER",
+
+
+E SIM 
+
+
+SERAO EVALUATED 
+
+
+NO VIRTUAL WAREHOUSE LAYER.... ---------> E O RESULT 
+
+SET 
+
+VAI 
+SER 
+
+
+WRITTEN NO CLOUD SERVICES LAYER...
+
+
+
+
+
+
+
+
+
+
+
+
+-> CERTO... 
+
+
+
+
+
+
+
+
+
+
+MAS NO NOSSO CENÁRIO DE AGORA,
+
+RODAMOS 1 SUBSTRING EM CIMA 
+
+DAQUELE FIELD ALI,
+
+
+FIELD 
+
+
+
+QUE NAO TEM MASKING POLICY...
+
+
+
+
+
+
+
+
+
+
+
+
+NA LECTURE ANTERIOR,
+
+MASCARAMOS A COLUMN INTEIRA (SSN_NUMBER),
+
+
+
+trocamos toda por "*****"....
+
+
+
+
+
+
+
+
+
+
+
+
+MAS NESSE CENÁRIO, DE AGORA,
+
+
+VAMOS 
+
+
+
+MASCARAR APENAS ALGUNS VALUES,
+
+
+
+VALUES QUE 
+
+
+SEJAM DE "25-247-272-2878',
+
+
+
+
+
+
+
+
+
+
+
+QUE ENTAO SERAO CONVERTIDOS A "ABDEFGH"....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> RODAMOS ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+
+SELECT * FROM EXAMPLE LIMIT 100;
+
+
+
+
+
+
+SELECT * FROM EXAMPLE WHERE SSN_NUMBER_2='25-247-272-2878';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> DE ACORDO COM NOSSA POLICY,
+
+
+
+
+
+
+VEREMOS 
+
+
+
+QUE O OUTPUT FICARÁ 
+
+
+
+ABCDEFGH...
+
+
+
+
+
+
+
+
+por ser PARTIALLY APPLIED,
+
+ESSA MASKING POLICY (
+
+    escolhamos mascarar 
+
+    NAO TODOS OS SSN VALUES,
+
+    DEIXAMOS DE LADO 
+
+
+
+    ESSE VALUE DE '25-247-272-2878'...
+), os efeitos sao diferentes...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> se selecionamos apenas os records 
+
+
+com value de '25-247-272-2878',
+
+O SNOWFLAKE É INTELIGENTE 
+
+
+E 
+
+ACTUALLY NAO ESCANEIA NADA,
+
+SÓ RETORNA "ABCDEFGH"....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS NESSE CENÁRIO, DE AGORA,
+
+
+
+
+ELE TEM QUE RODAR 1 FULL TABLE SCAN,
+
+
+PARA 
+
+
+QUE CONSIGA SABER QUAIS 
+
+RECORDS POSSUEM VALUE DE "25-247-272-2878"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK...
+
+
+
+
+
+
+
+ISSO DEMONSTRA QUE  A EXPRESSION É EVALUATED 
+
+
+NO VIRTUAL WAREHOUSE LAYER...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+O KEY TAKEAWAY, AQUI, É:
+
+
+
+
+
+1) QUANDO VC APLICA O MASKING,
+
+
+
+
+
+SE VC ESTÁ  APLICANDO O MASKING 
+
+__PARCIALMENTE_ EM 1 COLUMN (apenas para alguns rows),
+
+
+
+
+AS EXPRESSIONS SERAO EVALUATED NO 
+
+
+VIRTUAL WAREHOUSE LAYER ( o que pode gerar COSTS...
+
+pq se mascaramos tudo, tudo daquela column,
+ 
+ 
+ nao temos que procurar os "values que devem 
+ ser expostos"
+ dentro dessa column)

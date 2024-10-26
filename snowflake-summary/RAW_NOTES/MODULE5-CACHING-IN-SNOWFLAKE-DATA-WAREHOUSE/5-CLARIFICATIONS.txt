@@ -1,0 +1,634 @@
+
+
+
+
+
+
+
+
+PROFESSOR TENTARÁ 
+
+RESPONDER AS PERGUNTAS:
+
+
+
+
+
+
+
+WHAT IF UNDERLYING TABLE GET UPDATED?
+
+
+
+
+
+
+
+
+
+-> bem, aí o result set será descartado...
+
+
+
+
+
+
+
+
+
+"HOW LONG THIS QUERY RESULT WILL BE CACHED?"
+
+
+(nao sei)
+
+
+
+
+
+
+
+
+
+"WILL SNOWFLAKE CHARGE TO STORE THIS RESULT?"
+
+
+
+
+(acho que nao)....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-->  bem, a data é realmente pullada 
+
+de novo do storage layer... --> SE EXISTEM 
+
+QUAISQUER 
+
+CHANGES 
+
+
+NA TABLE,
+
+
+O SNOWFLAKE NAO VAI USAR O CACHED QUERY RESULT SET...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> ASSIM QUE ELE DETECTA 
+
+QUAISQUER CHANGES NA UNDERLYING TABLE,
+
+
+O SNOWFLAKE SUBMITA 
+
+ESSAS QUERIES 
+
+
+NO LAYER DE 
+
+
+
+VIRTUAL WAREHOUSE,
+
+
+
+PARA QUE SEJAM PROCESSADAS..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+QUANDO VC FAZ QUALQUER CHANGE EM 1 DATA,
+
+
+
+A DATA É APLICADA NO DATA STORAGE LAYER...
+
+
+
+
+
+
+
+
+
+
+
+
+
+O QUE APRENDEMOS:
+
+
+
+
+
+
+
+
+
+--> SE VC FAZ QUALQUER __ CHANGE__ 
+
+
+NAS SUAS TABLES,
+
+
+
+
+ESSA CHANGE VAI SER ESCRITA 
+
+
+NO SNOWFLAKE DATA STORAGE....
+
+
+
+
+
+
+--> SE VC RODAR 1 QUERY DE SELECT NESSA TABLE,
+
+O RESULT CACHEADO NAO SERÁ USADO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... POR ISSO DEVEMOS TER __ CUIDADO__....
+
+
+
+
+
+
+
+
+
+
+
+--> SE DESEJAMOS _ ATUALIZAR__ 
+
+NOSSA TABLE,
+
+
+É MELHOR FAZER TUDO DE UMA VEZ SÓ,
+
+
+
+COM 1 ÚNICA TRANSACTION,
+
+
+
+EM VEZ 
+
+
+
+DE FICAR FAZENDO POR PARTES...
+
+
+
+
+
+
+
+
+--> EM VEZ DE ESCREVER 
+
+
+SELECT * 
+UPDATE * 
+SELECT * 
+UPDATE *
+
+
+
+
+
+ESCREVA ASSIM:
+
+
+
+SELECT * 
+
+BEGIN;
+UPDATE *
+UPDATE *
+UPDATE *
+UPDATE *
+UPDATE *
+END;
+
+
+SELECT *
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... POR ISSO É MELHOR FAZER AS CHANGES 
+
+TUDO DE UMA VEZ SÓ...
+
+
+
+
+
+
+
+
+
+
+
+--> SE FIZERMOS O UPDATE E SELECT 
+
+EM "CICLOS",
+
+
+ISSO VAI AUMENTAR MUITO O NOSSO CUSTO..
+
+
+
+
+
+
+
+
+O RESULT CACHE É 
+
+COMPARTILHADO ENTRE USERS...
+
+
+
+
+
+
+quer dizer que a virtual warehouse nao é usada,
+
+
+
+mesmo se estivermos com users diferentes...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+PRÓXIMA PERGUNTA:
+
+
+
+
+
+
+
+
+
+
+
+
+""HOW LONG THIS QUERY RESULT WILL BE CACHED""
+
+
+
+
+
+
+
+
+
+
+24 HORAS DESDE O TEMPO DA ÚLTIMA EXECUCAO 
+
+
+DESSA QUERY...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+""O SNOWFLAKE COBRA PELO STORE DESSE RESULT SET NO CACHE?""
+
+
+
+
+
+
+
+
+
+
+
+NAO, NAO COBRA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+QUANDO VC ARMAZENA IMENSAS QUANTIDADES DE 
+
+DATA,
+
+
+
+
+
+VC TRABALHA COM MTOS gbs...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> E O SNOWFLAKE ARMAZENA TUDO DE GRACA PARA VOCE....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> DIGA QUE VC TEM 1 DATABASE TABLE 
+
+QUE É REFRESHADA EM 1 MONTHLY BASIS..
+
+
+
+
+
+
+
+
+
+
+
+--> QUANDO VC RODA 1 "REPORT QUERY"
+
+
+
+EM CIMA DESSA TABLE,
+
+ISSO CUSTA EM TORNO DE 100 DOLARES...
+
+
+
+
+
+
+
+
+
+
+
+-> O RESULTADO DESSA QUERY SERÁ 
+
+
+FEEDADO A 1 TABLEAU REPORT...
+
+
+
+
+
+
+
+
+
+-> O RESULTADO DESSA QUERY VAI SER ARMAZENADO 
+
+NO SNOWFLAKE POR 24 HORAS...
+
+
+
+
+
+
+--> SE O TABLEAU REPORT 
+
+SE REFERIR A ESSE RESULT DENTRO DE 24 HORAS,
+
+A RESPONSE SERÁ MT RÁPIDA,
+
+
+
+PQ O SNOWFLAKE VAI RETORNAR LÁ DO "CACHED RESULT"....
+
+
+
+
+
+
+se o tableau 
+
+
+
+tiver de queriar essa data 
+
+
+
+DEPOIS DE 24 HORAS,
+
+
+ISSO 
+
+
+VAI TE CUSTAR, NOVAMENTE, 100 DÓLARES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUERY RESULT WILL BE RETAINED FOR 24 HOURS 
+
+FROM THE LAST TIME 
+
+THE QUERY WAS EXECUTED...
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE 
+
+
+
+SE NÓS 
+
+
+RODARMOS ESSA MESMA QUERY,
+
+
+
+MAS NA 23a HORA,
+
+
+
+
+NOSSA QUERY SERÁ MANTIDA POR MAIS 24 HORAS..
+
+
+
+
+
+
+
+--> COMO NÓS SABEMOS QUE A TABLE É REFRESHADA 
+
+EM 1 MONTHLY BASIS,
+
+
+O QUERY RESULT NAO VAI SER ALTERADO.... ------>
+
+
+QUER DIZER QUE 
+
+SE APLICAMOS ESSA ESTRATEGIA,
+
+PODEMOS ECONOMIZAR CENTENAS DE DOLARES... (
+
+    porque usaremos o caching, em vez de usar o PROCESSAMENTO 
+    do snowflake...
+)

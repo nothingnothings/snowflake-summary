@@ -1,0 +1,402 @@
+
+
+
+
+
+
+
+
+
+AGORA VEREMOS COMO UPLOADAR 
+
+
+DATA 
+
+
+
+
+
+A S3 BUCKETS,
+
+
+
+
+
+
+
+DE NOSSO FILE SYSTEM...
+
+
+
+
+
+
+
+
+
+--> PARA UPLOADAR COISAS COM O WEB CONSOLE,
+É MT FÁCIL...
+
+
+
+
+
+
+BASTA ESCOLHER 1 BUCKET 
+
+
+
+E ENTAO 
+
+
+
+ARRASTAR AS FILES...
+
+
+
+
+
+
+
+
+
+
+--> DEVEMOS USAR O WEB CONSOLE __ SOMENTE__ 
+
+SE 
+
+ESTAMOS COM POUCAS FILES A SEREM UPLOADADAS 
+
+
+AO AWS...
+
+
+
+
+
+
+
+
+
+MAS SE VC TIVER FILES IMENSAS, DE VÁRIOS GB, 
+
+USAR 
+
+
+ESSE 
+
+
+WEB CONSOLE É MT RUIM,
+
+
+
+PQ 
+
+VC 
+
+TERÁ 
+
+DE 
+
+DEIXAR O BROWSER SEMPRE ATIVO ENQUANTO 
+
+ESTIVER ENVIANDO AS FILES 
+
+
+AO S3 BUCKET...
+
+
+
+
+
+
+
+
+
+
+
+--> É POR ISSO QUE É MELHOR USAR A CLI 
+
+
+DO AWS..
+
+
+
+
+
+
+
+
+--> MAS COMO USAMOS ESSA INTERFACE PARA UPLOADAR 
+
+AS FILES AO BUCKET?
+
+
+
+
+
+
+
+
+
+--> JÁ VIMOS COMO FAZER ISSO,
+
+
+É COM O COMANDO "aws s3 cp <local_file_path> s3://your_bucket_url 
+
+
+
+
+
+
+
+
+
+
+--> o professor basicamente mostra como 
+
+instalar o aws cli version 2...
+
+
+
+
+
+
+
+
+AÍ ELE FALA DO 
+
+
+"aws configure",
+
+que é usado para LOGGAR NA AWS,
+
+
+usando sua máquina..
+
+
+
+
+
+usamos o aws_key_id
+
+e o 
+
+aws_secret_key
+
+
+
+
+
+
+
+
+com isso,
+
+
+com essas 2 chaves, podemos conectar o aws cli com 
+
+o  aws...
+
+
+
+
+
+
+
+
+
+
+--> é claro que precisamos dessas 2 chaves,
+
+que são obtidas lá do IAM users,
+
+
+desse service 
+do aws...
+
+
+
+
+
+
+
+
+
+
+O PROFESSOR EXPLICA QUE PODERÍAMOS TER SELECIONADO 
+
+"READ ACCESS ONLY",
+
+mas que é melhor full access...
+
+
+
+
+com suas chaves,
+
+pessoas podem facilmente acessar seu 
+
+
+s3 bucket...
+
+
+
+
+nunca revele sua access key ID e secret access key
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... TUDO ISSO JÁ FIZEMOS...
+
+
+
+
+PARA LISTAR TODAS AS FILES NO S3,
+
+rodamos 
+
+
+
+
+aws s3 ls s3://bucket_path --recursive 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+AGORA QUEREMOS COPIAR 
+
+
+AS FILES DENTRO DO NOSSO LOCAL SYSTEM AO AWS 
+
+S3 BUCKET...
+
+
+
+
+
+
+
+
+--> PARA ISSO,
+ESCREVEMOS ASSIM:
+
+
+
+
+
+
+
+
+aws s3 cp <local_file_path> s3://s3_bucket_path 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SE VC É UM DEVELOPER E SE 
+
+SEU SNOWFLAKE ESTÁ CONFIGURADO COM O S3,
+É BOM 
+
+CONHECER 
+
+ESSA CLI DO AWS, COM O S3...
+
+
+
+
+
+
+
+
+
+
+--> CERTO... SAO ESSES OS COMANDOS QUE USAMOS 
+
+PARA UPLOADAR 
+
+
+AS FILES DO LOCAL FILE SYSTEM AO 
+
+AWS S3...
+
+
+
+
+
+
+
+também aquele comando de list, etc....
+
+
+
+
+É CLARO QUE PARA 
+
+COPIAR DO S3 BUCKETS PARA NOSSO LOCAL FILE SYSTEM 
+
+DEVEMOS ESCREVER O MESMO COMANDO, MAS AO CONTRÁRIO:
+
+
+
+
+
+
+
+
+aws s3 cp s3://s3_bucket_path <local_file_path> 
+
+
+
+
+
+
+
+
+CERTO...
+
+
+
+
+
+
+
+
+com isso, acabamos esta licao..

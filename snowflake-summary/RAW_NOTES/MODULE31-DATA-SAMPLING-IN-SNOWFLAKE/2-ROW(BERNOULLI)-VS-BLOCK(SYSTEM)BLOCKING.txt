@@ -1,0 +1,429 @@
+
+
+
+
+
+
+
+
+
+agora falaremos sobre os 2 sampling methods disponíveis 
+
+no snowflake...
+
+
+
+
+
+
+SAO ELES:
+
+
+
+
+1) SYSTEM METHOD 
+
+
+
+
+2) BERNOULLI METHOD...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+BERNOULLI --> é chamado de row based method ---> 
+
+
+QUANDO USAMOS ESSE ALGorithm,
+
+
+
+
+ELE VAI CONTRA CADA ROW NO SNOWFLAKE....
+
+
+
+
+
+
+
+
+
+
+
+--> É A MANEIRA MAIS SIMPLES DE SAMPLING...
+
+
+
+
+
+
+
+
+--> VC DEFINE "P" como a probabilidade 
+
+daquele row ser selecionado na sua sample,
+
+e aí 
+
+ele 
+
+
+
+roda isso para CADA ROW 
+
+EM SUA TABLE...
+
+
+
+
+
+
+
+
+
+VANTAGENS:
+
+
+
+
+1) É MAIS ALEATÓRIO...
+
+
+
+
+
+
+
+
+
+
+
+
+DESVANTAGEM:
+
+
+1) GASTA MAIS PROCESSAMENTO (
+    cada row tem que ser marcado..
+)
+
+
+
+
+
+
+
+
+
+--> <p>/100
+
+
+THE RESULTING SAMPLE SIZE IS APPROXIMATELY OF
+
+
+<p>/100 * NÚMERO DE ROWS NA FROM EXPRESSION....
+
+
+
+
+
+
+
+
+
+
+
+POR EXEMPLO,
+
+
+
+25% de  10.000
+
+
+
+
+2500 rows...
+
+
+
+
+
+
+-----------------------------
+
+
+
+
+
+
+
+
+
+SYSTEM/BLOCK METHOD...
+
+
+
+
+
+
+
+
+
+
+--> NESSE CASO,
+
+O SNOWFLAKE 
+
+VAI CONTRA CADA BLOCK NO SNOWFLAKE,
+
+
+EM VEZ DE CADA 
+
+RECORD... 
+
+
+
+
+
+
+
+
+
+--. A SAMPLE É FORMADA POR 1 
+
+CONJUNTO DE BLOCKS SELECIONADOS ALEATORIAMENTE...
+
+
+
+
+
+
+
+
+
+
+--> CADA PARTIITON SERÁ ESCOLHIDA COM UMA PROBABILIDADE 
+
+
+DE 
+
+"<p>/100"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OS BLOCKS RETORNAM MAIS ROWS, TIPICAMENTE...
+
+
+
+
+
+
+
+
+-> OK... E ESSES BLOCKS SAO TIPO MICRO PARTITIONS...
+
+
+
+
+
+
+
+
+
+
+OK, MAS QUAL METHOD DEVE SER USADO,
+
+E QUAL É O MELHOR METHOD?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> BERNOULLI DEVE SER USADO COM TABLES NAO TAO GRANDES...
+
+
+
+
+
+
+
+USE "BLOCK" COM TABLES IMENSAS...
+
+
+
+
+
+
+
+-----------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SE VC ESTÁ TRABALHANDO COM MT DATA,
+
+
+
+OU SE VC 
+
+QUER TIRAR 1 SAMPLE DE 
+
+
+1 TABLE IMENSA,
+
+
+É MELHOR USAR O SYSTEM METHOD...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> JÁ SE SEU DATA SIZE É MENOR,
+
+
+
+
+É MELHOR USAR O BERNOULLI METHOD...
+
+
+
+
+
+
+
+
+
+
+""I SUSPECT THE USE OF PARTICULAR SETS OF TABLE 
+
+PARTITIONING KEYS, IF ANY, MIGHT HAVE SOME INFLUENCE,
+TOO""...
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... E QUAL É A VANTAGEM DE USAR ESSES 
+
+ALGorithmS?
+
+
+
+
+
+
+
+
+1) O DEV LIFECYCLE SERÁ MAIS RÁPIDO....
+
+
+
+
+
+2) PODEMOS TESTAR TODOS OS CENÁRIOS COM SAMPLE DATA,
+
+COM 80% DE PRECISAO...
+
+
+
+
+
+3) REDUZIRÁ DEVELOPMENT COST...
+
+
+
+
+4) ANALYTICS TEAM PODERÁ TESTAR AS QUERIES 
+
+
+COM SAMPLE DATA...
+
+
+
+(quer dizer que devemos rodar analytics na sample database,
+
+antes de rodar na database de verdade)
+
+
+
+5) SE AS TEAMS ESTÃO CONSEGUINDO 
+
+
+80% DE ACCURACY,
+AÍ ELAS PODEM EXECUTAR AS QUERIES 
+
+NA DATABASE DE PROD...
+
+
+
+
+
+
+
+AGORA VEREMOS 1 DEMO...
+
+
+

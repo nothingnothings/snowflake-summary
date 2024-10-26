@@ -1,0 +1,1400 @@
+
+
+
+
+CONTINUAMOS A DISCUSSAO...
+
+
+
+
+
+
+VIMOS OS 2 PROBLEMAS 
+
+
+VISTOS QUANDO FAZEMOS GRANT 
+
+DE "CREATE DATABASE" 
+
+
+A 1 SCHEMA....
+
+
+
+
+
+
+
+
+
+
+OS 2 PROBLEMAS SAO:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1) O ROLE QUE GANHAR PERMISSION DE "CREATE DATABASE" 
+
+PODE CRIAR DB, SCHEMA E SCHEMA-RELATED OBJECTS 
+
+SEM QUALQUER TIPO DE RESTRIÇÃO...
+
+
+
+
+
+
+
+
+2) SEM QUALQUER RESTRIÇÃO, O ROLE QUE GANHA ESSA PERMISSION 
+DE "CREATE DATABASE" PODE __GRANT __ ACCESS __ A ESSES OBJECTS 
+
+___ A OUTROS __ ROLES __ DE SEU SISTEMA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+VIMOS COMO RESOLVER O SEGUNDO PROBLEMA,
+
+
+USANDO 
+
+
+A FEATURE DOS "MANAGED SCHEMAS" 
+
+(
+    que dividem a gestao 
+
+
+    dos schemas em 
+
+
+    "ROLE QUE FAZ GRANT DE ACESSO A SEUS DATABASE OBJECTS",
+
+    e 
+
+    "ROLE QUE FAZ A ACTUAL CRIACAO DE SEUS DATABASE OBJECTS"
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+AGORA, NAS PRÓXIMAS AULAS,
+
+
+VEREMOS COMO PODEMOS 
+
+
+RESOLVER O __PRIMEIRO PROBLEMA 
+
+
+
+
+
+
+(
+    "ROLE CAN CREATE DB, SCHEMA AND SCHEMA RELATED 
+    OBJECTS WITHOUT ANY RESTRICTION"...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ESSE PRIMEIRO PROBLEMA PODE SER RESOLVIDO 
+
+
+POR MEIO DA CRIACAO DE 1 ROLE HIERARCHY...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> VEREMOS ESSA CRIACAO, DESSA HIERARQUIA,
+
+DA PERSPECTIVA DE 1 DEVELOPER...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+REPRESENTACAO:
+
+
+
+
+
+
+
+
+0 ---> SAO OBJECTS NA DATABASE 
+
+
+
+
+X -->  SAO RULES.....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DEVEMOS DESENHAR 1 LINHA ENTRE OS 2...
+
+
+
+
+
+
+
+
+
+
+
+    0                 |                 X
+                                        [SYSADMIN]
+    [salesDB]    <-----------------------
+                      |
+                      |
+                      |
+                      |
+                      |
+                      |
+                      |
+                      |
+                      |
+                      |
+                      |
+                      |
+                      |
+                      |
+                      |
+                      |
+                      |
+
+
+
+
+DIGAMOS 
+
+QUE 
+
+
+
+o row "sysadmin"
+
+CRIA 1 DATABASE de nome "SALESDB"...
+
+
+
+
+
+
+
+
+
+--> ISSO FEITO,
+
+
+O SYSADMIN __tRANSFERE A RESPONSABILIDADE 
+
+
+
+DE 
+
+
+"CREATE SCHEMA AND DEFINE PRIVILEGES 
+
+ON THE SCHEMA" A OUTRO ROLE, "schemaAdmin"...
+
+
+
+
+
+
+
+
+
+
+
+EX:
+
+
+
+
+
+
+
+
+
+
+
+
+
+    0                 |                 X
+                                        [SYSADMIN]
+    [salesDB]    <-----------------------
+                      |                 i
+                      |                 i
+                      |                 [schemaAdmin]
+                      |
+                      |
+                      |
+                      |
+                      |
+                      |
+                      |
+                      |
+                      |
+                      |
+                      |
+                      |
+                      |
+                      |
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS QUAL SERIA A RAZAO PARA ISSO?
+
+
+
+
+
+
+
+
+
+BEM, COMO HÁ APENAS 
+
+
+
+POUCAS DATABASES NA NOSSA ORGANIZATION,
+
+
+É MELHOR 
+
+
+MANTER A OWNERSHIP 
+
+
+
+
+
+DESSAS DATABASES COM APENAS O SYSADMIN...
+
+
+
+
+
+
+
+
+--> JÁ A RESPONSABILIDADE 
+
+
+
+DE MAINTAIN SCHEMA E SCHEMA-RELATED OBJECTS,
+
+
+NESSAS DATABASES,
+
+
+PODE SER HANDLADA POR OUTRO ROLE,
+
+
+
+O "schemaAdmin"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> BEM, AÍ DIGAMOS QUE 
+
+
+
+ESSE ROLE CRIA 3 OUTROS SCHEMAS,
+
+
+"STAGING" "TARGET" E "SANDBOX"...
+
+
+
+
+
+
+
+
+
+ex:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    0                 |                 X
+                                        [SYSADMIN]
+    [salesDB]    <-----------------------
+                      |                 i
+                      |                 i
+                      |                 [schemaAdmin]
+                      |
+                      |
+                      |
+                      |
+                      |
+                      |
+ STAGING  TARGET      |
+ SANDBOX              |
+                      |
+                      |
+                      |
+                      |
+                      |
+                      |
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ESSES 3 SCHEMAS VAO EXISTIR DENTRO 
+
+
+
+DA DB 
+
+"SALESDB"...
+
+
+
+
+
+
+
+
+
+
+STAGING --> É USADO PARA ARMAZENAR INCREMENTAL DATA...
+
+--> LOADS A ESSE SCHEMA SEMPRE SERÃO "TRUNCATE AND LOAD"...
+
+
+
+
+
+--> PARA TRABALHAR COM ESSE SCHEMA,
+
+PRECISA-SE DOS SEGUINTES PRIVILEGES:
+
+
+
+1) SELECT 
+
+
+2) TRUNCATE 
+
+3) INSERT 
+
+
+4) DELETE 
+
+
+5) UPDATE....
+
+
+
+
+
+
+COM ISSO, O DEVELOPER TEM GRANDE LIBERDADE COM ESSE SCHEMA...
+
+
+
+
+-->  ELE TEM TODAS ESSAS PERMISSIONS,
+
+MAS ELE 
+
+__NAO __ TEM PERMISSION PARA CRIAR TABLES NESSE SCHEMA,
+
+
+
+E NEM PARA DROPPAR...
+
+
+
+
+
+--> SE O DEVELOPER QUER QUE TABLES SEJAM CRIADAS 
+NESSE SCHEMA,
+
+ELE PRECISA QUE ISSO SEJA FEITO PELO 
+
+ROLE "schemaAdmin"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+TARGET SCHEMA --> SIMILARMENTE,
+
+ESSA TABLE _ VAI _ ARMAZENAR "HISTORICAL DATA",
+
+
+
+DAILY PROCESS DATA, HISTORICALLY...
+
+
+
+
+
+--> PARA ISSO, AS TABLES NESSE SCHEMA 
+
+
+DEVEM TER OS SEGUINTES PRIVILEGES, PARA O DEVELOPER:
+
+
+
+
+
+
+1) SELECT 
+
+
+
+
+
+2) INSERT 
+
+
+
+
+
+3) UPDATE
+
+
+
+
+
+
+
+--> ELE NAO VAI PODER RODAR TRUNCATE OU DELETE,
+
+CREATE OU DROP 
+
+EM QUAISQUER TABLES CRIADAS NESSE SCHEMA...
+
+
+
+
+
+--> NOVAMENTE,
+
+AS TABLES DESSE SCHEMA SERAO CRIADAS PELO "schemaAdmin",
+
+
+e nao pelo developer...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> FINALMENTE, TEREMOS 1 TERCEIRO SCHEMA ,
+
+
+
+ O "SANDBOX"...
+
+
+
+
+
+
+
+
+
+
+
+
+SANDBOX:
+
+
+
+
+--> O DEVELOPER TERÁ, SOB ESSA TABLE,
+
+
+"ALL PRIVILEGES"... 
+
+
+
+
+
+ELE PODERÁ:
+
+
+1) DROP  TABLES 
+
+2) CREATE TABLES 
+
+3) INSERT 
+
+4) UPDATE 
+
+5) DELETE 
+
+6) TRUNCATE
+
+
+
+7) PODERÁ CRIAR/DROPPAR/ALTERAR QUALQUER 
+
+SNOWFLAKE OBJECT, NESSE SCHEMA...
+
+
+
+
+
+
+--> QUER DIZER QUE ESSA TABLE SERÁ 
+
+USADA PARA OS DEVELOPERS DEVELOPAREM,
+
+
+PARA PRATICAREM..
+
+
+
+
+
+
+----------------------------
+
+
+
+
+
+
+
+
+
+
+
+OK.... E ESSES PRIVILEGES, TODOS ELES,
+
+
+
+SERAO ASSIGNADOS AOS ROLES (roles CHILD de "schemaAdmin")
+
+
+
+"stage_role" ,  (select, truncate, insert, update, delete)
+
+
+"target_role"  (select, insert, update)
+
+
+
+e 
+
+"sandbox_role"... (all privileges)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... E O QUE FAZEMOS COM ESSES 3 ROLES?
+
+
+
+
+
+
+
+
+
+--> VAMOS O ASSIGNAR A UM MESMO 
+
+ROLE,
+
+
+
+O ROLE DE 
+
+"DEVELOPER"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+---> E É A ESSE ROLE DE "DEVELOPER"
+
+QUE VAMOS ASSIGNAR NOSSO USER....
+
+
+
+
+
+
+
+
+
+
+O ESQUEMA DA HIERARQUIA FICA TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+                SYSADMIN (grants privileges to database and schema objects to other roles)
+
+                    |
+                    |
+
+                SCHEMAADMIN (actually creates the schemas and database objects in the schemas... full control over that )
+
+
+    STAGE_ROLE    TARGET_ROLE      SANDBOX_ROLE 
+
+        |              |                |
+
+        ---->       DEVELOPER   <--------
+                (can use each of these roles,
+                to do different things on each 
+                schema)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> E É CLARO QUE 
+
+
+
+ESSE DEVELOPER SERÁ "ROLLED BACK"
+
+
+
+AO ROLE DE "SYSADMIN"...
+
+
+
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                SYSADMIN (grants privileges to database and schema objects to other roles)
+
+                    |
+                    |
+
+                SCHEMAADMIN (actually creates the schemas and database objects in the schemas... full control over that )
+
+
+    STAGE_ROLE    TARGET_ROLE      SANDBOX_ROLE 
+
+        |              |                |
+
+        ---->       DEVELOPER   <--------
+                (can use each of these roles,
+                to do different things on each 
+                schema)
+
+                       |
+                       |
+                       |
+                       V 
+                    
+                    SYSADMIN
+
+
+
+
+
+
+
+    
+
+
+
+
+OK... É MEIO CONFUSO, MAS FAZ SENTIDO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK, E O DEVELOPMENT DEVE ACONTECER ASSIM:
+
+
+
+
+
+
+
+1) DEVELOPER PODE CRIAR TODAS AS REQUIRED TABLES 
+
+
+DURANTE O DEVELOPMENT NO SCHEMA DE "SANDBOX"...
+
+
+
+
+
+
+
+
+2) ASSIM QUE ELE TEM _ CERTEZA SOBRE O CÓDIGO QUE ELE ESCREVEU,
+
+
+
+ELE PODE PEDIR AO 
+
+"SCHEMAADMIN"
+
+
+
+
+QUE ELE __ CRIE __ 
+
+
+
+AS RESPECTIVE TABLES 
+
+
+LÁ 
+
+NO "STAGING SCHEMA" 
+
+
+
+E 
+
+"TARGET SCHEMA"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ESSA FORMATACAO É MELHOR PQ 
+
+
+_MANTÉM a integridade/segurança 
+
+
+dos schemas
+
+
+
+"STAGING" E "TARGET"...
+
+
+
+(caso contrário, criaríamos 1 monte de 
+
+tables 
+
+
+NESSES "STAGING SCHEMA" E "TARGET SCHEMA"...)
+
+
+
+
+
+
+---------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK, AÍ O PROFESSOR REDESENHA O ESQUEMA:
+
+
+
+
+
+
+
+
+
+                SYSADMIN (grants privileges to database and schema objects to other roles)
+
+                    |
+                    |
+
+                SCHEMAADMIN (actually creates the schemas and database objects in the schemas... full control over that )
+
+
+    STAGE_ROLE    TARGET_ROLE      SANDBOX_ROLE 
+
+        |              |                |
+
+        ---->       DEVELOPER   <--------
+                (can use each of these roles,
+                to do different things on each 
+                schema)
+
+                       |
+                       |
+                       |
+                       V 
+                    
+                    SYSADMIN
+
+
+
+
+
+
+
+
+
+
+
+
+
+O QUE O PROFESSOR RESSALTA, AQUI,
+
+
+
+É QUE 
+
+
+AQUELES 3 ROLES ALI,
+
+
+"staging_role",
+
+
+"target_role" 
+
+e 
+
+"sandbox_role" 
+
+
+
+
+
+SAO CHAMADOS DE "ACCESS CONTROL ROLES"....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+""ACCESS CONTROL ROLES"" --> pq controlam o acesso...
+
+
+
+
+
+
+
+
+
+
+JÁ O ROLE DE 
+
+"DEVELOPER"
+
+
+É CHAMADO DE "FUNCTIONAL ROLE"...
+
+
+
+
+
+
+
+
+
+
+A ESSE FUNCTIONAL ROLE,
+
+"DEVELOPER",
+
+
+ASSIGNAMOS ESSES "ACCESS CONTROL ROLES" (staging_role, target_role, sandbox_role)..
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK, MAS QUAL É A DIFERENCA 
+
+
+ENTRE FUNCTIONAL ROLES E 
+ACCESS CONTROL ROLES?
+
+
+
+
+
+
+
+
+
+
+
+---------> A DIFERENÇA É QUE 
+
+
+
+
+__NUNCA __ DEVEMOS__ ASSIGNAR USERS 
+
+
+
+AOS 
+
+
+"ACCESS CONTROL ROLES"....
+
+
+
+
+
+
+
+
+
+
+--> APENAS DEVEMOS ASSIGNAR USERS AOS 
+
+"FUNCTIONAL ROLES"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ACCESS CONTROL ROLES --> SEMPRE DEVEM 
+
+
+CONTER APENAS __ OS REQUIRED PRIVILEGES 
+
+PARA ACESSAR SCHEMAS OU TABLES... --> POR ISSO,
+
+NUNCA DEVEMOS 
+
+ADICIONAR USERS DIRETAMENTE 
+
+
+A ELES...
+
+
+
+
+
+
+
+
+
+
+
+SEMPRE FAÇA O ASSIGN DE USERS A _ FUNCTIONAL _ ROLES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ALÉM DISSO,
+
+
+
+
+** NUNCA DEVEMOS __ ASSIGNAR 
+
+WAREHOUSES 
+
+
+
+ÀQUELE ROLE DE "schemaAdmin",
+
+
+
+JUSTAMENTE PQ 
+
+O __ ÚNICO PROPÓSITO 
+
+DO SCHEMAADMIN
+
+
+
+
+É O __ dE "CREATE DATABASE AND SCHEMA OBJECTS" --> e,
+
+PARA FAZER O CREATE 
+
+DESSE TIPO DE OBJECTS,
+
+
+NAO É NECESSÁRIO TER ACESSO A WAREHOUSE ALGUMA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PQ SE VC ASSIGNAR 1 WAREHOUSE 
+
+
+
+A ESSE ROLE DE "SCHEMAADMIN",
+
+
+O QUE PODE ACONTECER 
+
+É 
+
+
+
+
+""ACONTECERÁ O INVOLVE 
+
+DO SCHEMA ADMIN COM AS TAREFAS DE LOAD/TRUNCATE DATA FROM TABLE,
+e coisas relacionadas a queries de data manipulation"",
+
+
+o que 
+
+é algo que NAO DESEJAMOS...
+
+(segregation of duties)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK, QUER DIZER QUE NAO DEVEMOS ASSIGNAR 
+
+WAREHOUSES A ESSE ROLE DE "SCHEMAADMIN"...
+
+
+
+
+
+
+
+--> devemos o utilizar apenas para criar 
+
+tables/snowflake objects...
+
+
+
+
+
+
+
+
+
+
+--> NA PRÓXIMA AULA,
+
+
+VAMOS BUILDAR ESSA HIERARQUIA,
+
+POR MEIO DO EXECUTE DE CÓDIGO...
+
+
+
+
+
+
+
+--> TAMBÉM APRENDEREMOS MAIS ALGUMAS COISAS...

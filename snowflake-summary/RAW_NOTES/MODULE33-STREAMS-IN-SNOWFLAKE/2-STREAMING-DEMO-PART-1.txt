@@ -1,0 +1,1069 @@
+
+
+
+
+
+
+
+
+AGORA VEREMOS COMO CRIAR 
+
+
+1 STREAM OBJECT EM 1 TABLE...
+
+
+
+
+
+
+
+
+--> O PROFESSOR USA 1 EXEMPLO DOS DOCS DO SNOWFLAKE:
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- Create a table to store the names and fees paid by members 
+-- of a gym 
+
+CREATE OR REPLACE TABLE MEMBERS (
+    ID NUMBER(8) NOT NULL,
+    NAME VARCHAR(255) DEFAULT NULL,
+    FEE NUMBER(3) NULL
+);
+
+
+
+-- Create a stream to track changes to date in the MEMBERS table
+CREATE OR REPLACE STREAM MEMBER_CHECK ON TABLE MEMBERS;
+
+
+
+
+-- Create a table to store the DATES when gym members joined.
+CREATE OR REPLACE TABLE SIGNUP (
+    ID NUMBER(8),
+    DT DATE
+);
+
+
+-- DML 
+INSERT INTO members (id, name, fee) 
+VALUES (1, 'Joe', 0);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+O CÓDIGO, ATÉ AGORA:
+
+
+
+
+
+
+
+
+
+
+
+
+-- Create a table to store the names and fees paid by members 
+-- of a gym 
+
+CREATE OR REPLACE TABLE MEMBERS (
+    ID NUMBER(8) NOT NULL,
+    NAME VARCHAR(255) DEFAULT NULL,
+    FEE NUMBER(3) NULL
+);
+
+
+
+-- Create a stream to track changes to date in the MEMBERS table
+CREATE OR REPLACE STREAM MEMBER_CHECK ON TABLE MEMBERS;
+
+
+
+
+-- Create a table to store the DATES when gym members joined.
+CREATE OR REPLACE TABLE SIGNUP (
+    ID NUMBER(8),
+    DT DATE
+);
+
+
+-- DML 
+INSERT INTO members (id, name, fee) 
+VALUES (1, 'Joe', 0);
+
+
+
+SHOW STREAMS;
+
+DESC STREAM MEMBER_CHECK;
+
+SELECT * FROM MEMBER_CHECK;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> COM ESSES 3 ÚLTIMOS COMANDOS, FICAMOS COM MAIS INFO 
+
+SOBRE ESSA STREAM QUE CRIAMOS, E SOBRE A DATA/CDC (CHANGE DATA CAPTURES)
+
+CONTIDAS DENTRO DELE....
+
+
+
+
+
+
+
+
+
+
+O OUTPUT FOI ESTE:
+
+
+
+
+
+
+
+ID	NAME	FEE	METADATA$ACTION	METADATA$ISUPDATE	METADATA$ROW_ID
+1	Joe	0	INSERT	FALSE	6a670bdd70a87bd965a24ec7abb619ac01300a2d
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> O PROFESSOR INSERE MAIS DATA:
+
+
+
+
+INSERT INTO MEMBERS (id, name, fee)
+VALUES 
+(1, 'Joe', 0),
+(2, 'Jane', 0),
+(3, 'George', 0),
+(4, 'Betty', 0),
+(5, 'Sally', 0);
+
+
+
+
+
+
+
+
+INSERT INTO SIGNUP 
+VALUES 
+(1, '2018-01-01');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-------_> MAS ANTES DE RODAR ESSES INSERTS NESSA TABLE,
+
+
+O PROFESSOR QUER 
+
+QUE 
+
+
+CHEQUEMOS O "OFFSET" DO STREAM 
+
+
+OBJECT DESSA TABLE,
+
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+
+-------------- OFFSET ---------------------
+
+
+
+
+
+
+SELECT SYSTEM$STREAM_GET_TABLE_TIMESTAMP('member_check'); ---
+
+
+
+
+
+
+
+
+EX:
+
+
+
+-- CHECKS OFFSET OF STREAM OBJECT (initial offset)
+SELECT SYSTEM$STREAM_GET_TABLE_TIMESTAMP('member_check'); -- initial  stream object offset will be 0...
+
+
+
+
+
+
+
+
+--> o stream offset inicial será 0...
+
+
+
+
+
+
+
+
+
+
+--> DEPOIS DISSO, INSERIMOS DATA NA TABLE:
+
+
+
+
+
+INSERT INTO MEMBERS (id, name, fee)
+VALUES 
+(1, 'Joe', 0),
+(2, 'Jane', 0),
+(3, 'George', 0),
+(4, 'Betty', 0),
+(5, 'Sally', 0);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... DEPOIS RE-RODAMOS A QUERY DO OFFSET,
+
+QUE MOSTRARÁ:
+
+
+
+number of rows inserted
+5
+
+
+
+
+
+
+
+
+--> na STREAM,
+FICAMOS COM ISTO:
+
+
+
+ID	NAME	FEE	        METADATA$ACTION	        METADATA$ISUPDATE	METADATA$ROW_ID
+1	Joe	    0	           INSERT	                    FALSE	        26ebaca5271316a90083471aa845abd60240f5e2
+2	Jane	0	           INSERT	                    FALSE	        56900cf9df958e162b3ade459692317ca6fa2ab0
+3	George	0	           INSERT	                    FALSE	        da44edeea3fd94766c61fd561c5d583dc84c3d34
+4	Betty	0	           INSERT	                    FALSE	        f0a56bf02e41f27e1cf35332081807639e89ea49
+5	Sally	0	           INSERT	                    FALSE	        c76ab7e17d8f1c8693f039e3e1712da80df7f727
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+E É CLARO QUE CADA UM DESSES "METADATA$ROW_ID"
+
+
+É UNIQUE...
+
+
+
+
+
+
+
+
+NESSE STREAM OBJECT TRACKAMOS TODAS AS CHANGES 
+OCORRIDAS NA TABLE....
+
+
+
+
+
+
+
+
+--> O OFFSET SÓ MUDARÁ SE 
+
+
+O STREAM OBJECT FOR "CONSUMED"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> O PROFESSOR TAMBÉM INSERE DATA EM OUTRA TABLE,
+
+DE NOME "signup":
+
+
+
+
+INSERT INTO signup 
+VALUES
+(1, '2018-01-01'),
+(1, '2018-02-15'),
+(1, '2018-05-01'),
+(1, '2018-07-16'),
+(1, '2018-08-21');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+------> INICIALMENTE, O OFFSET É 0...
+
+
+
+
+
+
+
+
+--> MAS UMA VEZ QUE A DATA DA STREAM COMECA A SER 
+
+CONSUMIDA,
+
+o offset é alterado...
+
+
+
+
+
+
+
+
+
+
+
+
+TABLE --> STREAM 
+            i
+            i
+            i
+            CONSUMER TABLE....
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE A STREAM 
+
+
+É CONSUMIDA POR 1 "CONSUMER TABLE",
+
+
+que vai consumir as CHANGES OCORRIDAS NESSA TABLE ORIGINÁRIA...
+
+
+
+
+
+
+
+
+
+
+--> PARA ISSO,
+
+O PROFESSOR CRIA OUTRA TABLE,
+
+"MEMBERS_PROD"...
+
+
+
+
+
+
+
+
+CREATE OR REPLACE TABLE MEMBERS_PROD (
+    ID NUMBER(8) NOT NULL,
+    NAME VARCHAR(255) DEFAULT NULL,
+    FEE NUMBER(3) NULL
+);
+
+
+
+
+
+
+
+
+
+--> ok...
+
+
+
+
+
+
+
+
+
+AÍ O PROFESSOR RODA ESTE STATEMENT:
+
+
+
+
+
+
+
+
+
+
+-- Insert the first batch of stream data into the production table:
+
+INSERT INTO MEMBERS_PROD(id, name, fee) 
+SELECT ID, NAME, FEE 
+FROM MEMBER_CHECK WHERE metadata$action = 'INSERT';
+
+
+
+
+
+
+
+
+
+
+
+
+
+COM ISSO, INSERIMOS TODA A DATA 
+
+
+DE TIPO DE "INSERT"...
+
+
+
+
+
+
+
+--> esse é o nosso consumer statement, basicamente...
+
+
+
+
+
+
+---------------------------
+
+
+
+
+
+
+COM ISSO, 5 RECORDS FORAM INSERIDOS NESSA MEMBERS_PROD 
+
+TABLE...
+
+
+
+
+
+
+--> certo...
+
+
+
+
+
+
+
+
+--> agora toda a data da stream terá sumido, pois foi consumida...
+
+
+
+
+
+
+
+
+
+
+-> AGORA PODEMOS CHECAR O OFFSET DA TABLE,
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+
+SELECT SYSTEM$STREAM_GET_TABLE_TIMESTAMP('member_check');
+
+
+
+
+
+
+
+
+
+
+
+
+--> CHECAMOS O OFFSET DE NOSSA STREAM... --> 
+
+
+ISSO VAI NOS DAR 1 TIMESTAMP NUMBER,
+
+TIPO ASSIM:
+
+
+
+
+
+158294912091
+
+
+
+
+
+
+
+
+
+
+
+--> PODEMOS COPIAR ESSE NUMBER,
+
+
+E AÍ 
+
+
+
+
+
+TENTAR PEGAR 1 TIMESTAMP,
+
+
+COM 
+
+
+
+
+
+
+
+SELECT TO_TIMESTAMP('231315125125');
+
+
+
+
+
+
+
+
+
+
+E ISSO NOS DARÁ O "TIME OFFSET" dessa table...
+
+
+
+
+
+
+
+
+
+
+
+
+MAS O QUE SIGNIFICA ESSE TIME OFFSET?
+
+
+
+
+
+
+
+
+
+
+SIGNIFICA QUE 
+
+
+
+QUAISQUER 
+
+CHANGES 
+
+
+
+QUE OCORRAM DAQUELE TIMESTAMP EM FRENTE 
+
+
+SERAO 
+
+
+TRACKADAS POR ESSE STREAM OBJECT....
+
+
+
+
+
+
+
+
+------->  agora faremos 
+
+mais 1 operation....
+
+
+
+
+
+
+
+
+
+-> tentamos rodar 1 update em cima da table...
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA ISSO, RODAMOS:
+
+
+
+
+
+
+
+--- Apply a $90 fee to members who joined the gym after
+-- a free trial period ended...
+
+
+
+
+
+
+
+
+MERGE INTO MEMBERS AS M 
+    USING (
+        SELECT ID, DT 
+        FROM SIGNUP AS S
+        WHERE DATEDIFF((day, '2018-08-15'::date, s.dt::date) < -30) AS S 
+        ON M.ID = S.ID
+        WHEN MATCHED THEN UPDATE
+        SET m.FEE = 90;
+
+
+
+
+
+
+
+
+
+
+
+--> ISSO VAI UPDATAR A TABLE...
+
+
+
+
+
+
+
+
+
+
+
+--> SE VISUALIZAMOS O STREAM OBJECT,
+
+
+VISUALIZAMOS:
+
+
+
+
+1) METADATA$UPDATE --> TRUE ....
+
+
+
+
+
+QUER DIZER QUE DELETAMOS 3 RECORDS,
+AÍ INSERIMOS 
+
+3 RECORDS...
+
+
+
+
+(
+    isso pq 
+
+
+    O AMAZON S3 NAO ADMITE UPDATES,
+
+    E SIM 
+
+
+
+    APENAS ADMITE DELETES E INSERTS...
+)
+
+
+
+
+
+
+
+
+--> O OFFSET TAMBÉM TERÁ SIDO INCREMENTADO,
+E NAO TEREMOS MAIS DATA NO STREAM OBJECT....
+
+
+
+
+
+
+
+
+
+SELECT SYSTEM$STREAM_GET_TABLE_TIMESTAMP('member_check'); ---
+
+
+-------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+OK... MAS AGORA O PROFESSOR LANÇA UMA PERGUNTA:
+
+
+
+
+
+
+
+
+""SE EU TENHO APENAS ESSE STREAM OBJECT TIED A UMA TABLE,
+
+
+
+
+
+SE EU TENTAR CAPTURAR ESSAS CHANGES EM OUTRA 
+
+
+CONSUMER TABLE, ISSO SERIA POSSÍVEL?""
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+TIPO ASSIM:
+
+
+
+
+TABLE --> STREAM 
+            i
+            i
+            i
+            CONSUMER TABLE....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+O PROBLEMA É QUE TODA A DATA SERÁ CONSUMIDA PELA 
+
+PRIMEIRA CONSUMER TABLE...
+
+
+
+
+SE TIVERMOS 2 CONSUMER TABLES...:
+
+
+
+
+
+
+
+
+TABLE --> STREAM 
+            i
+            i
+        I-- i ----------I
+CONSUMER TABLE          CONSUMER TABLE 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> esse cenário seria possivel?
+
+
+
+
+
+
+
+
+
+
+--> SE VC TENTAR AMARRAR 
+
+
+OUTRA CONSUMER TABLE NESSE OBJECT,
+
+VC NAO SERÁ CAPAZ DE FAZER ISSO, NAO 
+
+SERÁ CAPAZ DE DIRECIONAR A DATA DESSE STREAM OBJECT PARA 
+OUTRA CONSUMER TABLE (justamente pq a data 
+só pode ser consumida 1 única vez... depois disso, ela some)...
+
+
+
+
+
+
+
+
+
+
+
+A ÚNICA OPCAO, AQUI,
+
+É CRIAR 2 STREAM OBJECTS,
+
+1 PARA CADA CONSUMER TABLE...
+
+
+
+
+
+
+
+
+
+--> ISSO PQ __ QUANDO 
+
+
+ESSE STREAM OBJECT FOR CONSUMIDO POR 1 CONSUMER TABLE,
+
+VC NAO VERÁ MAIS NENHUMA DATA NO STREAM OBJECT,
+
+
+E O OFFSET TAMBÉM TERÁ SIDO INCREMENTADO..
+
+
+
+
+
+
+
+
+
+----> QUER DIZER QUE SE VC TIVER MÚLTIPLAS CONSUMER TABLES 
+
+
+
+EM CIMA DE 1 GIVEN ORIGINAL TABLE,
+
+VC 
+
+
+TERÁ 
+
+
+DE CRIAR MÚLTIPLOS STREAM OBJECTS,
+
+1 PARA CADA CONSUMER TABLE....
+
+
+
+

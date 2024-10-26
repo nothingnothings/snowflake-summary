@@ -1,0 +1,60 @@
+Reference- Sampling
+
+
+Please go through this blog,
+
+https://sonra.io/2018/08/02/sampling-in-snowflake-approximate-query-processing-for-fast-data-visualisation/
+
+Please go through below documentation,
+
+https://docs.snowflake.net/manuals/sql-reference/constructs/sample.html
+
+
+
+Also go through different methods to take sample,
+
+Ref(https://docs.snowflake.com/en/sql-reference/constructs/sample.html)
+
+Fraction-based Row Sampling
+Return a sample of a table in which each row has a 10% probability of being included in the sample:
+
+select * from testtable sample (10);
+Return a sample of a table in which each row has a 20.3% probability of being included in the sample:
+
+select * from testtable tablesample bernoulli (20.3);
+Return an entire table, including all rows in the table:
+
+select * from testtable tablesample (100);
+Return an empty sample:
+
+select * from testtable sample row (0);
+This example shows how to sample multiple tables in a join:
+
+select i, j
+    from
+         table1 as t1 sample (25)     -- 25% of rows in table1
+             inner join
+         table2 as t2 sample (50)     -- 50% of rows in table2
+    where t2.j = t1.i
+    ;
+The SAMPLE clause applies to only one table, not all preceding tables or the entire expression prior to the SAMPLE clause. The following JOIN operation joins all rows of t1 to a sample of 50% of the rows in table2; it does not sample 50% of the rows that result from joining all rows in both tables:
+
+select i, j
+    from table1 as t1 inner join table2 as t2 sample (50)
+    where t2.j = t1.i
+    ;
+To apply the SAMPLE clause to the result of a JOIN, rather than to the individual tables in the JOIN, apply the JOIN to an inline view that contains the result of the JOIN. For example, perform the JOIN as a subquery, and then apply the SAMPLE to the result of the subquery. The example below samples approximately 1% of the rows returned by the JOIN:
+
+select *
+   from (
+         select *
+            from t1 join t2
+               on t1.a = t2.c
+        ) sample (1);
+Fraction-based Block Sampling (with Seeds)
+Return a sample of a table in which each block of rows has a 3% probability of being included in the sample, and set the seed to 82:
+
+select * from testtable sample system (3) seed (82);
+Return a sample of a table in which each block of rows has a 0.012% probability of being included in the sample, and set the seed to 99992:
+
+select * from testtable sample block (0.012) repeatable (99992);

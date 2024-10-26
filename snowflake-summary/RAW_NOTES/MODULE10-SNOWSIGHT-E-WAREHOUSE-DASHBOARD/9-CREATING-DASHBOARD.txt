@@ -1,0 +1,662 @@
+
+
+
+
+
+
+
+
+
+AGORA VEREMOS COMO CRIAR 1 DASHBOARD NO SNOWSIGHT...
+
+
+
+
+
+
+
+
+
+
+
+
+DEVEMOS FICAR COM ESSA QUERY EM MAOS:
+
+
+
+
+
+
+
+
+
+
+-- Warehouse will give information about credit information.
+-- WAREHOUSE_HISTORY view will calculate credit and cost grouped by warehouse name.
+
+
+WITH 
+WAREHOUSE_HISTORY AS
+
+ (SELECT TO_DATE(START_TIME) START_TIME,
+          WAREHOUSE_NAME,
+          'SNOWFLAKE_WAREHOUSE_COST' CRITERIA,
+                                     sum(credits_used) AS CREDITS,
+                                     ROUND(sum(credits_used)*4, 2) COST  -- according to edition (standard, enterprise, business critical)
+   FROM snowflake.account_usage.warehouse_metering_history
+   WHERE to_date(start_time) >=date_trunc(MONTH, CURRENT_DATE)
+     AND WAREHOUSE_NAME IS NOT NULL
+     AND WAREHOUSE_NAME NOT IN (' ',
+                                'CLOUD_SERVICES_ONLY')
+   GROUP BY TO_DATE(START_TIME), WAREHOUSE_NAME),
+			
+	
+-- Using the query execution time we will calculate the approx credits for the queries executed on warehouse.
+-- We will compare the credits calculated from query execution with total credits from WAREHOUSE_HISTORY to calculate Idle cost.
+
+  QUERY_HISTORY AS
+  
+  (SELECT TO_DATE(START_TIME) START_TIME,
+          WAREHOUSE_NAME,
+          'QUERY_EXECUTION_COST' CRITERIA,
+                                 sum(WAREHOUSE_COST) CREDITS,
+                                 ROUND(sum(WAREHOUSE_COST) *4, 2) COST
+   FROM
+     (SELECT TO_DATE(START_TIME) START_TIME,
+             WAREHOUSE_NAME,
+             CASE
+                 WHEN WAREHOUSE_SIZE='X-Small' THEN ((((EXECUTION_TIME/1000)/60))*(CLUSTER_NUMBER*1))/60
+                 WHEN WAREHOUSE_SIZE='Small' THEN ((((EXECUTION_TIME/1000)/60))*(CLUSTER_NUMBER*2))/60
+                 WHEN WAREHOUSE_SIZE='Medium' THEN ((((EXECUTION_TIME/1000)/60))*(CLUSTER_NUMBER*4))/60
+                 WHEN WAREHOUSE_SIZE='Large' THEN ((((EXECUTION_TIME/1000)/60))*(CLUSTER_NUMBER*8))/60
+                 WHEN WAREHOUSE_SIZE='X-Large' THEN ((((EXECUTION_TIME/1000)/60))*(CLUSTER_NUMBER*16))/60
+                 WHEN WAREHOUSE_SIZE='2X-Large' THEN ((((EXECUTION_TIME/1000)/60))*(CLUSTER_NUMBER*32))/60
+                 WHEN WAREHOUSE_SIZE='3X-Large' THEN ((((EXECUTION_TIME/1000)/60))*(CLUSTER_NUMBER*64))/60
+                 WHEN WAREHOUSE_SIZE='4X-Large' THEN ((((EXECUTION_TIME/1000)/60))*(CLUSTER_NUMBER*128))/60
+             END WAREHOUSE_COST
+      FROM snowflake.account_usage.query_history
+      WHERE to_date(start_time) >=date_trunc(MONTH, CURRENT_DATE) )
+   GROUP BY TO_DATE(START_TIME),
+            WAREHOUSE_NAME),
+			
+
+  -- 1 credit -- 60 minutes
+
+-- Calculate approx Idle credits and cost. This will use the calculation done from above steps.
+			
+   IDLE_COST AS
+   
+  (SELECT A.START_TIME,
+          A.WAREHOUSE_NAME,
+          'IDLE_COST' CRITERIA,
+                      (A.CREDITS-B.CREDITS) CREDITS,
+                      (A.CREDITS-B.CREDITS)*4 COST
+   FROM WAREHOUSE_HISTORY A
+   INNER JOIN QUERY_HISTORY B ON A.WAREHOUSE_NAME=B.WAREHOUSE_NAME
+   AND A.START_TIME=B.START_TIME),
+   
+  -- Categorise and union actual snowflake warehouse cost, snowflake query execution cost and Idle cost.
+  
+  OVERVIEW AS
+  
+  (SELECT START_TIME,
+          WAREHOUSE_NAME,
+          CRITERIA,
+          ROUND(CREDITS, 2)CREDITS,
+          ROUND(COST, 2) COST
+   FROM WAREHOUSE_HISTORY
+   
+   UNION 
+   
+   SELECT START_TIME,
+                WAREHOUSE_NAME,
+                CRITERIA,
+                ROUND(CREDITS, 2)CREDITS,
+                ROUND(COST, 2) COST
+   FROM QUERY_HISTORY
+   
+   UNION 
+   
+   SELECT START_TIME,
+                WAREHOUSE_NAME,
+                CRITERIA,
+                ROUND(CREDITS, 2)CREDITS,
+                ROUND(COST, 2) COST
+   FROM IDLE_COST)
+   
+   
+SELECT SUM(COST) COST
+FROM OVERVIEW
+WHERE CRITERIA='SNOWFLAKE_WAREHOUSE_COST'
+-- WHERE CRITERIA='QUERY_EXECUTION_COST'
+-- WHERE CRITERIA='IDLE_COST' -- o idle cost de suas maquinas (é um value dentro do snowflake_warehouse_cost)
+  AND WAREHOUSE_NAME='COMPUTE_WH'; -- insert value in here
+  -- AND WAREHOUSE_NAME=:my_warehouse; -- custom filter (created by us) example.
+-- AND  WAREHOUSE_NAME=:Warehouse;  -- insert value in here (dynamic, use SNOWSIGHT to insert value) -- and ':Warehouse' is a custom filter, created by us
+-- AND  START_TIME=:daterange;  -- insert value in here (dynamic, use SNOWSIGHT to insert value)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-----------> ENTAO O PROFESSOR CRIA UMA NOVA WORKSHEET,
+
+
+
+
+DE NOME 
+
+
+
+"query execution cost"...
+
+
+
+
+
+
+
+
+
+
+
+
+É A MESMA QUERY DE ANTES, MAS FILTRANDO POR 
+
+
+QUERY_EXECUTION_COST...
+
+
+
+
+
+
+EX:
+
+
+
+
+
+
+
+
+
+
+-- Warehouse will give information about credit information.
+-- WAREHOUSE_HISTORY view will calculate credit and cost grouped by warehouse name.
+
+
+WITH 
+WAREHOUSE_HISTORY AS
+
+ (SELECT TO_DATE(START_TIME) START_TIME,
+          WAREHOUSE_NAME,
+          'SNOWFLAKE_WAREHOUSE_COST' CRITERIA,
+                                     sum(credits_used) AS CREDITS,
+                                     ROUND(sum(credits_used)*4, 2) COST  -- according to edition (standard, enterprise, business critical)
+   FROM snowflake.account_usage.warehouse_metering_history
+   WHERE to_date(start_time) >=date_trunc(MONTH, CURRENT_DATE)
+     AND WAREHOUSE_NAME IS NOT NULL
+     AND WAREHOUSE_NAME NOT IN (' ',
+                                'CLOUD_SERVICES_ONLY')
+   GROUP BY TO_DATE(START_TIME), WAREHOUSE_NAME),
+			
+	
+-- Using the query execution time we will calculate the approx credits for the queries executed on warehouse.
+-- We will compare the credits calculated from query execution with total credits from WAREHOUSE_HISTORY to calculate Idle cost.
+
+  QUERY_HISTORY AS
+  
+  (SELECT TO_DATE(START_TIME) START_TIME,
+          WAREHOUSE_NAME,
+          'QUERY_EXECUTION_COST' CRITERIA,
+                                 sum(WAREHOUSE_COST) CREDITS,
+                                 ROUND(sum(WAREHOUSE_COST) *4, 2) COST
+   FROM
+     (SELECT TO_DATE(START_TIME) START_TIME,
+             WAREHOUSE_NAME,
+             CASE
+                 WHEN WAREHOUSE_SIZE='X-Small' THEN ((((EXECUTION_TIME/1000)/60))*(CLUSTER_NUMBER*1))/60
+                 WHEN WAREHOUSE_SIZE='Small' THEN ((((EXECUTION_TIME/1000)/60))*(CLUSTER_NUMBER*2))/60
+                 WHEN WAREHOUSE_SIZE='Medium' THEN ((((EXECUTION_TIME/1000)/60))*(CLUSTER_NUMBER*4))/60
+                 WHEN WAREHOUSE_SIZE='Large' THEN ((((EXECUTION_TIME/1000)/60))*(CLUSTER_NUMBER*8))/60
+                 WHEN WAREHOUSE_SIZE='X-Large' THEN ((((EXECUTION_TIME/1000)/60))*(CLUSTER_NUMBER*16))/60
+                 WHEN WAREHOUSE_SIZE='2X-Large' THEN ((((EXECUTION_TIME/1000)/60))*(CLUSTER_NUMBER*32))/60
+                 WHEN WAREHOUSE_SIZE='3X-Large' THEN ((((EXECUTION_TIME/1000)/60))*(CLUSTER_NUMBER*64))/60
+                 WHEN WAREHOUSE_SIZE='4X-Large' THEN ((((EXECUTION_TIME/1000)/60))*(CLUSTER_NUMBER*128))/60
+             END WAREHOUSE_COST
+      FROM snowflake.account_usage.query_history
+      WHERE to_date(start_time) >=date_trunc(MONTH, CURRENT_DATE) )
+   GROUP BY TO_DATE(START_TIME),
+            WAREHOUSE_NAME),
+			
+
+  -- 1 credit -- 60 minutes
+
+-- Calculate approx Idle credits and cost. This will use the calculation done from above steps.
+			
+   IDLE_COST AS
+   
+  (SELECT A.START_TIME,
+          A.WAREHOUSE_NAME,
+          'IDLE_COST' CRITERIA,
+                      (A.CREDITS-B.CREDITS) CREDITS,
+                      (A.CREDITS-B.CREDITS)*4 COST
+   FROM WAREHOUSE_HISTORY A
+   INNER JOIN QUERY_HISTORY B ON A.WAREHOUSE_NAME=B.WAREHOUSE_NAME
+   AND A.START_TIME=B.START_TIME),
+   
+  -- Categorise and union actual snowflake warehouse cost, snowflake query execution cost and Idle cost.
+  
+  OVERVIEW AS
+  
+  (SELECT START_TIME,
+          WAREHOUSE_NAME,
+          CRITERIA,
+          ROUND(CREDITS, 2)CREDITS,
+          ROUND(COST, 2) COST
+   FROM WAREHOUSE_HISTORY
+   
+   UNION 
+   
+   SELECT START_TIME,
+                WAREHOUSE_NAME,
+                CRITERIA,
+                ROUND(CREDITS, 2)CREDITS,
+                ROUND(COST, 2) COST
+   FROM QUERY_HISTORY
+   
+   UNION 
+   
+   SELECT START_TIME,
+                WAREHOUSE_NAME,
+                CRITERIA,
+                ROUND(CREDITS, 2)CREDITS,
+                ROUND(COST, 2) COST
+   FROM IDLE_COST)
+   
+   
+SELECT SUM(COST) COST
+FROM OVERVIEW
+WHERE CRITERIA='QUERY_EXECUTION_COST'
+AND WAREHOUSE_NAME=:my_warehouse; -- custom filter (created by us) example.
+AND  START_TIME=:daterange;  -- insert value in here (dynamic, use SNOWSIGHT to insert value)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CRIEI 3 WORKSHEETS DIFERENTES,
+
+
+UM PARA O IDLE_COST,
+
+
+OUTRO PARA O QUERY_EXECUTION_COST
+
+
+
+E OUTRO PARA O SNOWFLAKE_WAREHOUSE_COST...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> DEVEMOS NOMEAR NOSSAS WORKSHEETS BEM,
+
+PQ 
+
+
+
+OS NOMES DELAS SERAO USADAS COMO TITLES 
+
+
+
+DOS DASHBOARDS,
+
+
+QUANDO OS CRIARMOS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> QUANDO TEMOS 1 RESULT,
+
+PODEMOS ESCOLHER O "CHART TYPE"...
+
+
+
+
+
+
+
+no caso do professor, ele colocou o chart type de "scorecard"...
+
+(lá no "idle_cost_usd")...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK.... FAZEMOS ISSO COM AS 3 WORKSHEETS,
+
+
+
+
+deixamos chart type como "scorecard"..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AGORA VAMOS CRIAR 1 DASHBOARD...
+
+
+
+
+
+
+
+CLICAMOS EM "+ DASHBOARD"..
+
+
+
+
+
+
+
+
+--> professor escreve 
+
+
+demo_warehouse_cost....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+PARA INSERIRMOS O RESULTADO DAQUELAS WORKSHEETS 
+
+
+
+NOS NOSSOS DASHBOARDS,
+
+
+DEVEMOS IR ATÉ AS 
+
+
+WORKSHEETS,
+
+CLICAR NO NOME DELAS E ENTAO COLOCAR "MOVE TO DASHBOARD"..
+
+
+
+
+
+
+
+
+
+
+
+OK... AGORA ESSA WORKSHEET 
+
+
+
+ESTÁ 
+
+
+
+NESSA DASHBOARD...
+
+
+
+
+
+
+
+
+
+
+
+
+
+QUANDO MOVEMOS COISAS PARA 1 DASHBOARD,
+
+
+
+
+
+
+AS WORKSHEETS USADAS SOMEM...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> UMA VEZ QUE 
+
+
+SUA WORKSHEET FOI PARA O DASHBOARD,
+
+ELA NAO PODE SER RETORNADA...
+
+
+
+
+
+
+
+
+
+PODEMOS MANIPULAR OS BLOCOS,
+
+
+deixar o layout que quisermos...
+
+
+
+
+
+
+
+
+
+
+OK... É ASSIM QUE PODEMOS CRIAR 1 DASHBOARD E REPRESENTAR A DATA QUE 
+
+QUERIAMOS...
+
+
+
+
+
+
+
+
+
+
+
+------------------------------
+
+
+
+
+
+
+
+É UMA INBUILT VISUALIZATION,
+
+EM QUE PODEMOS QUERIAR A DATA 
+
+
+E 
+
+REPRESENTAR 
+
+ESSA DATA 
+
+
+
+DE UMA MANEIRA BEM INTUITIVA...
+
+
+
+
+
+
+
+
+
+
+
+--> TEM MENOS FEATURES DO QUE TABLEAU E OUTRAS 
+
+VISUALIZATION TOOLS,
+
+MAS É BOA...
+
+
+
+
+
+
+
+
+
+
+
+--> PODEMOS EDITAR NOSSAS QUERIES,
+
+
+DE DENTRO DO DASHBOARD...
+
+
+
+
+
+
+
+--> também devemos ter cuidado:
+
+
+
+
+
+SE CLICAMOS EM "UNPLACE TILE' ou "DELETE",
+
+
+
+
+vc nao terá mais esse tile,
+
+
+e nao será mais capaz de recuperar 
+
+
+sua query...
+
+
+
+
+
+AGORA VEREMOS MAIS DETALHES/DICAS DE USO 
+
+
+
+DESSE DASHBOARD...

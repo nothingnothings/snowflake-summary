@@ -1,0 +1,164 @@
+
+
+
+
+
+
+
+
+AGORA VEREMOS O MAINTENANCE COST DAS 
+
+MATERIALIZED VIEWS...
+
+
+
+
+
+
+PARA ISSO, CLIQUE EM "ACCOUNT"...
+
+
+
+
+
+
+
+
+
+
+-> A ABA "MATERIALIZED_VIEW_MAINTENANCE"...
+
+
+
+
+
+
+
+
+
+
+
+
+-> PODEMOS CLARAMENTE VER QUE 
+
+
+EXISTE 1 CUSTO ASSOCIADO COM A MANUTENCAO DESSAS VIEWS...
+
+
+
+
+
+
+
+
+
+O PROFESSOR QUER DEMONSTRAR 
+
+
+SE ESSE COST __ MATCHEIA COM A MATERIALIZED_VIEW_REFRESH_HISTORY...
+
+
+
+
+
+
+
+
+(se os values sao realmente correspondentes)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SELECT * FROM TABLE(INFORMATION_SCHEMA.MATERIALIZED_VIEW_REFRESH_HISTORY());
+
+
+
+
+
+
+
+
+
+--> SE TEMOS QUALQUER CHANGE NA UNDERLYING TABLE,
+
+
+
+TEMOS UM COST 
+
+
+PARA REFRESHAR A MATERIALIZED VIEW... ISSO SEMPRE ACONTECE...
+
+
+
+
+
+
+
+
+
+
+
+
+SE ADICIONAMOS TODOS OS VALUES 
+
+NA TABLE 
+
+DE 
+
+
+
+MATERIALIZED_VIEW_REFRESH_HISTORY (com um sum, por exemplo),
+
+
+FICAMOS COM O EXATO VALUE 
+
+
+MOSTRADO NO REPORT DO SNOWFLAKE (do account admin)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+o que temos que observar é que SEMPRE QUE HÁ 1 CHANGE NA DATA,
+
+NA BASE TABLE,
+
+
+
+
+
+EXISTIRÁ 1 REFRESH COST PARA MANTER A MATERIALIZED_VIEW...
+
+
+(mantê-la sincronizada)
+
+
+
+
+

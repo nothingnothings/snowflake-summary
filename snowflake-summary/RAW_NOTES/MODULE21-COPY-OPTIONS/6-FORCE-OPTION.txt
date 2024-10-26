@@ -1,0 +1,122 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... 
+
+
+
+
+
+
+
+
+NESSA LECTURE, VEREMOS A OPTION DE "fORCE"...
+
+
+
+
+
+
+
+
+
+
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+
+COPY INTO emp
+FROM @demo_db.external_stages.my_s3_stage
+FILE_FORMAT=(TYPE=CSV 
+field_optionally_enclosed_by='"')
+ON_ERROR='CONTINUE'
+FORCE=TRUE;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ESSE COMANDO FORCA O COPY DE ROWS NA SUA 
+
+TABLE, MESMO SE ELES FOREM PRODUZIDOS 
+
+DE 1 MESMO 
+ARQUIVO (
+    duplicate data, duplicate rows...
+)
+
+
+
+
+
+
+
+
+
+
+--> O SNOWFLAKE FAZ ESSE CHECK 
+
+
+DE ""SERÁ QUE O ARQUIVO É O MESMO QUE JÁ FOI USADO""
+
+
+
+POR MEIO 
+
+
+DA COMPARACAO ENTRE OS HASHES DOS ARQUIVOS....
+
+
+
+
+SE OS HASH VALUES SAO OS MESMOS, É O MESMO ARQUIVO,
+
+
+E AÍ 
+
+
+
+
+OS ROWS/RECORDS NAO SAO COPIADOS...
+
+
+
+
+
+
+
+
+
+--> MAS SE DEFINIMOS "FORCE=TRUE",
+
+ele vai copiar os rows para dentro da table,
+mesmo assim...

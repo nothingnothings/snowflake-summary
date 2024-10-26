@@ -1,0 +1,569 @@
+
+
+
+
+
+
+
+ALGUMAS DAS MELHORES PRACTICES SAO:
+
+
+
+
+
+
+1) DEVELOPMENT TEAM SHOULD USE SAME VIRTUAL CLUSTERS (VIRTUAL WAREHOUSES) 
+WHILE DOING DEVELOPMENT 
+
+
+
+
+
+
+2) FOR A DEVELOPMENT CLUSTER, SET AUTO-SHUTDOWN TO MAX PERIOD (15 minutes?)
+
+
+
+3) WHILE LOADING DATA INTO A TABLE, SORT BY KEYS 
+ON WHICH YOU WILL WANT TO QUERY DATA IN THE FUTURE.
+
+
+
+4) USE LARGE CLUSTERS TO RUN "COPY" COMMAND, BUT __ ALWAYS__  
+RUN __ COPY___ COMMAND__ ON SMALLER CHUNKS OF FILES ___...
+
+
+5) WHILE EXECUTING QUERIES, ALWAYS USE __ COLUMN__ NAMES 
+
+INSTEAD OF USING "*"... IF YOU WANT TO USE "*",
+
+USE LIMIT CLAUSE ALONG WITH IT...
+
+
+
+
+
+
+
+----------------------
+
+
+
+
+
+
+
+
+VIRTUAL WAREHOUSE:
+
+
+
+
+
+
+
+
+1) É NADA MAIS DO QUE 1 GROUP OF CLUSTERS/NODES QUE 
+
+
+TE AJUDA 
+
+A PROCESSAR A DATA...
+
+
+
+
+
+
+
+
+2) ASSIM QUE VC EXECUTA 1 QUERY COM 1 VIRTUAL WAREHOUSE,
+
+
+
+O QUE ELA FARÁ É 
+
+
+
+__FETCHEAR A DATA LÁ DO S3, e aí 
+
+
+vai MANTER 
+
+ESSA DATA 
+
+
+NO "lOCAL HARD DISK" (do próprio virtual warehouse)
+
+
+
+COMO 1 CACHE... ---------> ELE FAZ ISSO PARA QUE,
+
+QUANDO 
+
+VC 
+
+RODAR A QUERY NOVAMENTE,
+
+
+
+O SNOWFLAKE NAO TERÁ DE TARGETTAR A AWS DIRETAMENTE mais uma vez...
+
+
+
+
+
+
+
+
+
+3) COM ESSE CONHECIMENTO, DIGAMOS QUE TEMOS 1 DEV TEAM...
+
+
+PARA ESSA DEV TEAM,
+
+
+DEVEMOS USAR APENAS 1 ÚNICA VIRTUAL WAREHOUSE -->  PQ COMO OS 
+DEVELOPERS 
+
+RODARAO 
+
+QUERIES SIMILARES, EM CIMA DE TABLES SIMILARES/MESMAS TABLES,
+
+
+VC ACABARÁ PULLANDO "SIMILAR KIND OF DATA" LÁ DO S3,
+
+
+E ESSA DATA, PELA NATURE DA ARCHITECTURE SNOWFLAKE,
+
+
+
+SERÁ CACHEADA NO HARD DISK DO NODE....
+
+
+
+
+
+
+
+
+
+4) POR ISSO, SE USAMOS UMA 'SHARED VIRTUAL WAREHOUSE",
+shared entre os devs,
+
+quando 
+
+fazemos development activities,
+
+podemos facilmente leverage a cache memory 
+
+EM CADA 1 DESSES VIRTUAL CLUSTERS/NODES...
+
+
+
+
+
+
+
+
+
+
+
+
+aí temos o pŕoximo ponto:
+
+
+
+
+
+
+
+
+5) PARA SEU WAREHOUSE DE DEVELOPMENT,
+
+
+
+TENTE COLOCAR O "AUTO-SUSPEND"  PARA VALORES MAIORES ---> PQ,
+
+
+PARA DEVELOPMENT CLUSTERS,
+
+PODEMOS DEFINIR 
+
+
+O AUTO-SHUTDOWN 
+
+
+PARA 15 MINUTES...
+
+
+
+
+
+
+--> PQ SE O CLUSTER É SHUTDOWN,
+
+VC PERDE TODA CACHE MEMORY (
+
+    aí a data tem que ser toda fetcheada do aws s3...
+
+)
+
+
+
+
+
+--> É POR ISSO QUE, DURANTE DEV ACTIVITIES,
+
+MESMO SE O CLUSTER FICAR IDLE POR ALGUNS MOMENTOS,
+
+
+VC NAO DEVE DEIXAR ELE "SHUTDOWN"...
+
+
+
+
+
+
+--> MANTENHA ESSE SHUTDOWN PERIOD AO MÁXIMO,
+
+PARA QUE VC 
+
+CONSIGA 
+
+
+SALVAR 1 POUCO COM CACHE MEMORY (
+
+
+    aí, se outro dev chegar depois de 5-10 minutes 
+
+    e tentar rodar 1 mesma query, usando 
+
+    aquele cluster,
+
+
+        ele vai usar o caching, salvar bastante em custos...
+
+)
+
+
+
+
+
+
+O CACHE NAO É COBRADO.... --> ISSO É REALMENTE GRÁTIS...
+
+
+
+
+
+
+
+
+MAS SE O CLUSTER ESTIVER TENTANDO PULLAR A DATA DO S3,
+
+ELE SERÁ CHARGED....
+
+
+
+
+
+
+
+
+
+6) MANTENHA O AUTO-SUSPEND COMO "15 MINUTES" PARA DEVELOPMENT,
+
+ESSE É UM SWEET SPOT...
+
+
+
+
+
+
+7) PONTO IMPORTANTE!!!! -----------> QUANDO 
+
+FIZER LOAD DE DATA EM 1 TABLE,
+
+SEMPRE FAÇA 
+
+
+"SORT BY" 
+
+EM CIMA 
+
+DE KEYS _ PELAS QUAIS 
+
+VC VAI QUERER QUERIAR NO FUTURO (nos seus where filters)...
+
+
+
+
+
+
+
+--> PQ QUANDO CARREGAMOS DATA NA TABLE,
+
+O SNOWFLAKE 
+
+VAI AUTOMATICAMENTE 
+
+
+"KEEP TRACK OF STATS IN EACH COLUMN",
+
+
+
+
+tudo para que seja mais fácil queriar a data... (
+
+    para que quando vc rodar 1 query na table,
+
+    com base nos stats que 
+    o snowflake coletou enquanto vc carregava 
+
+    essa data,
+
+    ele vai facilmente RETRIEVAR A DATA E A ENTREGAR A VOCE...
+
+)
+
+
+
+
+
+
+--> SE VC SORTAR PELAS KEYS MAIS USADAS POR VOCE,
+
+
+
+SUA DATA JÁ SERÁ ORGANIZADA, NO BACKEND, PELO SNOWFLAKE,
+
+
+DE UMA MANEIRA SIMILAR A SUA ORGANIZACAO -->  QUER DIZER QUE 
+
+
+AS MICROPARTITIONS SERAO ORGANIZADAS 
+
+DE MANEIRA SIMILAR,
+
+
+PARA QUE 
+
+
+QUANDO VC QUERIAR A DATA, SUA DATA VOLTE BEM MAIS RÁPIDO (
+    pq já estará organizada/sortada...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OUTRO PONTO...
+
+
+
+
+
+
+8) USE UM CLUSTER MEDIUM OU LARGE
+
+PARA RODAR 
+
+COMANDOS DE "COPY"... MAS, QUANDO FIZER ISSO,
+
+EXECUTE O COMANDO DE "COPY"
+
+
+
+EM SMALLER CHUNKS DE FILES,
+
+PQ ISSO AUMENTA MT A VELOCIDADE 
+DE LOAD....
+
+
+
+
+
+
+CLUSTERS DE TAMANHO "LARGE" SEMPRE DEVEM SER O MÁXIMO, QUANDO 
+
+RODAMOS COPY COMMANDS (mais do que isso é exagero)..
+
+
+
+
+
+
+
+
+MAS VC DEVE ASSEGURAR QUE 
+
+
+SUAS FILES ESTAO DIVIDIDAS EM PIECES OF FILE (10mb)
+ANTES 
+
+DE RODAR O COPY COMMAND.... -------> SE VC RODAR 
+
+O COPY COMMAND COM ESSAS PIECES OF FILE COM 1 WAREHOUSE DE TAMANHO 
+
+LARGE,
+
+ELAS SERAO FACILMENTE CARREGADAS NAS TABLES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK, PRÓXIMO PONTO...
+
+
+
+
+
+
+
+
+
+
+
+9) ao executar queries,
+
+
+sempre use COLUMN NAMES em vez de usar "*"....
+
+
+
+
+
+-> PQ "*" vai USAR MT PROCESSAMENTO....
+
+
+
+
+
+
+
+
+
+
+--> SE FOR USAR "*",
+
+
+use 
+
+
+A LIMIT CLAUSE COM ELE...
+
+
+
+
+
+
+
+
+
+--> SE VC CONHECE A ARCHITECTURE 
+
+DO SNOWFLAKE,
+
+
+VC ENTENDE QUE RODAR "SELECT * " É RUIM -------> pq 
+
+isso vai 
+
+RODAR 1 FULL TABLE SCAN,
+
+
+
+
+VAI FETCHEAR TODA A DATA do s3,
+
+
+
+TODAS AS COLUMNS DOS ARQUIVOS, PARA ENTAO OS MOSTRAR A NÓS....
+
+
+
+
+
+
+
+
+--> mas se vc rodar uma query tipo 
+
+
+
+"SELECT 
+first_name 
+FROM EMPLOYEE",
+
+
+
+O QUE O SNOWFLAKE VAI FAZER, NO BACKEND,
+
+É FETCHEAR APENAS O HEADER/FILE 
+
+COM ESSE COLUMN NAME,
+
+E ENTAO 
+
+MOSTRAR O RESULT A VOCE... (
+    reduz bastante o workload do snowflake...
+).
+
+
+
+
+
+
+
+
+
+
+-> ex: 10 milhoes de records,
+
+SELECT * --> ele vai ter que pullar todos esses records,
+
+
+e vai gastar mt data... 
+
+(
+
+    e vc nem vai ver todos esses records...
+)
+
+
+
+
+
+
+
+
+SE FOR USAR "SELECT *",
+
+
+use "LIMIT 100"...
+
+
+

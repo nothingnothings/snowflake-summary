@@ -1,0 +1,562 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> NESSA LECTURE,
+
+VEREMOS 
+O QUE É 
+
+
+""QUERY MANAGEMENT"" 
+
+
+
+E 
+
+""QUERY OPTIMIZATION"" NO SNOWFLAKE...
+
+
+
+
+
+--------------------------------
+
+
+
+
+
+
+
+
+
+
+
+QUANDO VC ENVIA 1 QUERY AO SNOWFLAKE,
+
+ACONTECEM AS SEGUINTES ETAPAS:
+
+
+
+
+
+
+
+1) PARSING PHASE 
+
+
+
+
+
+
+2) OBJECT RESOLUTION...
+
+
+
+
+
+
+
+
+terminada a object resolution, o snowflake realiza 
+
+o 
+
+
+
+
+
+3) ACCESS CONTROL --> identifica se há acesso/permissao 
+
+para rodar essa query específica...
+
+
+
+
+
+
+
+
+
+
+--> SE QUALQUER OUTRA TRANSACTION ESTÁ SEGURANDO O
+
+OBJECT,
+
+O OBJECT QUE ESTÁ SENDO REFERENCIADO NA SUA QUERY,
+
+
+
+ELE vai "HOLD" sua nova transaction...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> E ESSE ACCESS CONTROL É MANAGEADO PELO CLOUD 
+
+SERVICES LAYER...
+
+
+
+
+
+
+
+
+DEPOIS DISSO,
+
+ACONTECE O "PLAN OPTIMIZATION"...
+
+
+
+
+
+4) PLAN OPTIMIZATION...
+
+
+
+
+
+
+
+--> ASSIM QUE O plan estiver pronto,
+
+ESSE QUERY PLAN VAI SER SUBMITTADO 
+
+
+A TODOS 
+
+VIRTUAL WAREHOUSE NODES,
+
+
+
+
+QUE VAO TRABALHAR PARA PROCESSAR A DATA....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS O SNOWFLAKE NAO USA INDEXES... --> PQ NAO?
+
+
+
+
+
+
+
+
+
+
+É PQ, HISTORICAMENTE,
+
+DATA ACCESS 
+
+A DATABASES ERA LIMITADO 
+
+
+PELO USO DE 
+
+
+INDEXES,
+
+
+
+
+
+
+
+
+
+no formato de "B-TREE" ou "B+TREE"
+
+
+
+OU OUTRAS DATA STRUCTURES SIMILARES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> APESAR DE ESSE APPROACH, ANTIGO, SER ALTAMENTE 
+
+
+EFETIVO PARA TRANSACTION PROCESSING,
+
+
+ELE TRAZIA 
+
+MUITOS PROBLEMAS PARA 1 SISTEMA COMO O SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--. MAS QUE PROBLEMAS ESSE SISTEMA TRAZIA AO SNOWFLAKE?
+
+
+
+
+
+
+
+
+----------------------------------------------
+
+
+
+
+ALGUNS DOS PROBLEMAS 
+EM RELACAO AO SNOWFLAKE, COM ESSE INDEXING, USADO COM 
+
+TRANSACTIONS, ERAM/SAO:
+
+
+
+
+
+1) STORAGE MEDIUM IN SNOWFLAKE IS S3,
+
+AND DATA FORMAT IS _ COMPRESSED __ FILES...
+
+
+
+
+
+
+
+--> OK... QUER DIZER QUE NO SNOWFLAKE 
+
+A STORAGE MEDIUM SERÁ BLOB STORAGE,
+
+E A DATA 
+
+
+ESTARÁ EM "COMPRESSED FILES" --> nesse caso,
+
+
+
+COMO PODERÍAMOS USAR INDEXES? é impossível....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2) O MAINTAIN DE INDEX AUMENTA ___ SIGNIFICATIVAMENTE___ 
+
+O VOLUME DE DATA,
+
+E O LOADING TIME DE DATA...
+
+
+
+
+
+
+
+
+--> ESSE PROBLEMA JÁ PODE SER VISTO 
+
+
+EM DATABASES COMUNS,
+
+PQ A CRIACAO 
+
+DE 
+
+INDEXES AFETA 
+
+"DATA LOADING TIMES" (operacoes de write/update, também, 
+pq temos de updatar também as tables dos indexes)..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+3) OUTRO PROBLEMA é que o user PRECISA CRIAR EXPLICITAMENTE
+INDEXES... ------> ISSO VAI CONTRA 
+
+A FILOSOFIA DO SNOWFLAKE 
+
+
+DE SAS (
+
+    SOFTWARE AS A SERVICE...
+)
+
+
+
+
+
+
+
+
+
+
+4) A MAINTENANCE DE INDEXES PODE SER COMPLEXA,
+
+EXPENSIVE E RISKY..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> É POR ISSO QUE CRIAR INDEXES NO SNOWFLAKE É 
+
+IMPOSSÍVEL..
+
+
+
+
+
+
+
+---> PODEMOS PENSAR NISSO DE OUTRA PERSPECTIVA..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NA LECTURE ANTERIOR,
+
+
+DISCUTIMOS SOBRE O USO DE MICROPARTITIONS PELO SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+
+
+cada table file segura header,
+
+
+
+que terá metadata information sobre 
+
+
+aquele table file específico (
+
+    como min value, max value,
+
+    número de columns distintas, e 
+
+    os columns offsets....
+
+)
+
+
+
+
+
+
+-> ESSA METADATA INFO VAI SER LEVERAGED PELO 
+
+
+VIRTUAL WAREHOUSE LAYER
+
+
+E PELO QUERY OPTIMIZER,
+
+PARA 
+
+OPTIMIZAR 
+
+A DATA 
+
+
+
+
+POR MEIO 
+
+
+DE TÉCNICAS COMO:
+
+
+
+
+1) PRUNING 
+
+
+2) ZONE MAPS 
+
+
+
+
+3) DATA SKIPPING...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> VC PRECISA APLICAR INDEXES NO SNOWFLAKE?
+
+
+
+
+
+
+
+
+
+
+
+
+--> NAO... NAO PRECISA DE INDEXES,
+
+
+PQ A MANEIRA 
+
+
+
+
+DE LOAD DE DATA DO SNOWFLAKE É COMPLETAMENTE 
+
+DIFERENTE 
+DO LOAD CONVENCIONAL DE DATA, POR DATABASES SQL COMUNS..
+
+
+
+
+
+
+
+
+
+
+
+
+--> NAO PRECISAMOS DE INDEXES, ENTAO...
+
+
+
+
+
+

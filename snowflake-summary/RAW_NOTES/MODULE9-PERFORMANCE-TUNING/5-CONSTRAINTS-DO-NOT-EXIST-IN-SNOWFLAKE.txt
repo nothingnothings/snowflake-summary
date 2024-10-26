@@ -1,0 +1,551 @@
+
+
+
+
+
+
+
+
+
+NESSA AULA, VEREMOS COMO TABLE CONSTRAINTS 
+
+FUNCIONAM (na verdade, como elas NAO EXISTEM)
+
+
+
+NO SNOWFLAKE..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+O CÓDIGO É ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE TABLE DEMO_DB.PUBLIC.salespeople (
+    sp_id INT NOT NULL 
+    name VARCHAR default NULL,
+    region VARCHAR,
+    constraint pk_sp_id primary key (sp.id)
+    );
+
+
+
+
+
+
+
+
+
+
+
+
+    --> ok... entao o professor insere 
+
+    data nessa talbe,
+
+    com este comando:
+
+
+
+
+
+
+
+
+INSERT INTO DEMO_DB.PUBLIC.SALESPEOPLE
+VALUES (
+'1',
+'pavan',
+'bangalore'
+);
+
+
+
+
+
+
+
+
+ok... inserido isso,
+
+
+
+
+rodamos isto de novo:
+
+
+
+
+
+
+INSERT INTO DEMO_DB.PUBLIC.SALESPEOPLE
+VALUES (
+'1',
+'pradeep',
+'bangalore'
+);
+
+
+
+
+
+
+
+
+
+
+
+RODAMOS ISSO... NAO GANHAMOS NENHUMA MENSAGEM 
+
+DE ERRO....
+
+
+
+
+
+
+-> JUSTAMENTE PQ "sp_id"
+
+NAO É 1 PRIMARY KEY....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ISSO PROVA QUE,
+
+
+NO SNOWFLAKE,
+
+
+NAO EXISTEM PRIMARY KEYS...
+
+
+
+
+
+
+
+
+
+
+
+
+A PRIMARY KEY, NO SNOWFLAKE,
+
+SERVE APENAS PARA NOSSA REFERENCIA...
+
+
+
+
+
+PQ ELA REALMENTE NAO TEM EFEITOS DE CONSTRAINT 
+
+
+SOBRE A COLUMN...
+
+
+
+
+
+
+
+
+
+
+
+
+E ISSO ACONTECE MESMO SE ESCREVERMOS 
+
+
+
+A DEFINICAO DA TABLE TIPO ASSIM:
+
+
+
+
+
+
+CONSTRAINT PK_SP_ID primary_key (sp_id)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ISSO NAO SERÁ APLICADO, A CONSTRAINT 
+
+NAO SERÁ APLICADA,
+
+
+
+
+PODEMOS INSERIR MÚLTIPLOS ROWS COM 
+
+
+"sp_id" igual.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK, MAS SE NADA É APLICADO, 
+
+SE ESSE TIPO DE CONSTRAINT NAO EXISTE,
+
+
+
+PQ DIABOS 
+
+O SNOWFLAKE 
+
+
+MANTEVE ESSE TIPO DE CONSTRAINT, PARA 
+
+INÍCIO DE CONVERSA?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> BEM, É PQ BASICAMENTE 
+
+
+VAMOS MIGRAR DATA DE DIFERENTES 
+
+DATABASES NO SNOWFLAKE... E, NESSAS DATABASES,
+
+
+NÓS CERTAMENTE TEREMOS ESSE TIPO 
+
+DE CONSTRAINTS DEFINIDAS... ----> SE TIVERMOS 
+
+
+ESSA SINTAXE NO LUGAR, NO SNOWFLAKE,
+
+ISSO 
+
+
+DEIXARÁ ESSA MIGRATION MAIS SIMPLES/FÁCIL...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ESSA É A PRIMEIRA RAZAO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2a RAZAO) SE TEMOS ESSA CONSTRAINT PARA NOSSA 
+REFERENCE,
+
+
+SE CONECTAMOS O SNOWFLAKE A QUALQUER 
+
+DATA MODELING TOOL,
+
+
+
+PODEMOS/PODEREMOS FACILMENTE 
+VER A RELATIONSHIP 
+
+
+
+ENTRE AS TABLES,
+
+USANDO ESSAS CONSTRAINTS...
+
+
+
+
+
+
+
+
+
+--> PODEMOS DEFINIR TAMBÉM FOREIGN KEYS 
+
+
+NO SNOWFLAKE,
+
+MAS ELA NAO SERÁ ENFORCED,
+
+SERÁ APENAS PARA "REFERENCE"...
+
+
+
+
+
+
+
+
+
+
+--> MAS QUANDO VC CONECTAR 
+
+A DATA MODELING TOOL DE SUA ESCOLHA,
+
+
+aí vc FACILMENTE PODERÁ VER A RELATIONSHIP
+
+
+ENTRE AS TABLES,
+
+
+
+
+NESSAS TOOLS...
+
+
+
+
+
+
+
+
+
+
+QUER DIZER QUE ESSAS CONSTRAINT SAO 
+
+DUMMY,
+
+E EXISTEM APENAS PARA NOSSA REFERENCE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+MAS AGORA O PROFESSOR TENTA INSERIR ESTE VALUE:
+
+
+
+
+
+INSERT INTO DEMO_DB.PUBLIC.SALESPEOPLE
+VALUES (
+NULL,
+'prakesh',
+'bangalore'
+);
+
+
+
+
+
+
+
+
+
+
+
+
+
+E ISSO IMEDIATAMENTE NOS DÁ UM ERROR...
+
+
+
+
+
+
+RECEBEMOS 1 ERROR POR CONTA DA CONSTRAINT 
+
+DE 
+
+"NOT NULL"...
+
+
+
+
+
+
+
+-- NOT NULL É __ A ÚNICA CONSTRAINT 
+
+
+REALMENTE ENFORCED NO SNOWFLAKE,
+
+A ÚNICA QUE REALMENTE TEM EFEITOS...
+
+
+
+
+
+
+
+
+
+
+
+-------> NAO HÁ MAIS NENHUMA CONSTRAINT 
+
+
+NO SNOWFLAKE...
+
+
+
+
+
+
+
+SIGNIFICA QUE 
+
+
+
+
+O RESTO DAS CONSTRAINTS (
+    default,
+    primary,
+    unique, check,
+    etc,
+    todas elas 
+)
+
+
+SÓ EXISTIRAO "FOR YOUR REFERENCE"... (
+    te ajudam a construir os 
+
+    models de sua database...
+)
+
+
+
+
+
+
+
+
+
+
+--> nem mesmo a constraint de default existe,
+
+no caso do snowflake:
+
+
+
+
+
+
+
+
+
+
+
+
+As of my last knowledge update in September 2021, Snowflake does not support the concept of a "default constraint" in the same way that traditional relational databases like SQL Server or PostgreSQL do.
+
+In most traditional relational databases, a default constraint is used to automatically populate a column with a default value if no value is explicitly provided during an INSERT operation.
+
+In Snowflake, you can achieve similar functionality by using default values in your INSERT statements or by allowing NULL values in columns and later using UPDATE statements to modify the NULL values to the desired default value.
+
+

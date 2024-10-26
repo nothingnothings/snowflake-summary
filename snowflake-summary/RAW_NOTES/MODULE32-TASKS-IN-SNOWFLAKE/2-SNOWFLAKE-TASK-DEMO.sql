@@ -1,0 +1,337 @@
+
+
+
+
+
+OK... NESSE DEMO,
+
+
+CRIAREMOS UMA TASK NO SNOWFLAKE...
+
+
+
+
+
+
+
+O PROFESSOR ESCREVE ESTE CÓDIGO:
+
+
+
+
+
+
+
+CREATE OR REPLACE TASK mytask_minute
+    WAREHOUSE = COMPUTE_WH 
+    SCHEDULE='1 MINUTE' -- shortest amount of time possible between runs 
+AS 
+INSERT INTO MY_TABLE (timestamp) VALUES (CURRENT_TIMESTAMP);
+
+
+
+
+
+
+
+
+
+ESSA TASK VAI INSERIR 1 CURRENT_TIMESTAMP
+
+
+A CADA MINUTO...
+
+
+
+
+
+
+
+
+
+
+
+TEMOS TAMBÉM OUTRA GRAFIA DE SCHEDULE,
+
+
+
+USANDO CRON, QUE É MAIS USADA:
+
+
+
+
+
+
+
+
+
+CREATE TASK mytask_hour
+    WAREHOUSE = COMPUTE_WH
+    SCHEDULE='USING CRON 0 9-17 * * SUN America/Los_Angeles'
+    TIMESTAMP_INPUT_FORMAT='YYY-MM-DD HH-24'
+AS
+INSERT INTO MY_TABLE (ts) VALUES(CURRENT_TIMESTAMP);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CADA TASK PODE RODAR APENAS 1 ÚNICO SQL STATEMENT,
+
+
+OU 1 ÚNICA PROCEDURE (com commits, etc)..
+
+
+
+
+
+
+
+
+
+--> PARA SCHEDULAR ESSA TASK, USAMOS CRON....
+
+
+
+
+
+
+
+
+
+
+
+MH DMD 
+
+
+
+MINUTE HOUR DAY OF THE MONTH MONTH OF THE YEAR DAY OF THE WEEK
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> SE QUEREMOS VER QUAIS TASKS ESTAO SCHEDULED NA NOSSA  DATABASE,
+
+PODEMOS RODAR 
+
+
+
+
+
+
+"SHOW TASKS"
+
+
+
+
+
+
+
+
+
+
+
+--> ISSO NOS DÁ 
+
+
+HIGH-LEVEL INFO SOBRE AS TASKS (scheduling time,  state, etc)...
+
+
+
+
+
+
+--> TBM A SQL QUERY QUANDO ESSA TASK RODA 
+
+NO SCHEDULE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> TODAS AS TASKS QUE SAO CRIADAS,
+
+FICAM NO STATE DE "SUSPENDED"...
+
+
+
+
+-_> PARA INICIARMOS 1 TASK DE VERDADE,
+
+
+PRECISAMOS ALTERAR SEU STATE PARA "STARTED"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> FAZEMOS ISSO COM 
+
+
+"ALTER TASK <NAME_OF_TASK> RESUME";
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA SUSPENDER TASKS,
+
+
+RODAMOS ASSIM:
+
+
+
+
+
+
+
+ALTER TASK <NAME_OF_TASK> SUSPEND;
+
+
+
+
+
+
+
+
+
+
+
+
+--> 
+
+
+
+
+AGORA, SE VC QUER SABER O STATUS DE EXECUTION DE CADA 
+
+1 DAS SUAS TASKS,
+
+
+
+VC PODE RODAR ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- Check task history 
+
+
+SELECT 
+*
+FROM TABLE(INFORMATION_SCHEMA.TASK_HISTORY())
+ORDER BY SCHEDULED_TIME;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ISSO VAI RODAR OS RESULTADOS DE CADA 1 DAS TASKS 
+
+QUE RODARAM ANTES,
+
+NAQUELE SCHEDULE...
+
+
+
+
+
+
+
+
+
+
+--> podemos ver o result de todas as tasks (se foi failed ou nao)...
+
+
+
+
+
+
+
+
+--> CADA EXECUCAO DE TASK NOS DÁ A RAZAO DE ERROR,
+
+SE OCORRIDO...
+
+
+
+
+
+
+
+
+

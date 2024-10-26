@@ -1,0 +1,261 @@
+
+
+
+
+
+
+
+VAMOS TENTAR FILTRAR O DASHBOARD DO PROFESSOR POR 1 
+
+WAREHOUSE ESPECÍFICO,
+
+E AÍ 
+
+
+
+
+ANALISAR OS GRÁFICOS....
+
+
+
+
+
+
+
+
+
+
+--> COLOCAMOS 
+
+
+A WAREHOUSE DE "COMPUTE_WH"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+quando vc clica em "apply",
+
+vc re-roda todas as queries 
+
+das suas tiles...
+
+
+
+
+
+
+
+
+
+
+A PARTE DE 'GB_SCANNED"
+
+
+É SUPER IMPORTANTE....
+
+
+
+
+
+
+
+
+
+
+COM BASE NO TILE DE "GB_SCANNED",
+
+
+
+PODEMOS SABER VÁRIAS COISAS...
+
+
+
+
+
+
+
+
+
+
+
+NO EXEMPLO DO PROFESSOR,
+
+ELE FICOU COM 363 GB SCANNED...
+
+
+
+
+
+
+
+
+
+205.74 GB FORAM WRITTEN NA SNOWFLAKE DATABASE...
+
+
+
+
+
+
+28GB "WRITTEN TO RESULT" --> ISSO BASICAMENTE NOS DIZ 
+
+
+""QUANTO ESSA WAREHOUSE FOI USADA""...
+
+
+
+
+
+
+
+
+
+ISSO TUDO NOS DIZ COMO ESSA WAREHOUSE FOI USADA...
+
+
+
+
+
+SE FOI USADA PARA RODAR ANÁLISES,
+
+OU SE FOI USADA PARA "LOAD THE DATA"...
+
+
+
+
+
+
+
+
+
+
+
+para saber COMO 
+
+NOSSA WAREHOUSE FOI/ESTÁ SENDO USADA:
+
+
+
+
+
+-----> 1) "GB WRITTEN" É MAIS ALTO DO QUE "GB WRITTEN TO RESULT" --> 
+    ISSO SIGNIFICA QUE 
+
+    __ A WAREHOUSE ESTÁ SENDO USADA PARA ____ "lOAD DATA"...
+
+
+
+
+      2) já se "GB WRITTEN TO RESULT" FOR MAIOR,
+        ISSO QUER DIZER QUE UM MONTE DE ANÁLISES 
+        FORAM RODADAS EM CIMA DESSA WAREHOUSE,
+        
+        RODADAS USANDO O MANAGEMENT CONSOLE DO SNOWFLAKE 
+        OU POR OUTRAS FERRAMENTAS COMO O TABLEAU...
+
+
+
+
+
+
+
+
+-->  COM BASE NESSAS INFORMACOES,
+
+
+PODEMOS DIZER:
+
+
+
+1) WAREHOUSE FOI UNDERUTILIZED 
+
+
+
+2) DEVEMOS RESET O AUTO-SUSPEND TIME 
+    (
+        pq a máquina está ficando mt tempo ligada...
+
+
+    )
+
+
+
+
+
+
+-------> PODEMOS MOSTRAR AOS OUTROS QUE 
+
+A WAREHOUSE 
+
+NAO ESTÁ SENDO ADMINISTRADA IDEALMENTE....
+
+
+
+
+
+
+
+
+
+--. OU, ENTAO,
+
+PODEMOS RODAR ALGUNS PROCESSOS AUTOMATIZADOS,
+
+
+QUE VAO 
+
+"LOOK INTO THESE WAREHOUSES",
+
+
+
+
+
+procurando/checando pelo "idle cost" 
+
+e o value de "auto-suspend time" 
+
+e "resume times",
+
+
+
+e entao 
+
+
+VAO RESETTAR ESSES AUTO-SUSPEND TIMES E RESUME TIMES 
+
+AUTOMATICAMENTE (
+
+
+    essa é uma das solucoes...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+--> ok... NA PRÓXIMA LICAO, 
+VEREMOS 
+
+COMO FILTER POR 1 DATE ESPECÍFICA,
+
+
+E VEREMOS 
+
+
+COMOS OS RESULTADOS FICAM...

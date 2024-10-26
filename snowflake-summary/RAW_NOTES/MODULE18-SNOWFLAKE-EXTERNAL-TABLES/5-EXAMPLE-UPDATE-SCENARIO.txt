@@ -1,0 +1,356 @@
+
+
+
+AGORA VEREMOS O QUE ACONTECE SE NÓS:
+
+
+
+
+
+
+1) UPDATAMOS 1 FILE EXISTENTE 
+
+NA S3 LOCATION...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> O QUE FAREMOS, AGORA,
+
+
+É 
+
+
+ALTERAR OS VALUES DA FILE employees03 
+
+LOCALMENTE,
+
+
+PARA AÍ 
+
+
+A UPLOADARMOS(overwrittarmos essa file)
+
+
+
+LÁ NO S3 LOCATION...
+
+
+
+
+
+
+
+
+--> O PROFESSOR SALVA O HASH VALUE 
+
+
+DO ARQUIVO employees03.csv 
+
+
+
+
+que temos lá no s3 bucket,
+
+
+
+
+por meio do uso 
+
+da 
+
+
+
+query 
+
+de 
+
+
+
+
+SELECT 
+*
+FROM TABLE(information_schema.external_table_file_registration_history(TABLE_NAME=>'emp_ext_table'))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+---> OK... AÍ ELE RODA 
+
+
+
+SELECT * FROM emp_ext_table;
+
+
+
+
+
+
+--> ISSO NOS DÁ 16 RECORDS...
+
+
+
+
+
+
+--> O PROFESSOR DECIDE ADICIONAR MAIS 2 RECORDS,
+
+DENTRO DE 
+
+'employees03.csv'...
+
+
+
+
+
+
+
+
+
+--. AÍ ELE UPLOADA ESSA UPDATED FILE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AÍ O PROFESSOR RE-RODA AQUELE 
+
+
+STATEMENT 
+
+DE 
+
+
+
+
+select * from emp_ext_table;
+
+
+
+
+
+
+
+
+APENAS PARA TER CERTEZA DE QUE O NÚMERO DE RECORDS 
+
+É REALMENTE 16...
+
+
+
+
+
+
+
+
+--> como ainda nao tínhamos refreshado a table 
+
+
+de metadata,
+
+
+
+realmente temos 16 records,
+
+
+mesmo 
+
+
+
+que lá no s3 agora temos 18 records (+2)....
+
+
+
+
+
+
+
+
+
+
+
+
+--> AÍ RODAMOS O COMANDO DE REFRESH,
+
+
+
+ALTER EXTERNAL TABLE emp_ext_table REFRESH;
+
+
+
+
+
+
+
+
+
+-- esse comando nos retorna 1 row:
+
+
+
+file                        status                      description
+emp/employees03.csv         REGISTERED_UPDATE           File registered (updated) SUCCESSFULLY
+
+
+
+
+
+
+--> como ele sabe disso?
+
+
+
+
+
+
+
+
+
+ELE SABE JUSTAMENTE PQ 
+
+
+
+OS HASH VALUES 
+
+FORAM ALTERADOS --------> AÍ ELE SABE QUE 
+
+
+HOUVE 1 ALTERACAO 
+
+NESSA FILE ESPECÍFICA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DEPOIS, RODAMOS A QUERY
+ 
+
+
+
+
+
+ DE 
+
+
+ select * from emp_ext_table...
+
+
+
+
+
+
+
+
+
+
+ --> COM ISSO,
+
+
+
+
+É FEITO 1 SCAN DA S3 LOCATION,
+
+e nos é retornado 1 result...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> O QUE TEMOS QUE ENTENDER É QUE QUANDO 
+
+VC 
+
+UPDATA 1 FILE,
+
+
+E VC ATUALZA A HISTORY LOCATION,
+
+
+
+
+O 
+
+
+SNOWFLAKE VAI RECONHECER ISSO 
+
+
+COMO 1 CHANGE,
+
+
+
+POR MEIO DO HASH VALUE,
+
+
+E AÍ 
+
+VAI 
+
+
+
+COLOCAR ESSA NOVA ENTRY 
+
+
+NA REGISTRATION_HISTORY 
+
+
+
+
+
+E NO RESULT...
+

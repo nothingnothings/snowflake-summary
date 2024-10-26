@@ -1,0 +1,538 @@
+
+
+
+
+
+
+
+
+NESSA LECTURE, VEREMOS 3 TIPOS DE INTERNAL STAGING 
+
+AREAS NO SNOWFLAKE...
+
+
+
+
+
+
+
+TIPOS DE INTERNAL STAGE:
+
+
+
+
+
+
+1) USER STAGE 
+
+
+
+
+
+
+2) TABLE STAGE 
+
+
+
+
+3) NAMED STAGE 
+
+
+
+
+
+
+
+
+
+
+-> O USER STAGE É REPRESENTADO 
+
+PELO SÍMBOLO DE 
+
+
+"@~"...  (nunca vi)....
+
+
+
+
+
+
+
+
+
+-> O TABLE STAGE É REPRESENTADO 
+
+PELO SÍMBOLO DE 
+
+'@%' 
+
+
+
+
+
+
+-> POR FIM, O NAMED STAGE 
+
+É REPRESENTADO POR 
+
+APENAS 
+
+'@' 
+
+
+
+
+
+
+
+
+--> NO ÚLTIMO CURSO DO SNOWFLAKE,
+
+
+
+USAMOS APENAS NAMED STAGES... NUNCA ENCOSTAMOS 
+
+
+EM "USER STAGE" E 
+
+"TABLE STAGE"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> DEVEMOS DISCUTIR, EM DETALHE,
+
+
+O QUE SAO ESSES 3 TIPOS DE STAGES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+USER STAGES:
+
+
+
+
+
+
+
+EXPLICACAO:
+
+
+
+"" EACH USER HAS A SNOWFLAKE STAGE ALLOCATED TO THEM BY 
+DEFAULT, FOR STORING FILES. THIS STAGE IS A CONVENIENT 
+OPTION IF YOUR FILES WILL ONLY BE ACCESSED BY 
+A SINGLE USER, BUT NEED TO BE COPIED INTO MULTIPLE TABLES""
+
+
+
+
+
+
+
+
+é bem situacional, portanto...
+
+
+
+
+
+
+QUAIS CONSTRAINTS TEMOS DE TER PRESENTES,
+
+PARA USAR ESSE TIPO DE STAGE?
+
+
+
+
+
+
+1) MULTIPLOS USERS REQUEREM ACESSO
+
+
+ÀS FILES...
+
+
+
+
+
+2) O CURRENT USER NAO TEM "INSERT" PRIVILEGES 
+
+NA TABLE EM QUE A DATA SERÁ INSERIDA...
+
+
+
+
+
+
+
+
+--> nao entendi...
+
+
+
+
+
+
+
+--> para que é um stage comum,
+
+mas assignado aos users... e parece que 
+
+
+esse tipo de stage NAO CONSEGUE FAZER LOAD 
+DE DATA EM TABLES EM QUE O USER NAO TEM PERMISSAO DE
+
+ACESSO.. acho que é isso...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+TABLE STAGES:
+
+
+
+
+
+
+
+
+""Each table has a SNOWFLAKE STAGE ALLOCATED 
+TO IT, BY DEFAULT, FOR STORING FILES. THIS STAGE 
+IS A CONVENIENT OPTION IF YOUR FILES NEED TO BE 
+ACCESSIBLE TO __ MULTIPLE _ USERS AND ONLY NEED 
+TO BE COPIED INTO A SINGLE TABLE""....
+
+
+
+
+
+
+
+
+QUER DIZER QUE 1 "TABLE STAGE"
+
+
+só é capaz de COPIAR FILES PARA DENTRO DA PRÓPRIA 
+TABLE A QUE FOI ASSIGNADO/EM QUE FOI CRIADO...
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE NAO PODEMOS COPIAR DATA, de esse stage,
+PARA OUTRAS TABLES, que nao sejam a própria 
+
+table assignada a ele...
+
+
+
+
+
+
+
+
+
+
+
+
+---> ESSE TIPO DE STAGE É CONVENIENTE SE:
+
+
+
+1) VC TEM MÚLTIPLOS USERS...
+
+
+
+
+2) VC TEM MÚLTIPLAS FILES NESSE STAGE 
+
+
+
+
+3) MAS A DATA DESSAS FILES SERÁ TODA ELA 
+
+COPIADA PARA APENAS 1 ÚNICA TABLE,
+
+NAO VAI SER COPIADA PARA MÚLTIPLAS TABLES...
+
+
+
+
+
+
+
+
+
+
+
+AS CONSTRAINTS QUE TEMOS, COM ESSE TIPO 
+
+DE STAGE,
+
+SAO:
+
+
+
+
+
+
+1) MULTIPLE USERS REQUIRE ACCESS TO FILES 
+
+
+
+
+2) AO CONTŔARIO DE NAMED STAGES,
+
+TABLE STAGES ___ NAO __ PODEM __ SER ALTERED 
+
+OU DROPPED (
+
+    esse tipo de object é dado pelo snowflake,
+
+
+    e nao pode ser alterado ou droppado...
+)
+
+
+
+
+
+3) TABLE STAGES __ NAO SUPORTAM AS OPTIONS DE 
+
+"FILE FORMAT",
+
+
+O QUE QUER DIZER QUE VC __ NAO __ CONSEGUE 
+
+USAR 
+
+FILE FORMATS/CRIAR FILE FORMATS PARA ESSE TABLE STAGE...
+
+
+
+
+
+4) EM VEZ DE USAR FILE FORMATS PRÉ-CRIADOS,
+
+VC DEVE/PODE ESPECIFICAR AS OPTIONS DE "FILE_FORMAT" 
+
+INLINE NO PRÓPRIO COMANDO DE COPY, da maneira tradicional...
+
+
+
+(tipo 
+COPY INTO xxx 
+FROM @yyy
+FILE_FORMAT=(
+    skip_header=1,
+    type=csv,
+    etc etc
+)
+)
+
+
+
+
+
+
+--> CERTO....
+
+
+
+
+
+
+
+5) table stages 
+
+NAO SUPORTAM O TRANSFORM DE DATA 
+
+ENQUANTO REALIZAM O LOAD DE DATA (
+
+    ex: vc nao pode usar a query 
+
+    COMO O SOURCE DO COMANDO DE COPY...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+ok... table stages parecem uma porcaria...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NAMED STAGES:
+
+
+
+
+
+""internal stages are NAMED DATABASE OBJECTS THAT 
+PROVIDE THE GREATEST DEGREE OF FLEXIBILITY FOR DATA LOADING.
+BECAUSE THEY ARE DATABASE OBJECTS, THE SECURITY/ACCESS 
+RULES THAT APPLY TO ALL OBJECTS ALSO ARE APPLIED 
+TO THIS TYPE OF OBJECT""...
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE ELE NOS DÁ A MAIOR FLEXIBILIDADE 
+POSSÍVEL,
+
+SE QUEREMOS NOS CONECTAR 
+
+
+
+A INTERNAL STAGES E CARREGAR DATA PARA 
+
+DENTRO 
+
+DE SNOWFLAKE STAGES...
+
+
+
+
+
+
+
+
+
+-> VEREMOS OUTROS TIPOS DE STAGE NA DEMO SECTION....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+""USERS WITH APPROPRIATE PRIVILEGES ON THE STAGE 
+CAN LOAD DATA INTO ANY TABLE""...
+
+
+
+
+
+
+
+
+(
+    ou seja,
+
+    podemos assignar e revogar 
+
+    privileges para esses named stages....
+)
+
+
+
+
+
+
+
+""Ownership do stage pode ser TRANSFERIDO para outro 
+
+role,
+
+e privileges granted para a usage do stage podem ser MODIFICADOS,
+para adicionar ou remover roles""...
+
+
+
+
+
+
+
+
+
+
+
+--> VEREMOS TODOS ESSES STAGES NA DEMO SECTION...
+
+
+
+
+
+AGORA TIVEMOS APENAS 1 OVERVIEW...
+
+
+
+
+
+

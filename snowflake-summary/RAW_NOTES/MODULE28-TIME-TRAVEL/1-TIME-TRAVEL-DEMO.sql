@@ -1,0 +1,582 @@
+
+
+
+NESSA LECTURE,
+
+VEREMOS COMO USAR TIME TRAVEL FEATURE NO SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+ESSA FEATURE SE TORNA ÚTIL SE VC 
+
+
+ESCREVEU QUAISQUER OPERATIONS ERRADAS
+
+NA SUA TABLE....
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> SE VC QUER FAZER TIME TRAVEL, VC PODE USAR ESSA FEATURE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> DIGAMOS ESTE CENÁRIO:
+
+
+
+
+--> TEMOS 1 PRODUCTION TABLE, DE NOME "emp"...
+
+
+
+
+
+
+
+
+
+
+
+EX:
+
+
+
+
+
+
+SELECT * FROM EMP;
+
+
+
+
+
+
+
+
+
+--> TEMOS VÁRIOS RECORDS...
+
+
+
+
+
+
+
+
+
+
+--> DIGAMOS QUE 
+
+
+
+RODAMOS 1 COMANDO DE DML ERRADO,
+
+COMO UPDATE...
+
+
+
+
+
+
+
+TIPO UM UPDATE SEM WHERE CLAUSE:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SELECT * FROM emp;
+
+
+
+UPDATE EMP
+SET FIRST_NAME='phc';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK, VEREMOS QUE TODOS FIRST NAME FICARAO COMO "phc"...
+
+
+
+
+
+
+
+
+
+
+--> certo....
+
+
+
+
+
+
+
+
+--> AGORA DIGAMOS QUE NAO PERCEBI ESSA MISTAKE,
+
+E AÍ 
+
+
+
+EXECUTO 
+
+MAIS 
+
+
+OPERATIONS, TIPO  ASSIM:
+
+
+
+
+
+SELECT * FROM emp;
+
+
+
+UPDATE EMP
+SET FIRST_NAME='phc'; -- first wrong update
+
+
+
+
+UPDATE EMP
+SET CITY='Bangalore';  -- SECOND WRONG UPDATE.
+
+
+
+
+
+
+
+
+
+
+-- "AFTER 2 MINS, YOU REALIZED YOU DID SOMETHING WRONG. IF YOU REALIZE AFTER 
+-- 5 HOURS, YOU NEED TO TRAVEL BACK BY 5 HOURS. HOW LONG YOU CAN TRAVEL BACK 
+-- DEPENDS ON TABLE RETENTION PERIOD (and your account plan)"
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA VOLTAR 1 CERTA QUANTIA DE TEMPO NO PASSADO,
+
+USE 
+
+"at(offset => time_amount)"
+
+
+
+
+
+EX:
+
+
+
+
+
+
+
+
+
+-- 1 minute back
+SELECT * FROM EMP AT(offset => 60 * 1);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... AÍ, ENTAO,
+
+SE QUISERMOS 
+
+__RESETTAR__ A DATA DE NOSSA TABLE,
+
+A PARTIR 
+
+DESSA DATA,
+
+DEVEMOS:
+
+
+
+
+
+
+
+
+1) CRIAR UMA "STAGING TABLE", DE TIPO TRANSIENT 
+
+
+
+
+2) EMPURRAR A DATA DESSA "TABLE ANTIGA" NA TABLE DE TIPO TRANSIENT 
+
+
+
+3) TRUNCAR TODA A DATA DA TABLE ORIGINAL (QUE ESTÁ ERRADA, AGORA)
+
+
+
+4) FAZER INSERT DA DATA DA "STAGING TABLE" PARA 
+
+DENTRO 
+
+DA TABLE ORIGINAL, QUE AGORA ESTÁ VAZIA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+COM ISSO, MANTEMOS A TIMELINE DA TABLE ORIGINAL...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OU SEJA,
+
+NAO DEVEMOS USAR "CREATE OR REPLACE",
+
+pq isso vai apagar a history 
+
+
+de nossa table original...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-_> E VOLTAR PARA ÀQUELE TEMPO 
+
+
+ESPECÍFICO É MT RUIM COM "OFFSET=>"...
+
+
+
+
+
+
+
+
+
+
+--> É BEM MELHOR USAR O QUERYID 
+
+
+com "at"..
+
+
+
+
+
+
+
+
+
+
+
+
+
+---> SE APAGARMOS A HISTORY USANDO 
+
+
+"CREATE OR REPLACE",
+
+
+ESTAMOS COM GRANDES PROBLEMAS,
+
+
+PQ SE 
+
+
+
+REALIZAMOS DIVERSAS MISTAKES, UMA ATRÁS DA OUTRA,
+
+
+
+
+
+NAO PODEREMOS 
+
+MAIS 
+
+
+VOLTAR ATÉ O TEMPO "ANTES DO PRIMEIRO ERRO" (pq a timeline terá 
+
+deixado de existir)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> É MELHOR NEM MESMO USAR ESSE APPROACH DO CREATE OR REPLACE...
+
+
+
+
+
+-------------------------
+
+
+
+
+
+
+
+
+
+
+O PROFESSOR ENTAO FALA DO CREATE DE 1 BACKUP TABLE,
+
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+
+-- CREATE BACKUP TABLE 
+CREATE OR REPLACE TABLE EMP_BKP
+AS SELECT * FROM EMP AT(OFFSET => 60 * 1);
+
+
+
+
+
+
+
+-- AFTER, TRUNCATE ORIGINAL TABLE:
+TRUNCATE TABLE EMP;
+
+
+
+
+
+
+
+
+-- COPY DATA FROM BACKUP TABLE INTO ORIGINAL TABLE....
+
+INSERT INTO EMP
+SELECT * FROM EMP_BKP;
+
+
+
+
+
+
+
+
+
+
+
+
+
+A MORAL É QUE, MESMO TRUNCANDO A TABLE,
+
+
+SOMOS CAPAZES DE VOLTAR PARA ANTES DO MOMENTO EM QUE 
+
+
+TRUNCAMOS A TABLE... (
+
+    isso pq NAO RODAMOS NENHUM CREATE OR REPLACE;
+
+
+    NAO ESTAMOS 
+
+    DROPPANDO O HIDDEN ID DA NOSSA TABLE...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+--> POR ISSO DEVEMOS TER MT CUIDADO COM O CREATE OR REPLACE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+LESSONS LEARNED:
+
+
+
+
+
+
+
+1) BEFORE TIME TRAVELLING,
+
+""CREATE BACKUP TABLE,
+
+BY TRAVELLING TO OLDER VERSION OF TABLE""
+
+
+
+2) TRUNCATE PRODUCTION TABLE 
+
+
+
+
+
+
+3) INSERT DATA FROM BACKUP TABLE TO PRODUCTION TABLE...
+
+
+
+
+
+
+
+
+
+
+--> SE VAMOS RODAR DML 
+
+
+EM 1 
+
+
+PRODUCTION TABLE,
+
+SEMPRE DEVEMOS TER 1 BACKUP __ ANTES__...

@@ -1,0 +1,201 @@
+
+
+
+
+
+
+COM O SNOWCLI E O AWS CLI ATIVADOS,
+
+e com o SNOWCLI EM 1 TERMINAL DO VSCODE,
+
+
+
+
+agora é hora 
+
+
+
+
+de CONFIGURARMOS O "GITPOD" (
+
+    mas devemos criar 1 novo repository, privado,
+
+    antes disso....
+)
+
+
+
+
+
+
+
+
+
+repository snowflake-gitpod, private...
+
+
+
+
+
+
+
+
+
+
+AGORA TEMOS QUE INSTALAR O GITPOD EM CIMA DO REPOSITORY 
+QUE CRIAMOS 
+
+NA ÚLTIMA AULA...
+
+
+
+
+
+
+
+
+
+
+
+
+O Professor pede que entremos no link dele,
+
+
+
+
+do github...
+
+
+
+
+
+
+
+
+
+
+
+--> aí temos que clicar em "fork",
+
+para forkar o repository do professor...
+
+
+
+
+
+
+
+nao podemos tornar forks em private...
+
+
+
+
+
+
+
+
+
+
+
+
+
+AÍ CRIAMOS 1 CONTA NO GITPOD...
+
+
+
+
+
+
+START FOR FREE...
+
+
+
+
+
+
+
+
+
+autorizamos o gitpod a se conectar ao nosso 
+
+repository...
+
+
+
+
+
+
+
+OK, CRIAMOS ESSA CONTA TAMBÉM...
+
+
+
+
+
+
+
+
+
+--> AÍ CRIAMOS 1 WORKSPACE...
+
+
+
+
+
+
+
+--> ESCOLHEMOS VSCODE,
+
+
+e aí 
+
+
+
+ESCOLHEMOS VSCODE DESKTOP...
+
+
+
+
+
+
+
+
+
+ok... isso settou 1 monte de coisas...
+
+
+
+
+
+
+
+
+
+
+
+abri esse projeto gitpod 
+
+com o vscode...
+
+
+
+
+
+
+NA PRÓXIMA AULA, PROFESSOR 
+
+VAI INSTALAR 
+
+
+O SNOWCLI... ACHO QUE DENTRO DO PRÓPRIO GITPOD...
+
+
+
+
+
+
+
+
+--> E AÍ VAMOS CONECTAR O SNOWCLI, DE DENTRO 
+
+DO GITPOD...

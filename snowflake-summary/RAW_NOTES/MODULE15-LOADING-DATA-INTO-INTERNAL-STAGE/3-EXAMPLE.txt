@@ -1,0 +1,268 @@
+
+
+OK... CONSIDERE ESTE EXEMPLO:
+
+
+
+
+
+
+
+
+
+
+
+
+--> VC É CONTRATADO 
+
+COMO DEVELOPER SNOWFLAKE 
+
+EM 1 COMPANHIA... E A CIA 
+
+
+ESTÁ EM 1 PROCESSO 
+DE MIGRACAO
+
+
+DE 1
+
+
+
+LEGACY DATABASE PARA 1 SNOWFLAKE DATABASE...
+
+
+
+
+
+
+
+
+
+
+
+COMO PARTE DESSA ATIVIDADE,
+
+
+ELES QUEREM CARREGAR 1 POUCO DE SAMPLE DATA 
+
+EM 1 
+
+SNOWFLAKE TABLE...
+
+
+
+
+
+
+
+
+
+
+--> TE PASSARAM ALGUMAS SAMPLE FILES,
+
+TIRADAS DA DATABASE ATUAL...
+
+
+
+
+
+
+
+
+--> PEDEM QUE VC CARREGUE ESSAS FILES 
+
+NO SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+--> E ESSA FILE AÍ TEM QUE SER CARREGADA 
+
+
+
+EM APENAS 1 ÚNICA TABLE...
+
+
+
+
+
+
+
+--> EM APENAS 1 ÚNICA TABLE, NO SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+COM BASE 
+
+NA FILE QUE FOI PROVIDENCIADA A NÓS,
+
+DEVEMOS 
+
+VER COMO FARÍAMOS ISSO...
+
+
+
+
+
+
+
+
+-- NÓS 
+
+JÁ CONEHCEMOS OS SNOWFLAKE INTERNAL STAGES...
+
+
+
+
+
+
+
+
+
+COM BASE NESSA KNOWLEDGE, DECIDIMOS 
+
+USAR A 
+
+
+__TABLE__ STAGE,
+
+
+
+
+JÁ QUE 
+
+
+__ A FILE/FILES SERAO CARREGADAS 
+
+EM APENAS 1 ÚNICA TABLE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> também precisamos instalar o SNOWSQL,
+
+
+PQ 
+
+O 
+
+
+FILESIZE É UM POUCO IMENSO,
+ NAO É POSSÍVEL 
+
+
+ SIMPLESMENTE CARREGAR 
+ ESSA FILE NO WEB CONSOLE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> vamos usar snowsql...
+
+
+
+
+
+
+
+
+
+
+PASSOS:
+
+
+
+
+1) USAR TABLE STAGES, VISTO QUE A DATA DAS FILES ENTRARÁ
+EM APENAS 1 ÚNICA TABLE 
+
+
+
+2) PRECISAMOS INSTALAR O SNOWSQL NO NOSSO PC,
+JÁ QUE O FILESIZE É IMENSO...
+
+
+3) PRECISAMOS PREPARAR 
+
+
+1 COMANDO DE "PUT"
+
+
+
+
+4) PRECISAMOS PREPARAR 1 COMANDO DE "COPY"...
+
+
+
+
+
+5) PRECISAMOS CRIAR 1 OBJECT DE FILE FORMAT,
+
+
+ANTES DE USAR O COPY COMMAND...
+
+
+
+
+
+
+
+
+
+
+
+--> esses sao todos os pré-requisitos 
+
+para 
+
+realizar essa tarefa...
+
+
+
+
+
+
+
+
+--> DEVEMOS BAIXAR AS DATA FILES DESSA 
+
+SECTION,
+
+E NA PRÓXIMA AULA 
+
+VEREMOS COMO PODEMOS FAZER TUDO ISSO....

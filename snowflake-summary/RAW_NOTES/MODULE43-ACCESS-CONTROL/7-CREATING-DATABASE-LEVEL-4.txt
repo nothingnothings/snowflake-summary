@@ -1,0 +1,1056 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+AGORA VAMOS CONSIDERAR 1 SCENARIO EM QUE O SYSADMIN
+
+QUER:
+
+
+
+
+1) DROP DATABASE "my_db"...
+
+
+
+
+
+
+
+
+
+2) MAS ESSA DATABASE FOI CRIADA PELO ROLE "MY_ROLE"...
+
+
+(owner é diferente do "sysadmin")...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AGORA TENTAMOS DROPPAR ESSA DATABASE, USANDO O SYSADMIN....
+
+
+
+
+
+
+
+
+
+
+
+
+
+ESCREVEMOS ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--- LEVEL-4
+
+
+
+
+USE ROLE SYSADMIN;
+
+
+
+
+DROP DATABASE MY_DB; --- ATTEMPT TO DROP DATABASE, CREATED BY "MY_ROLE" role...
+
+
+
+
+
+
+
+
+
+
+
+QUANDO TENTARMOS DROPPAR ESSA DATABASE,
+
+RECEBEREMOS UM __ERROR__:
+
+
+""DATABASE MY_DB DOES NOT EXIST OR NOT AUTHORIZED""...
+
+
+
+
+
+
+
+
+
+
+
+
+--> o sysadmin nao é capaz de "DROP"
+
+
+justamente pq 
+
+ELE NAO TEM OWNERSHIP PRIVILEGES
+
+
+
+NESSE OBJECT...
+
+
+
+
+
+
+
+
+
+--> PQ DATABASE OBJECTS ___ SÓ PODEM 
+
+SER MODIFIED 
+
+PELOS PRÓPRIOS OWNERS...
+
+
+
+
+
+
+
+
+
+
+
+
+--> ou seja, embora esse "sysadmin" tenha sido o role que 
+
+DEU GRANT DE "CREATE DATABASE"
+
+
+
+NESSE ROLE DE 
+
+
+"MY_ROLE",
+
+
+
+
+
+
+ELE NAO TEM/NAO TERÁ PERMISSAO 
+
+
+
+
+
+PARA DROPPAR ESSA DATABASE, CRIADA POR ESSE ROLE 
+
+
+DE "MY_ROLE"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+PARA VER QUAIS PERMISSIONS 1 GIVEN ROLE TEM,
+
+
+
+
+
+
+PODEMOS RODAR 
+
+
+
+
+
+
+
+
+
+
+"SHOW GRANTS TO <role>"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NO CASO, O PROFESSOR EXECUTA 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SHOW GRANTS TO ROLE SYSADMIN;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ISSO NOS DÁ 1 TABLE COM AS PERMISSIONS/GRANTS...
+
+
+
+
+
+
+
+
+
+
+
+
+-> ENTRETANTO, DENTRO DESSA TABLE,
+
+
+
+NAO TEMOS NENHUMA PERMISSION "GRANTED"
+
+
+
+RELACIONADA COM A DATABASE DE "MY_DB"...
+
+
+
+
+
+
+
+
+-> ou seja, na column de "GRANTED_ON",
+
+
+nenhuma vez encontraremos 
+
+o value de "MY_DB",
+
+
+
+justamente pq 
+
+
+
+
+O ROLE DE "MY_ROLE",
+
+
+owner dessa database de "MY_DB",
+
+
+
+nunca 
+
+deu nenhum grant de privilege 
+
+
+a esse role de "SYSADMIN"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+AGORA TROCAMOS PARA O ROLE DE "MY_DB",
+
+
+E AÍ CHECAMOS SUAS PERMISSIONS:
+
+
+
+
+
+
+
+
+
+
+
+USE ROLE MY_ROLE;
+
+
+
+
+
+
+SHOW GRANTS TO ROLE MY_ROLE;
+
+
+
+
+
+
+
+
+
+--> NO RESULT SET,
+
+PODEMOS 
+
+VER 1 ENTRY 
+
+
+
+COM 
+
+
+
+
+
+
+
+"NAME"  === "MY_DB"...
+
+
+
+"PRIVILEGE" === "OWNERSHIP"....
+
+
+
+
+
+
+
+
+
+
+
+
+
+como vc pode ver, esse role de "my_role" 
+
+é o verdadeiro owner 
+dessa database, e, portanto,
+
+
+tem a capacidade de o droppar no momento que quiser...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ele também pode criar e recriar essa database,
+
+no momento que quiser....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ok.... MAS O CENÁRIO DESEJADO POR NÓS É 
+
+
+
+""QUEREMOS QUE O SECURITYADMIN SEJA CAPAZ 
+DE DROPAPR A DATABASE DE MY_DB 
+
+A HORA QUE ELE QUISER""...
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA ISSO, PRECISAMOS DAR O PRIVILEGE DE "OWNERSHIP"
+
+
+DA DATABASE "MY_DB" AO ROLE SECURITYADMIN.... ------> E APENAS 
+
+
+PODEMOS FAZER ISSO SE:
+
+
+
+
+
+
+
+1) SE FORMOS O ROLE DE "MY_ROLE", QUE TEM A OWNERSHIP 
+DESSA DATABASE, NO MOMENTO....
+
+
+
+
+
+
+2) SE VINCULARMOS O ROLE DE "MY_ROLE" COM O SYSADMIN,
+
+
+E AÍ 
+
+
+RODARMOS O GRANT DE OWNERSHIP TAMBÉM PARA O SECURITYADMIN...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ENTRETANTO, SE ENTREGÁSSEMOS A OWNERSHIP 
+
+
+AO ROLE DE "SECURITYADMIN",
+
+
+ISSO NAO FARIA MT SENTIDO.... ---------> ISSO PQ,
+
+CADA 
+
+VEZ QUE 
+
+
+
+1 NOVO OBJECT É CRIADO POR 1 ROLE,
+
+
+
+
+no caso "my_role", TERÍAMOS DE 
+
+
+
+DAR PERMISSION EXPLICITAMENTE 
+
+
+
+AO ROLE DE "SYSADMIN" PARA ACESSAR ESSE ROLE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> NAO FARIA SENTIDO ASSIGNAR PERMISSIONS 
+
+AO "SYSADMIN" TODA VEZ QUE 
+
+1 NOVO DATABASE OBJECT FOSSE CRIADO/É CRIADO....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK, ENTAO QUAL É A SOLUTION?
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> A SOLUTION É VINCULAR O 
+
+MY_ROLE AO SYSADMIN,
+
+
+DEIXÁ-LO COMO CHILD DO SYSADMIN...
+
+
+
+
+
+
+
+
+
+
+
+__> DEVEMOS MANTER A HIERARQUIA...
+
+
+
+
+
+
+
+
+
+
+
+--> DEVEMOS ENTRAR NO SNOWSIGHT,
+
+E AÍ 
+
+CHECAR A PARTE DE 
+
+
+"ACCOUNT",
+
+
+
+a parte de 
+
+"ROLES" --> ISSO TE MOSTRA 1 OVERVIEW 
+
+DE TODOS OS ROLES...
+
+
+
+
+
+
+
+
+--> COM ISSO, PODEMOS VER A HIERARQUIA DE ROLES...
+
+
+
+
+
+
+
+
+
+
+
+
+--> NESSE ESQUEMA, PERCEBEMOS QUE "MY_ROLE"
+
+ESTÁ COMO UM ORPHAN ROLE,
+
+NAO ESTÁ 
+
+
+
+
+COMO CHILD DE NENHUM OUTRO ROLE.....
+
+
+
+
+
+
+
+
+
+--> O IDEAL É VINCULAR ESSE ROLE 
+
+
+
+AO ROLE DE "SYSADMIN"..
+
+
+
+
+
+
+
+
+
+
+
+
+--> NAO DEVEMOS ANEXAR ESSE ROLE EM "SECURITYADMIN" 
+
+
+PQ ISSO NAO FAZ SENTIDO...
+
+
+
+
+
+
+
+--> NAO FAZ SENTIDO PQ
+
+
+
+TODAS AS PERMISSIONS DE "CREATE DATABASE OBJECTS"
+
+
+
+
+VIVEM DENTRO DO ROLE DE "SYSADMIN",
+
+
+que pode repassar essas permissions facilmente a outros 
+
+CHILD roles de si,
+
+com grants...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA ISSO, EXECUTAMOS 1 statement 
+
+
+
+PARA ATTACHEAR 
+
+
+
+ESSE ROLE 
+
+
+"MY_ROLE"
+
+
+
+embaixo do role "sysadmin"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA ISSO,
+
+
+PRECISAMOS DO COMANDO 
+
+
+
+
+
+
+
+
+
+
+
+
+
+GRANT ROLE MY_ROLE TO ROLE SYSADMIN;
+
+
+
+
+
+
+
+
+
+
+
+
+--> ENTRETANTO, ANTES DE RODARMOS ESSE COMANDO,
+
+DEVEMOS 
+
+
+USAR O ROLE DE "SECURITYADMIN",
+
+
+JUSTAMENTE PQ 
+ESSE ROLE 
+
+
+"MANAGES GRANTS AND REVOKES IN A GLOBAL LEVEL"...
+
+
+
+
+
+
+
+
+
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+
+---------- MAINTAIN HIERARCHY, MY_ROLE SHOULD BE UNDER SYSADMIN ROLE... CUSTOM ROLES SHOULD BE UNDER SYSADMIN ROLE ----------------
+
+
+
+USE ROLE SECURITYADMIN;
+
+
+
+GRANT ROLE MY_ROLE TO ROLE SYSADMIN;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> CERTO... AÍ VOLTAMOS AO WEB CONSOLE DO SNOWSIGHT,
+
+
+PARA REFRESHARMOS... tudo...
+
+
+
+
+
+
+
+
+------> aí percebemos que nosso custom role agora 
+
+
+está sob o role de "SYSADMIN"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AÍ O PROFESSOR CHECA AS PERMISSIONS/GRANTS 
+
+DO ROLE "sysadmin"
+
+
+MAIS UMA VEZ:
+
+
+
+
+
+
+
+
+
+
+
+
+SHOW GRANTS TO ROLE SYSADMIN;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS O RESULT SET AINDA 
+
+NAO 
+
+
+NOS MOSTRA QUE "SYSADMIN" tem ownership 
+
+da database my_db (Criada por my_role)... --> MAS NAO DEVEMOS 
+
+
+NOS IMPORTAR COM ISSO,
+
+
+PQ 
+
+
+A METADATA DEMORA PARA SER ATUALIZADA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AGORA TENTAMOS RODAR "DROP DATABASE MY_DB;",
+
+
+
+
+NO ROLE DE "SYSADMIN"... -----------> AGORA, COM ISSO,
+
+
+SEREMOS CAPAZES 
+
+DE DROPPAR ESSA DATABASE, SEM PROBLEMAS...
+
+
+
+
+
+
+
+
+
+
+
+
+QUANDO VC COLOCA 1 ROLE COMO CHILD DE OUTRO,
+
+
+
+
+
+OS 
+
+
+
+PRIVILEGES SAO AUTOMATICAMENTE 
+
+INHERITED PELO PARENT ROLE...
+
+
+
+
+
+
+
+
+
+--. COM BASE NISSO,
+
+
+PODEMOS CONCLUIR:
+
+
+
+
+
+
+
+
+
+
+
+
+
+1) APENAS O OBJECT OWNER PODE FAZER MODIFICATIONS 
+
+EM 1 OBJECT (a nao ser que vc seja parent desse role)
+
+
+
+
+
+
+2) NENHUM OUTRO ROLE PODERÁ FAZER QUALQUER MODIFICATION 
+
+NESSE OBJECT, NEM MESMO "SYSADMIN" OU "SECURITYADMIN"...
+
+
+
+
+
+
+3) TODOS OS CUSTOM ROLES DEVEM "ROLL BACK" 
+
+na direção do "sysadmin" role...
+
+
+
+
+
+
+
+4) PRIVILEGES SAO INHERITED A HIGHER ROLES,
+
+
+ONCE HIERARCHY IS FORMED (GRANT ROLE <CHILD_ROLE> TO ROLE <PARENT_ROLE>)

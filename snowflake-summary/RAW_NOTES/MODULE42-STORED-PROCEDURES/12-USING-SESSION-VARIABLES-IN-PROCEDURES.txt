@@ -1,0 +1,1342 @@
+
+
+
+
+
+
+
+
+CONTINUANDO A AULA ANTERIOR,
+
+
+
+
+
+
+
+
+
+
+
+DISCUTIMOS QUE 
+
+OWNER PROCEDURES FICAM COM OS PRIVILEGES 
+
+
+DO OWNER/ROLE QUE CRIOU ESSA PROCEDURE (privileges de acesso 
+às tables, etc)....
+
+
+
+
+
+
+--> JÁ CALLER PROCEDURES HERDAM 
+
+
+
+O CONTEXT(DATABASE E SCHEMA), PRIVILEGES E SESSION VARIABLES 
+
+
+DO ROLE QUE AS CHAMA....
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS AGORA TEMOS MAIS UMA CARACTERÍSTICA 
+
+
+
+DAS OWNER STORED PROCEDURES QUE DEVE SER 
+
+ESTUDADA...
+
+
+
+
+
+
+
+
+
+
+É O
+
+
+
+"CANNOT VIEW, SET OR UNSET THE CALLER'S SESSION VARIABLES""...
+
+
+
+
+
+
+e o 
+
+
+"DOES NOT ALLOW NON-OWNERS TO VIEW INFORMATION 
+
+ABOUT THE PROCEDURE, FROM THE PROCEDURES VIEW (''SHOW PROCEDURES'');""
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ok.. devemos ver esses 2 points...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUANTO AO TÓPICO DE "VIEW, SET AND UNSET SESSION VARIABLES"",
+
+
+
+
+
+
+TEMOS ESTE CÓDIGO:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE PROCEDURE SET_VARIABLE_CALLER()
+    RETURNS VARCHAR
+    LANGUAGE JAVASCRIPT 
+    EXECUTE AS CALLER
+    AS
+    $$ 
+
+    var rs = snowflake.execute({
+        sqlText: "SET SESSION_VAR_CALLER = 51"
+    });
+
+    rs.next();
+
+
+    $$;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NESSE CÓDIGO, O QUE ESTAMOS FAZENDO É BASICAMENTE 
+
+RODANDO 
+
+ESSE STATEMENT PARA DEFINIR 
+
+
+
+
+
+O VALUE 
+
+DESSA VARIABLE 
+
+"SESSION_VAR_CALLER" como "51"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> CERTO.... MAS O QUE INTERESSA,
+
+AQUI,
+
+É QUE ESSA PROCEDURE ESTÁ SENDO CRIADA COMO UMA "CALLER PROCEDURE"...
+
+
+
+
+
+
+
+
+
+
+
+
+--> CRIAMOS ESSA PROCEDURE...
+
+
+
+
+
+
+
+
+--> CRIADA ESSA PROCEDURE,
+
+ELA VAI SETTAR ESSA SESSION VARIABLE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+EX:
+
+
+
+
+
+
+
+CREATE PROCEDURE SET_VARIABLE_CALLER()
+    RETURNS VARCHAR
+    LANGUAGE JAVASCRIPT 
+    EXECUTE AS CALLER
+    AS
+    $$ 
+
+    var rs = snowflake.execute({
+        sqlText: "SET SESSION_VAR_CALLER = 51"
+    });
+
+    rs.next();
+
+
+    $$;
+
+
+
+
+
+
+CALL SET_VARIABLE_CALLER();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PODEMOS CHECAR QUE A SESSION VARIABLE 
+
+FOI SETTADA,
+
+
+
+
+COM 1 SELECT:
+
+
+
+
+
+
+
+
+
+
+
+
+SELECT $SESSION_VAR_CALLER;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> RODAMOS O SELECT STATEMENT,
+
+E AÍ 
+
+
+ENXERGAMOS O VALUE DE 51...
+
+
+
+
+
+
+
+
+--> OK...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AGORA DEVEMOS FAZER A MESMA COISA, 
+
+
+
+MAS PARA A "OWNER PROCEDURE"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA ISSO,
+
+O PROFESSOR CRIA 1 NOVA PROCEDURE,
+
+
+
+
+
+que faz a mesma coisa:
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE PROCEDURE SET_VARIABLE_OWNER()
+    RETURNS VARCHAR 
+    LANGUAGE JAVASCRIPT 
+    EXECUTE AS OWNER 
+    AS
+    $$ 
+        var rs = snowflake.execute({
+            sqlText: "SET SESSION_VAR_OWNER = 51"
+        })
+        rs.next();
+    
+    $$;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+COM ISSO, TAMBÉM DEFINIMOS O VALUE DESSA VARIABLE 
+
+
+COMO SENDO 51....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... AÍ RODAMOS ESSA PROCEDURE...
+
+
+
+
+
+
+
+
+
+
+
+
+EX:
+
+
+
+
+
+
+
+CREATE OR REPLACE PROCEDURE SET_VARIABLE_OWNER()
+    RETURNS VARCHAR 
+    LANGUAGE JAVASCRIPT 
+    EXECUTE AS OWNER 
+    AS
+    $$ 
+        var rs = snowflake.execute({
+            sqlText: "SET SESSION_VAR_OWNER = 51"
+        })
+        rs.next();
+    
+    $$;
+
+
+
+
+
+    CALL SET_VARIABLE_OWNER();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+----> AO CHAMARMOS ESSA PROCEDURE,
+
+
+ELA IMEDIATAMENTE FAZ THROW DE 1 ERROR..
+
+
+
+
+
+
+
+
+
+O ERROR FOI:
+
+
+
+
+
+
+
+
+"Execution error in stored procedure `SET_vARIABLE_OWNER: STored 
+procedure execution error: Unsupported statement type "SET": At 
+Snowflake execute....
+
+
+
+
+
+
+
+
+
+
+--> "SET" ---> ISSO QUER DIZER, ESSENCIALMENTE,
+
+
+
+QUE NAO É CAPAZ DE SETTAR ESSA SESSION VARIABLE,
+
+DE DENTRO 
+
+
+DE SUA OWNER PROCEDURE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> EXATAMENTE COMO O PROFESSOR TINHA COLOCADO NO SLIDE DA AULA:
+
+
+
+
+
+
+
+
+""CANNOT VIEW, SET OR UNSET THE CALLER's SESSION VARIABLES""...
+
+
+
+
+
+
+
+
+
+
+""VIEW"" -> QUER DIZER QUE SE TENTAMOS _ USAR 
+
+QUALQUER 
+
+SESSION VARIABLE 
+
+
+QUE VC SETTOU NO LEVEL DA SESSION,
+
+
+
+
+VAMOS GANHAR 1 ERROR...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> RESUMINDO:
+
+
+
+PODEMOS "SETTAR", "VIEW" E UNSET 
+
+VARIABLES 
+
+
+EM QUALQUER CALLER PROCEDURE,
+
+MAS NAO PODEMOS FAZER NADA DISSO 
+
+
+
+EM OWNER PROCEDURES... NAO PODEMOS NEM MESMO 
+
+
+USAR AS SESSION VARIABLES,
+
+
+SETTADAS DO LADO DE FORA, NA SESSION EM QUE 
+
+
+A OWNER PROCEDURE É EXECUTADA...
+
+
+
+
+
+
+
+
+
+
+
+--> OK...
+
+
+
+
+
+
+
+
+
+MAS TEMOS OUTRO STATEMENT:
+
+
+
+
+
+
+
+
+
+""DOES NOT ALLOW NON-OWNERS TO VIEW 
+
+INFORMATION ABOUT THE PROCEDURE FROM THE 
+
+__PROCEDURES__ VIEW""...
+
+
+(SHOW PROCEDURES)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> JÁ CRIAMOS UMA OWNER PROCEDURE...
+
+
+
+
+
+
+
+
+--> SE TENTAMOS 
+
+
+EXECUTAR 
+
+
+"DESC PROCEDURE CLONE_TABLE_OWNER",
+
+
+
+
+LÁ NO ROLE DE "SANDBOX" (Que nao é seu owner; o owner é sysadmin, nesse exemplo),
+
+
+
+
+
+
+CONSEGUIMOS VER OS DETAILS,
+
+
+
+MAS NAO TODOS ELES (o "BODY" fica em branco, o que quer dizer que 
+
+nao podemos ver os detalhes de criacao/lógica 
+da procedure, criada pelo outro role)
+
+
+
+
+
+
+
+
+
+--> COM "DESC", PODEMOS 
+
+
+
+VER O BODY 
+
+
+DA PROCEDURE....
+
+
+
+
+
+
+
+
+
+
+-> SE NAO SOMOS O OWNER,
+
+
+O BODY FICA 
+
+EM BRANCO (para que vc nao consiga ver como 
+
+a procedure foi criada)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> COM A CALLER PROCEDURE,
+
+
+
+
+SEMPRE PODEMOS VER O BODY DA PROCEDURE,
+
+COM 
+
+
+
+
+
+
+
+
+
+DESC PROCEDURE CLONE_TABLE_CALLER(varchar, varchar)....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ISSO É EXATAMENTE COMO O STATEMENT 
+
+ANTERIOR,
+
+
+DE 
+
+
+
+""DO NOT ALLOW NON-OWNERS TO VIEW INFORMATION 
+
+ABOUT THE OWNER PROCEDURE,
+
+FROM THE PROCEDURES VIEW""...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+QUER DIZER QUE OS CALLERS:
+
+
+
+
+
+
+
+1) PODEM CHAMAR AS PROCEDURES
+
+
+
+2) MAS NAO PODEM VER OS DETALHES __ DO QUE _ ACONTECE,
+
+DENTRO DAS PROCEDURES...
+
+
+
+
+
+
+
+
+
+
+
+--> HÁ MAIS 1 COISA IMPORTANTE QUE DEVEMOS DISCUTIR..
+
+
+
+
+
+
+
+
+
+
+--> USAREMOS VÁRIOS STATEMENTS DENTRO DAS PROCEDURES...
+
+
+
+
+
+
+--> TEMOS QUE ENTENDER COMO _ESSES STATEMENTS SAO EXECUTADOS,
+
+LÁ NO BACKEND....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE SE TEMOS 5 OU 6 SELECT STATEMENTS 
+
+
+OU CREATE STATEMENTS,
+
+
+
+
+
+EU DEVO SER CAPAZ DE 
+
+VER 
+
+
+COMO 
+
+
+
+
+ESSES STATEMENTS SAO EXECUTADOS 
+
+LÁ 
+
+
+
+NA PARTE DE "HISTORY" DO SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+--> ENTRETANTO, COM ESSA DIFERENCIACAO ENTRE 
+
+OWNER E CALLER PROCEDURES,
+
+
+
+DEVEMOS 
+INVESTIGAR SE REALMENTE É possível 
+MONITORAR (ou nao)
+ESSA EXECUCAO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+---> OK... NA HISTORY, COM O ROLE DE "SANDBOX",
+
+
+
+
+
+
+TENTAMOS VISUALIZAR A EXECUCAO DE 
+
+
+1 
+"OWNER PROCEDURE"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS NAO CONSEGUIMOS VISUALIZAR OS DETALHES 
+
+DE EXECUCAO DA 
+
+OWNER PROCEDURE,
+
+
+JUSTAMENTE PQ O "SANDBOX"
+
+
+NAO É O OWNER DELA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> OK, MAS E SE VC PRECISA MONITORAR ESSES STATEMENTS?
+
+
+
+
+
+
+
+
+
+--> DIGAMOS QUE VC ESTÁ RODANDO 
+
+1 PROCEDURE ENORME,
+
+E VC 
+
+
+NAO SABE COM CERTEZA QUAL STEP
+
+
+A PROCEDURE 
+
+ESTÁ RODANDO?
+
+
+
+
+
+
+
+
+-> DURANTE ESSE MOMENTO,
+
+
+
+SERÁ MT IMPORTANTE 
+
+
+
+VC TER NOÇÃO DE QUAIS STATEMENTS 
+
+
+
+ESTAO/ESTARAO SENDO EXECUTADOS 
+
+
+NESSA PROCEDURE...
+
+
+
+
+
+(apenas ver que "a procedure foi chamada" 
+
+nao vai te ajudar a entender 
+o 
+
+CURRENT STATUS DELA, SENDO EXECUTADA.... )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> para vc conseguir entender 
+
+
+melhor o que está acontecendo em 1 given 
+procedure,
+
+
+
+
+
+é melhor CONSEGUIR VER O STATEMNET 
+
+
+QUE ESTÁ SENDO EXECUTADO DENTRO 
+
+DESSA STORED PROCEDURE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA QUE VC CONSIGUE MONITORAR ISSO,
+
+ESSAS PROCEDURES,
+
+
+
+
+
+O IDEAL É 
+
+ENABLAR 
+
+
+A 
+
+
+"""WAREHOUSE MONITORING PERMISSION"""...
+
+
+
+
+
+
+
+
+
+"""WAREHOUSE MONITORING PERMISSION""" --> OU SEJA,
+
+
+
+
+
+TEMOS QUE 
+
+
+RODAR OS COMANDOS QUE DAO GRANT 
+
+
+
+DE "MONITOR" 
+
+
+
+A WAREHOUSES...
+
+
+
+
+
+
+
+
+
+
+
+
+--> OS COMANDOS SAO:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--------------------- GRANT PERMISSIONS TO CHECK PROCEDURE EXECUTION ---------------
+-------------------- DETAILS TO OTHER ROLES, ROLES OTHER THAN THE OWNER ----------
+
+
+
+
+GRANT MONITOR ON WAREHOUSE COMPUTE_WH TO ROLE SANDBOX;
+REVOKE MONITOR ON WAREHOUSE COMPUTE_WH FROM ROLE SANDBOX;
+
+
+
+
+
+
+
+
+
+COM ESSAS PERMISSIONS,
+
+CONSEGUIREMOS 
+
+ANALISAR OS STATEMENTS 
+
+EXECUTADOS 
+DENTRO 
+
+
+
+DAS STORED PROCEDURES,
+
+MESMO QUE SEJAM OWNER PROCEDURES,
+
+
+OWNED POR OUTRO ROLE...
+
+
+
+
+
+
+
+
+
+
+
+AGORA FAZEMOS GRANT 
+
+
+
+
+DESSA PERMISSION,
+
+ DE "MONITOR",
+
+
+
+ AO ROLE DE "SANDBOX"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ --> DEPOIS RODAMOS A PROCEDURE....
+
+
+
+
+
+
+
+
+
+
+
+ --> NO CONSOLE, NA HISTORY,
+
+ SEREMOS CAPAZES DE VER 
+
+ OS DETALHES DE EXECUCAO,
+
+
+ bem melhor...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ -_> OK... QUER DIZER QUE 
+
+ DEVEMOS 
+
+ CONFERIR A PERMISSION DE "MONITOR"
+
+ AOS ROLES ADEQUADOS,
+
+
+
+EM CIMA DAS NOSSAS WAREHOUSES,
+
+PARA QUE 
+
+ELES CONSIGAM 
+
+ANALISAR 
+
+
+A EXECUCAO DOS STATEMENTS 
+
+
+DENTRO DAS STORED PROCEDURES...

@@ -1,0 +1,709 @@
+
+
+
+
+
+
+
+
+O QUE É O TAGGING, NO SNOWFLAKE?
+
+
+
+
+
+ANTES DE MAIS NADA, DEVEMOS COMPREENDER:
+
+
+
+
+
+
+
+
+
+
+
+1) O QUE É TAGGING...
+
+
+
+
+
+
+
+
+
+
+2) PQ O TAGGING PODE SER ÚTIL...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> DIGAMOS QUE TEMOS 1 PESSOA,
+
+QUE VIAJA 
+
+A DIVERSOS PAÍSES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> DIGAMOS QUE ESSA PESSOA 
+
+
+CRIA 1 FOLDER PARA CADA PAÍS,
+E AÍ ARMAZENA FOTOS DENTRO DE CADA UM DELES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--. DIGAMOS QUE ESSA PESSOA TEM QUE FAZER "SEARCH BY"...
+
+
+
+
+
+
+--> SEARCH BY ALGUM CRITÉRIO,
+
+
+
+COMO "DESERT PHOTOS", "BEACH PHOTOS", "HILL STATION PHOTOS"...
+
+
+
+
+
+
+
+
+
+
+
+
+--> COM ESSE ARRANGEMENT,
+
+
+
+DE 
+
+
+""1 TABLE POR PAÍS"",
+
+FICARÁ 
+
+BEM DIFÍCIL PROCURAR POR ESSE TIPO DE "CRITÉRIO"....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA RESOLVER ESSE PROBLEMA,
+
+ELE CRIA 
+
+MAIS 3 CATEGORIAS 
+
+
+
+DENTRO DE CADA COUNTRY,
+
+
+CATEGORIAS 
+
+
+
+"STATION",
+
+
+"BEACH",
+
+
+"DESERT"...
+
+
+
+
+
+
+
+
+
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+
+            COUNTRIES 
+
+
+BRAZIL         USA          JAPAN 
+                             
+B S D          B S D       BEACH STATION DESERT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ok... ele comecou 
+
+a 
+
+armazenar dentro desses subfolders,
+
+
+e funcionou...
+
+
+
+
+
+
+
+
+
+
+
+
+
+MAS DIGAMOS QUE ELE TENHA QUE PROCURAR POR DIFERENTES 
+
+KEYWORDS,
+
+
+COMO 
+
+
+
+"PHOTOS WITH FAMILY",
+
+
+
+ou 
+
+"PHOTOS OF HOTELS"
+
+
+
+
+"PHOTOS OF AIRPORTS"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> DE NOVO, SE ELE QUISER FAZER ASSSIM,
+
+
+O ESQUEMA NAO VAI FUNCIONAR,
+
+
+
+
+A NAO SER QUE ELE CRIE NOVAS CATEGORIAS, 
+
+
+DENTRO DE CADA COUNTRY...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> O QUE DEVEMOS ENTENDER:
+
+
+
+
+
+ESSA "CATEGORIZATION' FUNCIONA 
+
+ATÉ CERTO PONTO... ALÉM DESSE LIMITE,
+
+
+FICA MT DIFÍCIL E CUMBERSOME 
+
+CATEGORIZAR 
+
+E ARMAZENAR AS COISAS DESSA FORMA..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+----> MAS QUE ALTERNATIVA TEMOS A ISSO?
+
+
+
+
+
+
+
+
+
+
+
+
+--> É ESTA: 
+
+
+
+SEMPRE QUE ESSA PESSOA TIRAR 1 FOTO,
+
+
+ELA PODE _ TAGGAR __ eSSAS FOTOS...
+
+
+
+
+
+
+TAGS:
+
+
+FAMILY 
+
+
+
+AIRPORT 
+
+SHOPPING 
+
+
+STATION 
+
+
+DESERT 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ELE FARIA ISSO PARA QUE,
+
+
+SEMPRE QUE ELE PROCURAR ESSAS PHOTOS 
+
+
+EM 1 COMPUTER SYSTEM,
+
+
+SERÁ MT FÁCIL 
+
+
+
+PARA ENCONTRAR ESSSA COISAS..
+
+
+
+
+
+
+
+
+
+
+
+
+--> NESSES CASOS AÍ,
+
+
+O TAGGING PODE SER MT HANDY...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> RESUMO:
+
+
+"CATEGORIZATION GOES UP TO A CERTAIN LEVEL... AFTER 
+
+THAT CERTAIN POINT,
+
+
+YOU SHOULD NOT/CANNOT ALWAYS CATEGORIZE THINGS"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NESSES CASOS,
+
+VC 
+
+DEVE 
+TAGGAR 
+
+ESSAS COISAS,
+
+
+PQ ISSO VAI FACILITAR SUA PROCURA,
+EM UM COMPUTER SYSTEM..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ESSA COISA,
+ESSE SISTEMA DE TAGS,
+
+
+
+ELE TAMBÉM PODE SER APLICADO 
+
+
+A 1 DATABASE SYSTEM....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> JUSTAMENTE,
+
+O SNOWFLAKE
+
+CRIOU 1 FEATURE DE TAGGING,
+
+TUDO PARA QUE VC 
+
+POSSA 
+TAGGAR 
+
+
+TABLES,
+
+DATABASES,
+
+WAREHOUSES,
+
+ETC...
+
+
+
+
+
+
+
+
+
+
+--> TUDO PARA QUE FIQUE MT 
+
+FÁCIL PARA VOCE PROCURAR 
+
+
+
+DATA SOBRE SUAS COISAS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> MAS É CLARO QUE A FEATURE DE TAGGING É 
+
+MELHOR PARA SETUPS/ENVIRONMENTS EM QUE 
+
+TENHO 
+
+
+
+MTAS ESTRUTURAS...
+
+
+
+
+
+
+
+
+SE TENHO APENAS 15 "FOTOS",
+
+POR EXEMPLO,
+
+
+
+POSSO ABRIR OS FOLDERS MANUALMENTE E CONSEGUIR 
+
+O QUE QUERO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS SE TEMOS 1 SISTEMA MT GRANDE,
+10.000, 20.000 PHOTOS,
+
+
+
+NAO É BOM DEPENDER DE ESSAS CATEGORIAS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> SE EU TIVESSE DEIXADO 1 TAG EM CADA 
+
+PHOTO QUE TIREI, 
+
+SERIA BEM MAIS FÁCIL PROCURAR 
+
+POR ELSA...
+
+
+
+
+
+
+
+--> O MESMO PRINCÍPIO SE APLICA A DATABASE SYSTEMS....
+
+
+
+
+
+
+
+
+
+--> SE APLICAMOS TAGS EM 
+
+
+GIVEN OBJECTS,
+
+
+QUANDO NOSSA DATABASE 
+
+EXPANDIR,
+
+
+PODEMOS 
+
+
+
+PROCURAR PELOS "KINDS"
+
+
+
+DE COLUMNS E DATA 
+
+
+DE QUE PRECISAMOS,
+
+
+TUDO POR MEIO DE 1 SEARCH NA DATABASE... E, COM ISSO,
+
+RETRIEVAR 
+
+OS RESULTS...
+
+
+
+
+
+
+
+
+
+
+
+
+--> EM CASOS COMO ESSES, TAGGING PODE SER MT HELPFUL...
+
+
+
+
+
+
+
+
+--> VEREMOS COMO APLICAR TAGS E PROCURAR 
+
+POR TAGS 
+
+NAS PRÓXIMAS AULAS....

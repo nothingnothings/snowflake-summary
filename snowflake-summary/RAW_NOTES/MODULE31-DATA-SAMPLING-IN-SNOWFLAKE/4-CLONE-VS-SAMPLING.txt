@@ -1,0 +1,303 @@
+
+
+
+
+na última lecture, vimos como 
+snowflake sampling algorithms 
+
+
+
+PODEM SER ÚTEIS 
+
+QUANDO ESTAMOS 
+
+
+
+
+TENDO DEV ACTIVITY, TESTING ACTIVITY...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE PEGAR O SAMPLE DA TABLE VAI 
+
+NOS AJUDAR 
+
+A 
+
+RODAR 
+
+QUERIES DE TEST MAIS RÁPIDAS... 
+
+
+
+
+
+
+
+
+
+
+--> É BEM MELHOR DO QUE USAR PRODUCTION TABLES...
+
+
+
+
+
+
+
+
+
+
+--> MAS TAMBÉM PODEMOS ARGUMENTAR:
+
+
+
+""EM VEZ DE PEGAR ESSA SAMPLE,
+
+
+PQ NÓS SIMPLESMENTE NAO COPIAMOS ESSA TABLE,
+
+COM ZERO-COPY-CLONE?""
+
+
+
+
+
+
+
+
+
+
+
+
+--> BEM, NESSA LECTURE TENTAREMOS ENTENDER 
+
+
+COMO __ O SAMPLING PODE SER MAIS EFICIENTE 
+
+DO QUE 
+
+1 ZERO-COPY-CLONE DA TABLE....
+
+
+
+
+
+
+
+
+
+
+--> BEM, NAS LECTURES ANTERIORES 
+
+DISCUTIMOS QUE 
+
+
+
+FAZER 1 CLONE DA TABLE 
+
+
+NAO VAI ACTUALLY COPIAR A DATA...
+
+
+
+
+
+
+A ÚNICA COISA COPIADA SERÁ A METADATA DA PARENT 
+
+TABLE...
+
+
+
+
+
+
+
+
+
+
+
+--> MAS PQ DIABOS NAO PODEMOS RODAR 
+
+SAMPLES 
+
+
+EM CIMA 
+
+
+DO CLONE DA TABLE?
+
+
+
+
+
+
+
+
+
+
+--> É SEMPRE MELHOR USAR SAMPLING, DO QUE CLONES...
+
+
+
+
+
+
+-----------------------
+
+
+
+
+
+
+
+
+
+PARA ISSO, O PROFESSOR CRIOU 1 TABLE DE NOME 
+
+"SUPPLIER_BLOCK_ALG"...
+
+
+
+
+
+
+
+
+TIPO ASSIM:
+
+
+
+
+CREATE OR REPLACE TRANSIENT TABLE SUPPLIER_ROW_ALG
+AS 
+SELECT * FROM
+SNOWFLAKE_SAMPLE_DATA.TPCH_SF1000.SUPPLIER SAMPLE ROW(3) SEED (82);
+
+
+
+
+
+
+
+
+
+
+
+OK... TENTAMOS CRIAR 1 CLONE TABLE,
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE TRANSIENT TABLE SUPPLIER_CLONE CLONE SUPPLIER;
+
+
+
+
+
+
+
+
+
+
+
+
+--> O QUE VAI ACONTECER, COM ISSO,
+
+
+É QUE SE CLICAMOS NESSA CLONE TABLE,
+
+VEREMOS QUE 
+
+ELA TAMBÉM TEM 1 VOLUME DE 6.5GB ----------_> QUER DIZER QUE 
+
+QUALQUER 
+
+
+QUERY QUE 
+
+EU 
+RODAR EM CIMA 
+
+DESSA TABLE,
+
+
+
+ACABAREI RODANDO EM CIMA DESSE VOLUME IMENSO 
+
+DE DATA 
+
+
+(GASTANDO TEMPO E PROCESSAMENTO CONSIDERÁVEIS)..
+
+
+
+
+
+
+ISSO TUDO VAI TE CUSTAR...
+
+
+
+
+
+
+
+
+
+
+
+
+---> CUSTO DA DEVELOPMENT ACTIVITY...
+
+
+
+
+
+
+
+
+--> É SEMPRE MELHOR USAR SAMPLING, PORTANTO...
+
+
+
+
+
+
+
+-> É SEMPRE MELHOR USAR SAMPLING, E UM DOS ALGORITHMS...
+
+
+
+
+
+
+
+
+
+--> quer dizer que se usarmos clones, sempre ficaremos 
+
+com quantidades absurdas de data a ser executada,
+
+e isso vai aumentar seu custo...

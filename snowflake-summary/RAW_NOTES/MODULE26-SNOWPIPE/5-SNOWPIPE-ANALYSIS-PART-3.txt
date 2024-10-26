@@ -1,0 +1,662 @@
+
+
+
+
+
+
+
+
+AGORA DEVEMOS VER COMO O SNOWPIPE 
+
+E
+ COMANDOS 
+
+
+ DE COPY SE COMPORTAM QUANDO A DATA 
+
+
+ É ___ TRUNCATED____...
+
+
+
+
+
+
+
+
+
+
+
+
+--> VEJA ESTES COMANDOS:
+
+
+
+
+
+
+
+
+
+
+TRUNCATE TABLE DEMO_DB.PUBLIC.EMP_SNOWPIPE;
+
+-- table will be empty
+SELECT * FROM DEMO_DB.PUBLIC.EMP_SNOWPIPE;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+isso feito, 
+
+a table estará vazia...
+
+
+
+
+
+
+
+
+--> JÁ SABEMOS QUE, SE TRUNCAMOS A DATA DA TABLE,
+
+
+
+A  FILE/FILES QUE ESTAO MARKED COMO "SENT",
+
+
+NO OBJECT DE "PIPE",
+
+
+NAO SERAO 
+
+
+"RE-ENVIADAS" se vc tentar as enviar mais uma vez (
+    mesmo sua data nao estando na table, que vc recém 
+
+    truncou...
+)
+
+
+
+EX:
+
+
+
+
+
+
+-- file still marked as "SENT"...
+ALTER PIPE SNOWPIPE REFRESH;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA TENTAR RESOLVER ISSO,
+
+
+
+O PROFESSOR COMECA PELO FIX DO STAGE OBJECT...
+
+
+
+
+
+
+
+--> ELE REMOVE A PROPRIEDADE DE "COMPRESSION=GZIP",
+
+PARA QUE 
+
+
+AS FILES/DATA DAS FILES CONSIGA SER COPIADA,
+
+
+ATRAVÉS DO COMANDO DE "COPY",
+
+DENTRO DO 
+
+PIPE...
+
+
+
+
+EX:
+
+
+
+
+
+
+
+CREATE OR REPLACE FILE FORMAT MY_CSV_S3_FORMAT
+    TYPE=CSV
+    FIELD_DELIMITER=","
+    SKIP_HEADER=0
+    NULL_IF=('NULL', 'null')
+    EMPTY_FIELD_AS_NULL=TRUE
+    FIELD_OPTIONALLY_ENCLOSED_BY='"';
+
+
+
+
+
+
+
+
+
+
+
+
+
+BEM... como já sabemoos, temos 1 file 
+
+"employee0",
+
+que já está marcada como sent...
+
+
+
+
+
+
+
+
+
+
+--> SE TENTARMOS UPLOADAR 1 FILE DE NOME 
+"employee02",
+
+é claro que essa file será 
+
+uploadada (pq ela nao está marcada como "sent", ao contrário 
+
+
+de employee0)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK.. ISSO VAI TRIGGAR O PIPE OBJECT,
+
+QUE DEVERÁ COPIAR A 
+
+DATA PARA ESSA FILE....
+
+
+
+
+
+
+MAS A DATA DO EMPLOYEE0 
+
+NAO VAI SER COPIADA,
+
+
+
+PQ ELA AINDA ESTÁ MARCADA COMO "SENT"..
+
+
+
+
+
+
+
+
+
+-> E ESSE MARK COMO "SENT"
+
+
+NAO É PURGEADO __ MESMO _ QUANDO RECRIAMOS 
+
+
+O PIPE EM SI... (a metadata das copied files nao 
+
+é limpada....)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK, ESSE É O COMPORTAMENTO 
+
+
+DO PIPE OBJECT...
+
+
+
+
+
+
+
+
+
+--> MAS DEVEMOS CHECAR O MESMO CENÁRIO,
+
+
+MAS AGORA COM A EXECUCAO DIRETA DO COMANDO DE 
+
+"COPY"... (sem o pipe em volta dele...)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA ISSO, O PROFESSOR TRUNCA A TABLE MAIS UMA VEZ:
+
+
+
+
+
+
+
+
+
+
+TRUNCATE TABLE DEMO_DB.PUBLIC.EMP_SNOWPIPE;
+
+
+
+
+
+
+
+
+--> DEPOIS DISSO, ELE EXECUTA O COMANDO DE COPY DIRETAMENTE....
+
+
+
+
+
+TIPO ASSIM:
+
+
+
+
+COPY INTO DEMO_DB.PUBLIC.EMP_SNOWPIPE
+FROM @DEMO_DB.PUBLIC.SNOW_STAGE
+FILE_FORMAT=(
+    TYPE=CSV,
+    FIELD_OPTIONALLY_ENCLOSED_BY='"'
+);
+
+
+
+
+
+
+
+isso vai copiar os 2 employee,
+
+
+o employee0 e o employee2...
+
+
+
+
+
+
+
+QUER DIZER QUE 
+
+OO EMPLOYEE0 NAO FICOU "SUJO",
+
+
+
+
+"MARKED AS SENT"...
+
+
+
+
+
+
+--> ISSO ACONTECE/ACONTECEU PQ 
+
+
+O COMANDOO DE COPY FUNCIONA COM BASE 
+
+
+
+
+EM "HASH VALUES" --> a metadata trabalha com hash 
+
+values,
+
+PARA 
+
+DETECTAR SE ESSA FILE JÁ FOI CARREGADA 
+
+
+OU NAO 
+
+PARA DENTRO DA TABLE...
+
+
+
+
+
+
+
+
+MAS O QUE ISSO TUDO QUER DIZER?
+
+
+
+
+
+
+
+
+
+
+
+RESUMINDO:
+
+
+
+
+1) O SNOWPIPE __ __""COPIA DATA __ À TABLE 
+
+__ COM __ BASE __ NO NOME DAS FILES""  
+
+(se os nomes sao iguais, a file/a data da file NAO É 
+COPIADA)
+
+
+
+
+2) JÁ O COPY COMMAND __ ""COPIA DATA À TABLE 
+
+COM BASE _ NO HASH __ DAS FILES""
+
+(se os hashes sao iguais, as files nao sao copiadas)
+
+
+
+
+
+
+
+
+
+PARA CONCRETIZAR NOSSO ENTENDIMENTO,
+
+O PROFESSOR ADICIONA MAIS UM RECORD NA FILE 
+
+DE 
+
+"employee0"... --> ISSO VAI MUDAR O HASH DA FILE..
+
+
+
+
+
+
+
+--. MUDADO ESSE HASH,
+
+
+SE O PROFESSOR REEXECUTAR O COMANDO DE COPY (Diretamente, sem o pipe),
+
+
+ESSA DATA VAI SER INSERIDA NA TABLE, SEM PROBLEMAS...
+
+
+
+
+
+
+
+
+
+--> ENTRETANTO, MESMO COM ESSE HASH ALTERADO,
+
+
+
+
+NO CASO DO PIPE,
+
+ESSA ADICAO/UPDATE DE 1 RECORD A MAIS 
+
+
+NAO VAI ALTERAR O NOME DA FILE,
+
+O QUE QUER DIZER QUE ELA AINDA VAI SER CONSIDERADA 
+
+
+COMO "MARKED AS SENT",
+
+
+
+ALGO QUE VAI IMPEDIR O PIPE DE ADICIONAR 
+
+A 
+
+DATA DESSA FILE, QUE FOI ATUALIZADA,
+
+
+À TABLE...
+
+
+
+(o hash mudou, o copy command funciona sendo 
+
+reexecutado por conta disso,
+
+MAS O PIPE NAO SE IMPORTA NEM UM POUCO....)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... AGORA CHECAREMOS OUTRO SCENARIO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--. O PROFESSOR TRUNCA A TABLE DE NOVO...
+
+
+
+
+
+
+
+
+
+TRUNCATE TABLE DEMO_DB.PUBLIC.EMP_SNOWPIPE;
+
+
+
+
+
+ISSO FEITO,
+
+O PROFESSOR RENOMEIA "employee0"
+
+PARA "employee04",
+
+e aí o reuploada 
+
+
+na 
+
+
+S3 LOCATION... ------> COMO FICA O COMPORTAMENTO DO PIPE,
+
+COM ISSO?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> bem...
+
+
+
+
+
+
+
+
+AÍ O PROFESSOR RODA 1 REFRESH NO PIPE OBJECT,
+
+COM 
+
+
+
+
+
+ALTER PIPE SNOWPIPE_OBJECT REFRESH;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+O  EMPLOYEE04 foi copiado, justamente 
+
+pq ficou com 1 name diferente... 
+
+(
+    ele só considera o nome dos arquivos...
+)
+
+
+TUDO QUE IMPORTA PARA OS PIPE OBJECTS É O NOME DOS ARQUIVOS...
+
+
+
+
+
+
+
+
+LESSONS LEARNED:
+
+
+
+
+
+
+
+1) SNOWPIPE WORKS BASED ON THE NAMES OF THE FILES,
+
+THAT IT REGISTERS IN EACH PIPE OBJECT...
+
+
+
+
+
+2) DIRECT EXECUTION OF COPY COMMAND,
+
+ON THE OTHER HAND,
+WILL LOOK FOR HASH VALUES...
+
+
+
+
+
+3) DIRECT EXECUTION OF COPY COMMANDS IS 
+MORE RELIABLE/BETTER WHEN YOU ARE DOING BATCH LOADS...
+
+
+
+
+
+
+

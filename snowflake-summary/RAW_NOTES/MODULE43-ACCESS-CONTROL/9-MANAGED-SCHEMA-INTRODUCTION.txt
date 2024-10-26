@@ -1,0 +1,513 @@
+
+
+
+
+
+
+AGORA VEREMOS UMA NOVA FEATURE,
+
+
+
+OS "MANAGED SCHEMA"...
+
+
+
+
+
+
+
+
+
+
+
+
+NA ÚLTIMA AULA,
+
+
+DISCUTIMOS SOBRE 2 PROBLEMAS,
+
+
+
+ESTES AQUI:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1) O ROLE QUE GANHAR PERMISSION DE "CREATE DATABASE" 
+
+PODE CRIAR DB, SCHEMA E SCHEMA-RELATED OBJECTS 
+
+SEM QUALQUER TIPO DE RESTRIÇÃO...
+
+
+
+
+
+
+
+
+2) SEM QUALQUER RESTRIÇÃO, O ROLE QUE GANHA ESSA PERMISSION 
+DE "CREATE DATABASE" PODE __GRANT __ ACCESS __ A ESSES OBJECTS 
+
+___ A OUTROS __ ROLES __ DE SEU SISTEMA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> idealmente, queremos que APENAS O "SYSADMIN" CONSIGA 
+criar 
+
+
+database objects (databases, schemas, tables, 
+views, streams, file formats, procedures, etc)
+
+
+
+SEM 
+
+RESTRICAO....
+
+
+
+
+------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+POR ENQUANTO, DEVEMOS IGNORAR O PRIMEIRO PROBLEMA,
+
+
+E FOCAR NO SEGUNDO....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA RESOLVER O SEGUNDO PROBLEMA,
+
+
+
+
+
+
+DE "ROLE NAO PODE CONFERIR ACESSO A ESSE OBJECT 
+
+A OUTROS ROLES... APENAS O SYSADMIN E SECURITYADMIN podem fazer isso",
+
+
+
+
+
+
+
+PODEMOS USAR A FEATURE DOS "MANAGED SCHEMAS"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+EM VEZ DE CRIARMOS 1 NORMAL SCHEMA,
+CRIAMOS 1 MANAGED SCHEMA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ""MANAGED ACCESS SCHEMAS"" --> 
+
+
+
+
+""THEY IMPROVE SECURITY BY __ LOCKING DOWN 
+PRIVILEGE MANAGEMENT ON OBJECTS""...
+
+
+
+
+
+
+
+
+
+""IN REGULAR (i.e. NON-MANAGED) SCHEMAS,
+
+OBJECT OWNERS (ou seja, ROLES COM "OWNERSHIP" PRIVILEGE 
+em 1 object) CAN GRANT ACCESS ON THEIR OBJECTS  TO OTHER 
+ROLES""...
+
+
+
+
+(esse é o principal problema)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+""WITH MANAGED ACCESS SCHEMAS, OBJECT OWNERS __LOSE__ THE 
+ABILITY TO MAKE GRANT __DECISIONS. ONLY THE SCHEMA OWNER ( ou seja,
+o ROLE COM privilege de "OWNERSHIP" em cima do schema em si) or a role 
+with the MANAGE GRANTS privilege can grant privileges on objects 
+in the schema""...
+
+
+
+
+
+
+
+
+
+EX: O criador da table 
+
+NAO VAI PODER CONFERIR ACESSO A ESSA TABLE A OUTROS ROLES...
+
+
+
+APENAS O CRIADOR _ DO __ SCHEMA__ poderá 
+
+conferir esse acesso...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+""SCHEMA OWNER"" --> é o personagem mais importante,
+
+
+
+nos managed schemas....
+
+
+
+----------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+PARA UTILIZARMOS OS MANAGED SCHEMAS ADEQUADAMENTE,
+
+TEMOS QUE SEGUIR ALGUMAS REGRAS:
+
+
+
+
+
+
+
+
+1) O ROLE QUE ESTÁ FAZENDO O __CREATE__ 
+
+DOS OBJECTS, DENTRO DO SCHEMA, 
+
+___NAO DEVE _ SER O SCHEMA OWNER (
+    devem ser personagens DIFERENTES...
+)
+
+
+
+
+
+
+2) MAS ESSE ROLE, O ROLE QUE CRIA OS OBJECTS,
+
+
+DEVE TER PRIVILEGES PARA __ CRIAR __ OBJECTS 
+
+NO SCHEMA...
+
+
+
+
+
+
+
+
+--> O ROLE QUE CRIA OS DATABASE OBJECTS 
+
+
+E O ROLE QUE CONFERE ACESSO 
+
+
+AOS DATABASE OBJECTS A OUTROS ROLES DEVEM SER ___DIFERENTES...
+
+
+
+
+
+
+
+
+
+
+
+--> TENTAREMOS ENTENDER COM UMA REPRESENTAÇÃO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+IMAGINE ISTO:
+
+
+
+
+
+
+
+
+
+
+
+            [ MY_ROLE ] ---> is the SCHEMA OWNER (schema === 'my_schema')
+                  i 
+                  i 
+                  i 
+                  i (grants schema access to )
+            [MY_ROLE_CHILD_1]  ---> will receive all privileges, except "Ownership", on the schema "my_schema"
+                                ----> this means that it will 
+                                        have the privilege to:
+                                        1) CREATE table 
+                                        2) create file formats 
+                                        3) create functons 
+                                        4) create stored procedures 
+                                        etc... 
+
+                                        5) BUT IT WONT HAVE THE OWNERSHIP OF THE ENTIRE SCHEMA...
+                                        6) but it will have the ownership over the objects it creates
+
+                                        7) BUT THE "GRANT PERMISSION TO OBJECTS" WILL STILL STAY WITH THE ROLE "MY_ROLE"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+QUER DIZER QUE QUANDO VC CRIAR 1 SCHEMA COMO "MANAGED SCHEMA" (como algum rule, como "my_role")
+
+
+E ASSIGNAR 1 OUTRO ROLE 
+
+DEBAIXO DELE, o primeiro role (chefe)
+
+
+vai managear o acesso aos objects,
+
+
+e o 
+
+
+segundo role (Subchefe) 
+
+
+vai managear a sua criacao.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+MY_ROLE_CHILD_1 --> nao será capaz de grant access a 
+
+esses database objects, a outros roles... JUSTAMENTE 
+PQ 
+
+ELE NAO É 
+
+O 
+OWNER DO SCHEMA EM SI...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ok...ESSES SAO OS MANAGED SCHEMAS NO SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+--> SE CRIAMOS 1 MANAGED SCHEMA,
+
+OS 2 PROBLEMAS SAO RESOLVIDOS:
+
+
+
+
+
+
+problemas:
+
+
+1) "ROLE WHICH IS CREATING OBJECTS SHOULD NOT BE THE SCHEMA OWNER"
+
+
+
+
+2) BUT THE ROLE THAT CREATES OBJECTS SHOULD HAVE THE PRIVILEGES 
+TO CREATE THEM.
+
+
+
+
+
+
+
+
+
+
+
+
+NA PRÓXIMA AULA, CRIAREMOS 1 MANAGED SCHEMA, E VEREMOS 
+
+COMO ELE FUNCIONA....

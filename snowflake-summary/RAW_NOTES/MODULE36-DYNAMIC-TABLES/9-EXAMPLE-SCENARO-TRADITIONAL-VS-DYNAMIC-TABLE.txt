@@ -1,0 +1,244 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-_> AGORA DEVEMOS CONSIDERAR 1 EXEMPLO..
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> DIGAMOS QUE TEMOS 2 STAGE TABLES:
+
+
+
+
+
+
+
+
+
+
+1) STAGE TABLE 1 
+
+
+
+
+
+
+
+
+2) STAGE TABLE 2...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AGORA DIGAMOS QUE CARREGAMOS DATA PARA DENTRO 
+
+DESSAS 2 TABLES,
+
+
+
+DE UM MODO INCREMENTAL...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AÍ, IMAGINE QUE,
+
+
+
+DEPOIS QUE A DATA É CARREGADA NAS 2 STAGE TABLES,
+
+
+
+
+
+
+APLICAMOS 
+
+
+1 JOIN EM CIMA 
+
+DAS 2 TABLES (
+
+
+APPLY JOIN AND BUSINESS LOGIC,
+SELECTING THE COLUMNS...
+
+)
+
+
+
+
+
+
+
+
+
+--> COM ISSO, CRIAREMOS 1 TERCEIRA TABLE,
+
+INTERMEDIATE TABLE,
+
+
+COM BASE NA JOIN CONDITION...
+
+
+
+
+
+
+
+
+
+
+
+--> DEPOIS DE CRIAR O JOIN ENTRE ESSAS 2 TABLES,
+
+
+
+FINALMENTE 
+
+
+TENTAREMOS 
+
+
+MERGEAR 
+
+
+ESSA DATA TODA,
+JOINADA,
+
+EM 1 
+
+
+FINAL TABLE....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ESSA FINAL TABLE TERÁ A DATA 
+
+
+
+VINDA DAS 2 STAGING TABLES, data que 
+
+vai sair 
+
+
+da INTERMEDIATE TABLE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+------_> OK... ESSE É O CENÁRIO...
+
+
+
+
+
+
+
+
+AGORA VAMOS TENTAR RESOLVÊ-LO,
+
+
+USANDO:
+
+
+
+
+
+
+
+1) APPROACH TRADICIONAL, 
+
+SEM DYNAMIC TABLE...
+
+
+
+
+
+
+
+2) APPROACH COM DYNAMIC TABLE...
+
+
+
+
+
+
+
+
+
+DURANTE ESSE PROCESSO,
+
+
+TENTAREMOS COMPREENDER AS VANTAGENS E DESVANTAGENS 
+
+
+
+DE USAR DYNAMIC TABLES...

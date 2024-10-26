@@ -1,0 +1,1568 @@
+
+
+
+
+
+
+
+na última aula,
+
+
+
+explicamos que o snowflake 
+
+nao usa indexes,
+
+primary keys 
+
+
+ou quaisquer unique constraints...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK, ENTAO COMO DIABOS 
+
+
+O SNOWFLAKE VAI REALIZAR TRANSACTIONS?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+---> VAMOS ESTUDAR ISSO NESSA LECTURE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> digamos que temos essa table,
+
+
+
+chamada de "CUSTOMER_NOCLUSTER"....
+
+
+
+
+
+
+
+
+
+
+
+EX:
+
+
+
+
+
+
+
+
+
+
+DESC TABLE DEMO_DB.PUBLIC.CUSTOMER_NOCLUSTER;
+
+
+
+
+SELECT * FROM DEMO_DB.PUBLIC.CUSTOMER_NOCLUSTER 
+LIMIT 100;
+
+
+
+
+
+
+-- CREATE TRANSIENT TABLE DEMO_DB.PUBLIC.CUSTOMER_NOCLUSTER1 CLONE DEMO_DB.PUBLIC.CUSTOMER_NOCLUSTER;
+-- CREATE OR REPLACE TRANSIENT TABLE DEMO_DB.PUBLIC.CUSTOMER_NOCLUSTER CLONE SAMPLE_DATABASE.PUBLIC.CUSTOMER_NOCLUSTER1;
+
+
+
+
+UPDATE SAMPLE_DATABASE.PUBLIC.CUSTOMER_NOCLUSTER
+SET C_MKTSEGMENT='FURNI'
+WHERE C_MKTSEGMENT='FURNITURE';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--------> ok... CRIAMOS ESSA TABLE 
+
+
+DE "CUSTOMER_NOCLUSTER".....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--. ESSA COLUMN DE "C_MKTSEGMENT"
+
+está com 1 value de "FURNITURE"..
+
+
+
+
+
+
+
+TROCAMOS ESSE VALUE PARA "Furni"..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> O PROFESSOR DIZ QUE ISSO (esse trecho de código)
+
+É UMA TRANSACTION,
+
+
+
+
+MAS ELE NAO USOU "BEGIN", E NEM "END"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> O PROFESSOR TROCA PARA 1 OUTRA WORKSHEET,
+
+
+
+QUE ELE DIZ SER A SEGUNDA TRANSACTION:
+
+
+
+
+
+
+
+
+
+
+
+
+UPDATE DEMO_DB.PUBLIC.CUSTOMER_NOCLUSTER
+SET C_MKTSEGMENT='FUR'
+WHERE C_MKTSEGMENT='FURNITURE';
+
+
+
+
+
+SELECT * FROM DEMO_DB.PUBLIC.CUSTOMER_NOCLUSTER;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ou seja, tentamos 
+
+
+atualizar de novo...
+
+
+
+
+
+- o professor trigga as transactions 
+
+1 depois da outra...
+
+
+
+
+
+
+
+
+--> rodamos 1
+
+
+"transaction" em uma das warehouses,
+ 
+
+
+ e a outra "transaction" em outra 
+
+ warehouse...
+
+
+
+
+
+
+
+
+
+
+
+
+
+ --> COMO RESULTADO DISSO,
+
+
+ A QUERY ENTROU EM 1 STATE DE "BLOCKED",
+
+
+
+ o que é diferente de databases comuns....
+
+
+
+
+
+
+
+
+
+
+
+
+ --> outra coisa curiosa é que, ao ser bloqueado,
+
+ a warehouse também é bloqueada....
+
+
+
+
+
+
+
+
+
+
+ --> o que vai acontecer é a object resolution 
+
+ dessa segunda query...
+
+
+
+
+
+
+
+
+
+
+
+
+
+ --> REALIZANDO O "ACCESS CONTROL",
+
+
+ O SNOWFLAKE PERCEBE QUE 
+
+
+ JÁ EXISTE 1 TRANSACTION 
+
+
+ "HOLDING THE LOCK"
+
+ nessa column de "C_MKTSEGMENT"
+
+
+ dentro dessa table 
+
+ de CUSTOMER_NOCLUSTER...
+
+
+
+
+
+
+
+
+
+
+
+ --> SE ESSA PRIMEIRA TRANSACTION NAO TERMINAR,
+
+ AS TABLE FILES RELATIVAS 
+
+
+
+ A ESSA COLUMN NAO SERAO LIBERADAS...
+
+
+
+
+
+
+
+
+
+
+
+ basicamente a query vai pelo cloud services 
+
+ layer,
+
+
+
+
+ e aí 
+
+
+ o 
+
+
+
+ snowflake determina que 
+
+
+
+
+
+ esse object está LOCKED....
+
+
+
+
+
+
+
+
+
+
+ --> quer dizer que a outra warehouse 
+
+ nem mesmo ficou "live",
+
+ nem mesmo resumiu...
+
+
+ (ainda está SUSPENDED)
+
+
+
+
+
+
+
+
+
+
+
+ --> o que o professor faz, entao,
+
+
+ É ABORTAR A PRIMEIRA TRANSACTION/OPERATION...
+
+
+
+
+
+
+
+
+ quando ele faz isso, a segunda operation/transaction,
+
+
+ que estava na "queue",
+
+ imediatamente comeca a ser executada...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ ESSENCIALMENTE, NOSSA PRIMEIRA QUERY 
+ ESTAVA EM 1 QUEUE,
+
+
+
+
+ e a segunda query/transaction 
+
+
+ só startaria 
+
+ quando a primeira tivesse acabado...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ --> SUAS TRANSACTIONS/OPERATIONS 
+
+
+ SAO CONTROLADAS PELO CLOUD SERVICES LAYER...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ --> E SUAS TRANSACTIONS SAO CONTROLADAS 
+
+ PELO CLOUD SERVICES 
+
+ LAYER POR MEIO 
+
+
+
+ DA METADATA INFORMATION SOBRE AS FILES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+---------------------------------
+
+
+
+
+
+
+
+
+
+
+O CLOUD SERVICES LAYER VAI TER METADATA INFORMATION,
+
+
+
+
+
+ALGO COMO ISOLATION
+
+
+
+
+
+
+
+
+
+
+
+KEY             VALUE 
+
+TABLE1         s3:\\<some-location>\
+
+TABLE1         s3:\\<some-location>\
+
+TABLE1         s3:\\<some-location>\
+
+TABLE1         s3:\\<some-location>\
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> no layer de CLOUD SERVICES 
+
+
+existirá 
+
+
+
+esse key-value pair 
+
+table,
+
+
+
+
+EM QUE 
+
+
+
+
+TODA A INFO 
+
+
+DA TABLE 1 
+
+
+
+É ARMAZENADA...
+
+
+
+
+
+
+
+
+
+----------------------
+
+
+
+
+
+
+
+
+
+sempre que vc roda alguma operation/transaction 
+
+
+com esse object,
+
+
+
+
+ocorrerá 1 LOCK 
+
+
+no key-value pair 
+
+
+
+
+
+usado na query...
+
+
+
+
+
+
+
+
+--> SE EXISTIR 1 LOCK,
+
+
+
+o snowflake 
+
+nao vai deixar 
+
+
+
+a transaction 2 
+
+
+tomar controle 
+
+da table... (vai esperar até 
+
+a transaction 1 acabar...)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> O PROFESSOR 
+
+
+
+
+TENTA DROPPAR A TABLE ENQUANTO 
+
+
+
+
+1 OUTRA TRANSACTION/SESSION ESTÁ UPDATANDO 
+
+
+ESSA TABLE...
+
+
+
+
+
+
+
+
+
+
+
+
+----> a table foi droppada durante a operation...
+
+
+eventualmente a operation de update falha...
+
+
+
+
+
+
+
+
+
+-> 
+
+O PROFESSOR ENTAO TENTA CRIAR A TABLE MAIS UMA VEZ,
+
+
+COM ESTE STATEMENT (CLONE):
+
+
+
+
+-- CREATE TRANSIENT TABLE DEMO_DB.PUBLIC.CUSTOMER_NOCLUSTER1 CLONE DEMO_DB.PUBLIC.CUSTOMER_NOCLUSTER;
+-- CREATE OR REPLACE TRANSIENT TABLE DEMO_DB.PUBLIC.CUSTOMER_NOCLUSTER CLONE SAMPLE_DATABASE.PUBLIC.CUSTOMER_NOCLUSTER1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ELE ENTAO RODA 1 SELECT STATEMNT 
+
+NESSA TABLE,
+E ENTAO A DROPPA (enqaunto o select executa)....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+(SESSION 1/TRANSACTION 1)
+
+SELECT * FROM DEMO_DB.PUBLIC.CUSTOMER_NOCLUSTER;
+
+
+
+
+
+
+
+
+
+(SESSION 2/TRANSACTION 2):
+
+
+
+
+
+
+DROP TABLE DEMO_DB.PUBLIC.CUSTOMER_NOCLUSTER;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+COM A TABLE DROPPADA, O QUE ACONTECE?
+
+
+
+
+
+
+
+
+
+
+
+
+
+------> A QUERY AINDA VIA TERMINAR,
+
+
+
+E VAI RETORNAR 
+
+
+O RESULTADO... --> ISSO ACONTECE 
+
+
+
+
+____SIMPLESMENTE/SOMENTE__ PQ ISSO AÍ 
+
+
+
+
+SE TRATA 
+
+
+DE UMA 
+
+
+
+___rEAD OPERATION...
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE __ QUANDO A TRANSACTION/OPERATION 
+
+
+FOI STARTADA,
+
+
+
+A INTENCAO ERA FAZER 1 "CHECK" DA DATA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS SE VC RODA ESSA QUERY MAIS UMA VEZ,
+
+
+
+
+NAO VAI FUNCIONAR,
+
+PQ 
+
+A TABLE JÁ ESTARÁ DROPPADA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--. O QUE O PROFESSOR QUER NOS DIZER, COM ISSO,
+
+
+É QUE 
+
+
+O SNOWFLAKE 
+
+
+
+FAZ FOLLOW DE TODOS OS PRINCÍPIOS "ACID"
+
+
+
+DAS TRANSACTIONS,
+
+
+
+
+AINDA QUE 
+
+A MANEIRA PELA QUAL 
+
+o 
+
+SNOWFLAKE 
+
+
+
+PROCESSA A DATA SEJA DIFERENTE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE TODAS AS COISAS 
+
+COMO "ATOMICITY,
+
+CONCURRENCY,
+
+INTEGRITY,
+DURABILITY",
+
+
+
+
+
+todas essas properties ainda sao 
+seguidas...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> E PODEMOS CHECAR MAIS 1 CENÁRIO, AQUI....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+----> PROFESSOR TEM 1 TRANSACTION 
+
+
+DE 
+
+"UPDATE",
+
+
+
+assim:
+
+
+
+
+
+
+UPDATE DEMO_DB.PUBLIC.CUSTOMER_NOCLUSTER
+SET C_MKTSEGMENT='FUR'
+WHERE C_MKTSEGMENT='FURNITURE';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> enquanto essa transaction/operation/SESSION
+está rodando,
+
+
+
+
+
+
+
+O PROFESSOR FARÁ O INSERTT 
+
+
+
+
+DE 10.000 RECORDS,
+
+
+COM VALUE DE "FURNITURE":
+
+
+
+
+
+
+
+
+
+
+
+
+INSERT INTO DEMO_DB.PUBLIC.CUSTOMER_NOCLUSTER
+SELECT * FROM DEMO_DB.PUBLIC.CUSTOMER_NOCLUSTER
+WHERE C_MKTSEGMENT='FURNITURE'
+LIMIT 10000;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> COM ISSO,
+
+VAMOS INSERIR 10.000 RECORDS 
+
+
+AO MESMO TEMPO QUE TENTAMOS 
+
+
+
+
+UPDATAR 
+
+
+ROWS QUE POSSUAM EXATAMENTE O VALUE 
+
+
+DE "FURNITURE" 
+
+dentro daquela column....
+
+
+
+
+
+
+
+
+
+
+
+
+--> ISSO CRIARIA UM CONFLITO, BASICAMENTE...
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS O QUE ACONTECE?
+
+
+
+
+
+
+
+
+O QUE DEVERIA ACONTECER, IDEALMENTE?
+
+
+
+
+
+
+
+
+
+--> O IDEAL É QUE A TRANSACTION 
+
+
+DE UPDATE 
+
+
+
+BLOQUEIE 
+
+
+ESSA TABLE.. --> 1 LOCK SEJA CRIADO 
+
+
+EM CIMA DESSA TABLE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ASSIM QUE ESSE LOCK FOR CRIADO,
+
+
+ESSA TRANSACTION (a primeira transaction)
+
+TERÁ INTERESSE APENAS 
+
+
+NO 
+
+
+SET DE FILES QUE TENHA VALUE DE "C_MKTSEGMENT"
+
+
+COMO "FURNITURE"..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... ASSIM QUE ESSE UPDATE ESTIVER OCORRENDO,
+
+O PROFESSOR INSERE 10.000 RECORDS COM 
+
+ESSE VALUE AÍ...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS O QUE ACONTECE, NO BACKEND?
+
+
+
+
+
+
+
+
+
+
+
+1 NOVO SET DE FILES 
+
+
+
+ACABOU INSERIDO.... MAS COMO O LOCK 
+
+ESTÁ SENDO APLICADO 
+
+
+SOBRE 
+
+
+AS ROWS AFETADAS PELA ÚLTIMA TRANSACTION,
+
+
+
+
+A PRIMEIRA OPERATION, DE UPDATE,
+
+
+
+NAO TEM EFEITO SOBRE A SEGUNDA 
+TRANSACTION,
+
+DE INSERT (
+    princípio da ISOLATION 
+
+    do acid...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE QUANDO A TRANSACTION 
+
+
+FOI STARTADA,
+
+
+ELA APENAS LOGGOU AQUELE SET 
+
+
+DE FILES,
+
+
+
+
+E O NOVO SET DE FILES NAO FOI UPDATADO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ok... agora já sabemos como acid transactions 
+
+sao handladas pelo snowflake...
+
+
+
+
+
+
+
+
+
+
+
+    e esse sistema que 
+
+
+    CONDUZ 
+
+    ESSA 
+
+    OPERATION É 
+
+
+    GRAÇAS AO "SNAPSHOT ISOLATION"..
+
+
+
+
+
+
+
+
+QUER DIZER QUE O SNOWFLAKE MANTÉM MÚLTIPLAS 
+VERSOES DAS FILES,
+
+
+E ESSA FEATURE É CHAMADA DE "SNAPSHOT ISOLATION"...
+
+
+
+
+
+
+A SNAPSHOT ISOLATION 
+
+
+TAMBÉM NOS AJUDA COM O TIME TRAVEL...
+
+
+
+
+
+
+
+
+
+
+
+
+--> SNAPSHOT ISOLATION ---> A SNAPSHOT DA FILE 
+
+É ISOLADA QUANDO A TRANSACTION É STARTADA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AINDA QUE NAO EXISTAM 
+
+
+PRIMARY KEY INDEXES, 
+
+CONSTRAINTS E ETC NO SNOWFLAKE,
+
+
+
+
+O SNOWFLAKE AINDA 
+
+
+
+PROCESSA DATA 
+
+
+
+DE FORMA ACID,
+
+COM A AJUDA DESSA SNAPSHOT ISOLATION...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-----> MAIS 1 COISA IMPORTANTE:
+
+
+
+
+
+--> O SNOWFLAKE MANTÉM A METADATA 
+
+DA TABLE,
+
+
+E USA ISSO PARA TER O "ACCESS CONTROL" 
+
+(
+    para nao deixar 1 operation/transaction 
+
+    se embaralhar com outra transaction...
+)

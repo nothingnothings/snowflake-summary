@@ -1,0 +1,571 @@
+
+
+
+
+
+
+NESSA LICAO, VEREMOS O QUE ACONTECE QUANDO 
+VC SUBMITTA 1 QUERY AO SNOWFLAKE...
+
+
+
+
+
+
+
+
+EX DE QUERY:
+
+
+
+
+
+
+
+SELECT 
+name, 
+country 
+FROM employee 
+WHERE date='11/2';
+
+
+
+
+
+
+
+
+
+
+
+
+ESSA QUERY É SUBMITTADA AO  
+
+
+
+LAYER DE CLOUD SERVICES...
+
+
+
+
+
+
+
+ESSE LAYER VAI:
+
+
+
+
+
+1) FAZER QUERY OPTIMIZATION 
+
+
+2) CRIAR EXECUTION PLAN 
+
+
+3) SUBMITTAR ESSE PLAN A TODOS 
+
+OS VIRTUAL WAREHOUSE NODES...
+
+
+
+
+
+
+
+NODES VAO PRIMEIRAMENTE 
+
+
+
+BAIXAR O "TABLE FILE __HEADER_"
+
+DE TODAS AS TABLE FILES...
+
+
+
+
+
+
+
+
+
+
+
+COM BASE NA METADATA INFORMATION 
+
+
+NO ARQUIVO "HEADER",
+
+
+
+
+
+AS TABLE FILES (micro partitions)
+
+
+SERAO ESCANEADAS...
+
+
+
+
+
+
+
+
+
+
+---> MAS COMO ESSA DATA É PROCESSADA?
+
+
+
+
+
+
+
+
+
+
+
+
+
+IMAGINE ESSAS TABLES:
+
+
+
+
+
+
+
+
+
+
+
+
+
+MICRO PARTIITON 1 
+
+
+
+
+TYPE        COUNTRY     DATE 
+2A          UK           11/2
+4C          SP          11/2
+3C          DE          11/2
+2B          DE          11/2
+3A          FR          11/2
+2C          SP          11/2
+
+
+
+
+
+
+
+
+
+
+MICRO PARTITION 2 
+
+
+
+
+MICRO PARTITION 3 
+
+
+
+
+
+
+MICRO PARTITION 4
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUANDO ENVIAMOS ESSA QUERY,
+
+EVENTUALMENTE ELA CHEGA NO LAYER DE 
+"VIRTUAL WAREHOUSE"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> CADA MICRO PARTITION TERÁ UM "HEADER",
+
+
+
+QUE CONTÉM METADATA INFORMATION 
+
+SOBRE MICRO PARTITIONS...
+
+
+
+
+
+
+
+
+
+
+
+--> O VIRTUAL WAREHOUSE 
+VAI __ BAIXAR ESSAS HEADER FILES,
+
+
+
+CADA 1 DAS HEADER FILES,
+
+
+DE CADA 1 DAS MICRO PARTITIONS DA TABLE DE 
+
+"EMPLOYEE"....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+COM BASE NA INFORMACAO NA HEADER FILE 
+
+
+E NO PREDICADO DO FILTER,
+
+
+
+
+
+AS MICRO PARTITIONS ADEQUADAS (
+
+    adequadas ao filtro
+)
+
+
+VAO SER SELECIONADAS,
+
+
+
+E AS MICRO PARTITIONS INADEQUADAS SERAO "PRUNED"...
+
+
+
+
+
+
+
+A QUERY:
+
+
+
+
+
+
+
+SELECT 
+name, 
+country 
+FROM employee 
+WHERE date='11/2';
+
+
+
+
+
+
+
+--> próximo,
+
+COM BASE NA QUERY,
+
+
+
+ESTAMOS APENAS INTERESSADOS 
+
+
+NAS COLUMNS DE "NAME" 
+
+
+E "COUNTRY"...
+
+
+
+
+
+
+
+
+
+
+-> COM BASE NESSA QUERY,
+
+
+
+
+O VIRTUAL WAREHOUSE VAI REQUISITAR AO AWS S3 (data storage 
+layer) 
+
+O DOWNLOAD 
+
+APENAS 
+
+
+DESSA PARTE DAS FILES/RANGE OF FILES...
+
+
+
+
+
+
+
+
+
+
+
+
+--> ASSIM QUE ISSO ACONTECE,
+
+A DATA É PROCESSADA E ENVIADA DE VOLTA 
+
+AO LAYER DE "CLOUD PROCESSES"...
+
+
+
+
+
+
+
+
+
+
+--> SE VC OBSERVAR ATENTAMENTE,
+
+
+
+
+
+
+
+
+
+
+
+
+NA SEGUNDA E TERCEIRA MICROPARTITIONS 
+
+
+TEMOS 
+
+
+
+"OVERLAPPING DATA"...
+
+
+
+
+
+
+
+
+
+
+--> MAS PQ 3 
+
+MICROPARTITIONS 
+
+FORAM CRIADAS,
+
+
+PARA INÍCIO DE CONVERSA?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ISSO ACONTECE PQ 
+
+O MICRO-PARTITIONING É FEITO __ AUTOMATICAMENTE 
+
+
+PELO SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+--> tables sao PARTICIONADAS 
+
+DE FORMA TRANSPARENTE,
+
+
+USANDO A ORDEM DA DATA 
+
+
+COMO ELA É INSERIDA/CARREGADA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> o processo de AGRUPAR 
+
+RECORDS DENTRO DE MICRO-PARTITIONS 
+
+É CHAMADO DE 
+
+"cLUSTERING"....
+
+
+
+
+
+
+
+
+
+
+
+SE VC PROVIDENCIA 1 CLUSTER KEY 
+
+
+A 1 TABLE 
+
+
+
+SNOWFLAKE,
+
+OU SE VC 
+
+
+
+DEFINE 1 CLUSTER KEY EM 1 SNOWFLAKE TABLE,
+
+
+
+AÍ O SNOWFLAKE VAI 
+
+
+AUTOMATICAMENTE 
+
+
+AGRUPAR DATA EM MICRO PARTITIONS,
+
+
+BY ESSA CLUSTER KEY....
+
+
+
+
+
+
+
+
+
+
+
+O PROFESSOR TEM ESTE EXEMPLO:
+
+
+
+
+
+
+
+
+
+
+
+
+-- CREATE TABLE WITH CLUSTERING --
+
+
+
+CREATE TABLE EMPLOYEE (TYPE, NAME, COUNTRY, DATE) CLUSTER BY (DATE);
+
+
+-- IF YOU HAVE ALREADY LOADED DATA -- 
+
+ALTER TABLE EMPLOYEE CLUSTER BY (DATE);
+
+ALTER TABLE TEST RECLUSTER;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> VEREMOS ALGUNS DEMOS...
+
+
+
+
+
+

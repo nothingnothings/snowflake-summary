@@ -1,0 +1,558 @@
+
+
+
+
+
+
+
+
+
+
+--> AGORA ENTENDEREMOS COMO PODEMOS CRIAR DYNAMIC TABLES 
+
+NO SNOWFLAKE....
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ESSE CONCEITO NAO FOI EXPLORADO COM O OUTRO PROFESSOR....
+
+
+
+
+
+
+--> A SINTAXE DAS DYNAMIC TABLES É 
+
+"CREATE OR REPLACE DYNAMIC TABLE <table_name>"...
+
+
+
+
+
+----------------------------------------------
+
+
+
+
+
+
+
+
+ESTE PROFESSOR COMEÇA ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+
+---------------------------------------------
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE TABLE DEMO_DB.PUBLIC.LINEITEM
+AS 
+SELECT * FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.LINEITEM;
+
+
+
+
+
+
+
+
+CREATE OR REPLACE DYNAMIC TABLE DEMO_DB.PUBLIC.LINEITEM_DYNAMIC
+  TARGET_LAG = '20 minutes'  ---  DIFERENCIAL, EXCLUSIVO A ESSE TIPO DE TABLE.
+  WAREHOUSE = compute_wh
+  AS
+  select
+  l_returnflag,
+  l_linestatus,
+  sum(l_quantity) as sum_qty,
+  sum(l_extendedprice) as sum_base_price,
+  sum(l_extendedprice * (
+1
+ - l_discount)) as sum_disc_price,
+  sum(l_extendedprice * (
+1
+ - l_discount) * (
+1
+ + l_tax)) as sum_charge,
+  avg(l_quantity) as avg_qty,
+  avg(l_extendedprice) as avg_price,
+  avg(l_discount) as avg_disc,
+  count(*) as count_order
+from demo_db.public.lineitem
+where  l_shipdate <= date '1998-12-01'
+group by  l_returnflag,  l_linestatus
+order by  l_returnflag,  l_linestatus;
+
+
+
+----------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PODEMOS VER QUE ESSA QUERY É UM POUCO COMPLEXA,
+
+
+ENVOLVE AGGREGATES...
+
+
+
+
+
+
+--> ELA NAO TEM JOINS,
+
+
+MAS TEM AGGREGATES, 1 pouco de complexidade....
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> COM ESSA QUERY, ESTAMOS CRIANDO 1 DYNAMIC TABLE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK...
+
+
+
+--> ISSO FEITO,
+
+
+
+QUERIAMOS NOSSA DYNAMIC TABLE,
+
+
+
+assim:
+
+
+
+
+
+
+
+
+
+SELECT * FROM DEMO_DB.PUBLIC.LINEITEM_DYNAMIC;
+
+
+
+
+
+
+
+
+
+
+
+--> OK... MAS QUANDO RODAMOS ISSO EM CIMA 
+
+
+DA NOSSA TABLE,
+
+RECEBEMOS 1 ERROR:
+
+
+
+
+
+
+"Dynamic table 'DEMO_DB.PUBLIC.LINEITEM_DYNAMIC' IS NOT INITIALIZED.
+PLEASE RUN A MANUAL REFRESH OR WAIT FOR A SCHEDULED REFRESH BEFORE 
+QUERYING"...
+
+
+
+
+
+
+
+
+
+
+
+
+"MANUAL REFRESH"....
+
+
+
+
+
+
+
+
+
+
+--> O QUE ISSO SIGNIFICA?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+BEM, LÁ EM CIMA,
+
+ENCONTRAMOS O "TARGET_LAG=20 minutes'...
+
+
+
+
+
+
+
+
+O QUE ISSO QUER DIZER?
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> BEM, ISSO QUER DIZER QUE 
+
+NOSSA DYNAMIC TABLE 
+
+
+VAI SER __ REFRESHADA __ A CADA _ 20 MINUTES...
+
+
+
+
+
+
+
+
+
+
+E ESSA TABLE AÍ 
+
+VAI SER CRIADA A PARTIR 
+
+DA OUTRA TABLE (e múltiplas tables)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+COMO 20 MINUTOS AINDA NAO SE PASSARAM,
+
+
+
+O SNOWFLAKE PEDE QUE 
+
+EXECUTEMOS 1 MANUAL REFRESH NESSA TABLE...
+
+
+
+
+
+
+
+---> PARA ISSO,
+
+
+RODAMOS ASSIM:
+
+
+
+
+
+
+
+
+
+
+ALTER DYNAMIC TABLE DEMO_DB.PUBLIC.LINEITEM_DYNAMIC REFRESH;
+
+
+
+
+
+
+
+
+
+
+
+
+COM ISSO, OBRIGAMOS ESSA TABLE A REFRESHAR...
+
+
+
+
+
+
+--> ao refreshar,
+
+
+
+a query informa que 
+
+4 rows foram inseridos...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> também ganhamos o timestamp do refresh...
+
+
+
+
+
+
+
+
+
+
+
+
+--. AGORA PODEMOS RODAR O SELECT,
+
+PARA VER A DATA NESSA TABLE:
+
+
+
+
+
+
+
+
+SELECT * FROM DEMO_DB.PUBLIC.LINEITEM_DYNAMIC;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NA VERDADE,
+
+ SE ANALISARMOS BEM,
+
+ VEREMOS QUE O SNOWFLAKE RESOLVEU OS 
+
+
+ 3 PROBLEMAS 
+
+ QUE TÍNHAMOS COM AS VIEWS E MATERIALIZED VIEWS:
+
+
+
+
+
+
+
+1) WE SHOULD BE ABLE TO WRITE COMPLEX QUERIES 
+
+(podemos)
+
+
+
+
+
+2) WE SHOULD BE ABLE TO PERSIST THE QUERY RESULT (result set cache)
+        (PODEMOS)
+
+
+
+
+
+3) WE SHOULD BE ABLE TO DETERMINE HOW OFTEN THE
+ PERISTENT RESULT (result set)
+    SHOULD BE REFRESHED...
+
+
+    (fazemos isso por meio do 'time lag')...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ESSA FEATURE É SUPER RECENTE,
+
+FOI LANÇADA EM 2023...
+
+
+
+E FOI LANÇADA EM JUNHO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> NÓS TAMBÉM PODEMOS 
+
+
+ESCOLHER ___ QUAL __ WAREHOUSE 
+
+
+DEVE SER USADA 
+
+PARA PROCESSAR 
+
+
+
+
+ESSE REFRESH...
+
+
+(
+    no caso das materialized views,
+
+
+    nao podíamos escolher 
+
+    qual warehouse realizava esse 
+
+    refresh....
+)
+
+
+
+
+
+
+
+
+
+
+
+OK.... AGORA VIMOS COMO A DYNAMIC TABLE NOS AJUDA A
+
+
+RESOLVER OS PROBLEMAS DAS NORMAL E MATERIALIZED VIEWS....
+
+
+
+
+

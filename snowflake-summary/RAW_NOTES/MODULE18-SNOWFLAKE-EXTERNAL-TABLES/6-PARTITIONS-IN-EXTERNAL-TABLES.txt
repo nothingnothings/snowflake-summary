@@ -1,0 +1,688 @@
+
+
+AGORA APRENDEREMOS:
+
+
+
+
+
+1) COMO ADICIONAR __ PARTITIONS_ 
+
+EM EXTERNAL TABLES...
+
+
+
+
+
+
+2) COMO A ADICAO DESSAS PARTITIONS AJUDA 
+
+COM O FILTERING DA SUA DATA...
+
+
+
+
+
+
+
+------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--------> A PRIMEIRA COISA QUE O PROFESSOR 
+
+
+FAZ 
+
+
+
+
+
+É 
+
+
+
+
+ESCREVER ASSIM:
+
+
+
+
+
+
+
+
+
+SELECT * FROM emp_ext_table
+WHERE first_name='John';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> temos 1 record com isso...
+
+
+
+
+
+
+
+
+
+--> certo...
+
+
+
+
+
+
+
+
+RODAMOS ESSA QUERY...
+
+
+
+
+
+
+
+--> CONSEGUIMOS O RESULT DE VOLTA,
+
+
+
+MAS PERCEBEMOS QUE,
+
+PARA CONSEGUIR 
+
+ESSE RESULT,
+
+
+
+
+O SNOWFLAKE FOI OBRIGADO A ESCANEAR 
+
+ESSES 3 ARQUIVOS... (
+    employees01.csv,
+    02.csv,
+    03.csv
+)
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... MAS O PROFESSOR SABE, ESPECIFICAMENTE,
+
+QUE 
+
+
+
+
+ESSE NAME __ SÓ __ VAI APARECER 
+
+
+EM 1 DAS FILES,
+
+
+NAO VAI APARECER NAS OUTRAS DUAS...
+
+
+
+
+
+
+
+
+
+
+-->  PARA ECONOMIZAR PODER DE PROCESSAMENTO,
+
+
+O QUE PODEMOS ACTUALLY FAZER É COMUNICAR 
+
+
+AO SNOWFLAKE 
+
+
+""HEY, ESSE RECORD SÓ PODE ESTAR NESSA FILE ESPECÍFICA""...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+MAS COMO FAZEMOS ISSO?
+
+
+
+
+
+
+
+
+
+
+--> COMO PODEMOS DIVIDIR NOSSOS ARQUIVOS 
+
+EM PARTITIONS??
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> TEMOS QUE PARTICIONAR NOSSAS FILES,
+
+AS FILES QUE UPLOADAMOS...
+
+
+
+
+
+--> TEMOS ESSE PATTERN AÍ...
+
+
+
+employees01,
+
+employees02,
+
+employees03...
+
+
+
+
+
+
+
+
+
+--> OK... EM 1 CENÁRIO DE VERDADE,
+
+VC PROVAVELMENTE 
+
+
+TERÁ 
+
+
+MILHARES DE FILES 
+
+
+COM NOMES ASSIM..
+
+
+
+
+
+
+
+
+
+employee2112312.csv.gz...
+
+
+
+
+
+
+
+
+
+
+--> MAS O QUE VC PRECISA FAZER É CLASSIFICAR 
+
+ESSE SET DE FILES,
+
+E AS PARTICIONAR...
+
+
+
+
+
+
+
+
+
+--> PODEMOS DIZER AO SNOWFLAKE ""FETCHEIE/ESCANEIE APENAS 
+
+ESSE CONJUNTO DE FILES""...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA ISSO, PRECISAMOS FAZER ESSE 
+
+PARTICIONAMENTO...
+
+
+
+
+
+
+
+
+PARA FAZER O PARTICIONAMENTO,
+
+
+PODEMOS ESCREVER ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE EXTERNAL TABLE emp_ext_table
+(
+    DEPARTMENT VARCHAR AS SUBSTR(metadata$filename, 5, 11),
+    FIRST_NAME STRING AS (VALUE:c1::string),
+    LAST_NAME STRING(20) AS (value:c2::string),
+    EMAIL STRING AS (value:c3::string)
+    PARTITION BY (DEPARTMENT)
+    WITH LOCATION = @demo_db.public.s3_external_stage
+    FILE_FORMAT=(
+        TYPE=CSV
+    )
+);
+
+
+
+
+
+
+
+
+
+
+
+--> MAS SÓ PODEMOS FAZER "PARTITION BY"
+
+
+usando PARTES DO PATH DO ARQUIVO,
+
+dentro do s3... --> QUER DIZER QUE 
+
+SE QUEREMOS 
+
+
+CRIAR PARTITIONS/PARTICIONAR 
+
+
+1 EXTERNAL TABLE DO SNOWFLAKE,
+
+
+
+
+
+SÓ PODEMOS CONSIDERAR 
+
+
+ESSA COLUMN DE "metadata$filename"
+
+
+
+como "PARTICIONADOR" (a ser usado na clause de partition),
+
+
+
+COMO VISTO 
+
+
+
+NO CÓDIGO MOSTRADO ACIMA:
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE EXTERNAL TABLE emp_ext_table
+(
+    DEPARTMENT VARCHAR AS SUBSTR(metadata$filename, 5, 11), -- código em questao
+    FIRST_NAME STRING AS (VALUE:c1::string),
+    LAST_NAME STRING(20) AS (value:c2::string),
+    EMAIL STRING AS (value:c3::string)
+    PARTITION BY (DEPARTMENT) -- código em questao
+    WITH LOCATION = @demo_db.public.s3_external_stage
+    FILE_FORMAT=(
+        TYPE=CSV
+    )
+);
+
+
+
+
+
+
+
+
+
+
+
+
+NO CASO, AQUI O PROFESSOR DIZ 
+
+
+"COMECE DA POSICAO 5 E VÁ ATÉ A POSICAO 11"...
+
+
+
+
+
+--> ISSO VAI NOS DAR 1 PATTERN...
+
+
+
+
+
+
+
+
+
+
+--> 1 PATTERN POR 
+
+
+
+FILENAME,
+
+ESSENCIALMENTE...
+
+
+
+
+
+
+
+
+
+
+quer dizer que vamos pegar a parte de "employees01.csv"
+dentro 
+
+da url...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK.... ISSO VAI CRIAR ESSA TABLE,
+
+COM ESSA DIVISAO DE PARTITIONS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK, MAS COMO PODEMOS USAR ESSA PARTITION 
+
+NAS NOSSAS QUERIES DE SELECT?
+
+
+
+
+
+
+
+
+
+
+
+PODEMOS USAR ESTA SINTAXE:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SELECT
+*
+FROM emp_ext_table
+WHERE department='employees03' AND first_name='John';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+E ISSO VAI REALMENTE FUNCIONAR,
+
+
+
+VAI 
+
+
+
+ESCANEAR APENAS 1 DAS 
+
+FILES 
+
+NA S3 LOCATION...
+
+
+
+
+
+--> na query profile, percebemos que 
+
+
+
+TEMOS 3 PARTITIONS, E QUE APENAS 1 DELAS FOI SCANNED (
+
+    1 partition para cada arquivo,
+
+
+    e apenas 1 dos arquivos foi escaneado, o que é 
+    bem mais optimal...
+
+
+)
+
+
+
+
+
+
+
+
+
+ok, com isso entendemos:
+
+
+
+
+
+1) QUE A SINTAXE DE PARTITION 
+
+É IMPORTANTE...
+
+
+
+
+2) QUE VC SÓ PODE FAZER A PARTITION NA EXTERNAL TABLE 
+COM 
+
+
+BASE NO VALUE DE "metadata$filename"
+
+(
+    o snowflake nao te dá nenhuma outra 
+    option...
+)
+
+
+
+
+
+3) VC TIPICAMENTE USA "substr()"
+
+PARA FORMATAR A COISA/VALUE 
+
+
+DO PATH QUE VC VAI USAR COMO PARTITION...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> QUANDO O VOLUME DE DATA CRESCE ABSURDAMENTE,
+
+NESSA EXTERNAL TABLE,
+
+
+ESSA ACAO DE CRIAR PARTITIONS 
+
+
+SE TORNA 
+
+BEM MAIS IMPORTANTE,
+
+
+
+
+TUDO PARA RETORNAR O RESULT DA QUERY MAIS EFICIENTEMENTE 
+(
+    escanear menos arquivos...
+)
+
+
+
+
+
+
+
+
+
+4) QUANDO RODARMOS QUERIES,
+
+DEVEMOS 
+
+
+USAR O VALUE DA PARTITION, A STRING (como "customers999.csv.gz"),
+
+
+
+NOS WHERE FILTERS...
+
+
+

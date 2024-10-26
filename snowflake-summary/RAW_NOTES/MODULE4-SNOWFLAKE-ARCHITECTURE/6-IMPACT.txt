@@ -1,0 +1,60 @@
+snowflak -- >  fácil processar imensas quantidades de data...
+
+
+
+
+
+
+
+
+
+
+nao temos que nos importar com data backups,
+query optimization,
+
+indexes e out of memory issues...
+
+
+
+
+
+
+
+
+
+
+
+
+-> snowflake é mt powerful...
+
+
+
+
+
+
+
+
+
+
+MAS TUDO NO SNOWFLAKE TEM COST...
+
+
+
+
+
+
+
+
+
+
+
+
+--> E TUDO PODE GERAR GRANDE COST...
+
+
+
+
+
+
+
+-> VEREMOS COMO REDUZIR COST COM O SNOWFLAKE...

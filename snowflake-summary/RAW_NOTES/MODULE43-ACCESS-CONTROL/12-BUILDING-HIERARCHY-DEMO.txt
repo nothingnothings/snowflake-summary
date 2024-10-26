@@ -1,0 +1,1296 @@
+
+
+
+
+
+
+
+
+NESSA LECTURE,
+
+CONSTRUÍREMOS A HIERARQUIA 
+
+MOSTRADA NESTE ESQUEMA:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                SYSADMIN (grants privileges to database and schema objects to other roles)
+
+                    |
+                    |
+
+                SCHEMAADMIN (actually creates the schemas and database objects in the schemas... full control over that )
+
+
+    STAGE_ROLE    TARGET_ROLE      SANDBOX_ROLE 
+
+        |              |                |
+
+        ---->       DEVELOPER   <--------
+                (can use each of these roles,
+                to do different things on each 
+                schema)
+
+                       |
+                       |
+                       |
+                       V 
+                    
+                    SYSADMIN
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+---------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+COMEÇAMOS COM ESTE CÓDIGO:
+
+
+
+
+
+
+
+
+
+
+
+
+--- Form the hierarchy
+
+
+USE ROLE SECURITYADMIN; -- role used to create and manage roles;
+
+
+
+CREATE OR REPLACE ROLE SCHEMAADMIN;
+
+
+
+GRANT ROLE SCHEMAADMIN TO ROLE SYSADMIN; -- integrate custom role into hierarchy
+
+
+
+
+
+
+
+
+
+
+
+
+
+O PRÓXIMO PASSO É CRIAR ESSA DATABASE 
+
+
+"SalesDB"...
+
+
+
+
+
+
+
+
+
+--> DEPOIS A CRIACAO DOS SCHEMAS 
+
+
+STAGING, TARGET E SANDBOX...
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA CRIAR A DATABASE, ESCREVEMOS ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+
+USE ROLE SYSADMIN; -- we should be in the role sysadmin;
+
+
+
+CREATE DATABASE SALESDB;
+
+
+
+
+
+GRANT USAGE ON DATABASE SALESDB TO ROLE SCHEMAADMIN WITH GRANT OPTION;
+
+GRANT CREATE SCHEMA ON DATABASE SALES_DB TO ROLE SCHEMAADMIN;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> """ GRANT USAGE ON DATABASE SALESDB TO ROLE SCHEMAADMIN WITH GRANT OPTION; """
+
+
+
+
+
+
+
+--> temos essa "With grant option" --> COM ISSO,
+
+
+QUEREMOS DIZER QUE O "SCHEMAADMIN" 
+
+
+vai RECEBER PERMISSION PARA "GRANT USAGE"
+
+A ESSA DATABASE, A OUTROS ROLES (
+
+    pq é isso que queremos que esse role faça...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+--> O SCHEMAADMIN PODE 
+
+
+GRANT USAGE A ESSE SALESDB A OUTROS 
+
+ROLES,
+
+
+que, no caso,
+
+
+serao 
+
+os roles 
+
+
+"STAGING_ROLE", "TARGET_ROLE" E "SANDBOX_ROLE"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AÍ TAMBÉM HÁ O CÓDIGO DE 
+
+
+
+
+"""GRANT CREATE SCHEMA ON DATABASE SALES_DB TO ROLE SCHEMAADMIN; """
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> FINALMENTE,
+
+VAMOS CRIAR ESSES SCHEMAS,
+
+USANDO O ROLE DE "schemaadmin",
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+
+--- CREATE SCHEMA USING SCHEMAADMIN -----
+
+
+
+
+
+USE ROLE SCHEMAADMIN;
+
+
+
+USE DATABASE SALESDB;
+
+
+
+CREATE OR REPLACE TRANSIENT SCHEMA STAGING WITH MANAGED ACCESS; -- MANAGED SCHEMAS ARE BETTER THAN REGULAR SCHEMAS 
+
+CREATE OR REPLACE SCHEMA TARGET WITH MANAGED ACCESS; -- managed schemas are better  (this is the "production" table, so we should not use transient, as well... to get FAILSAFE feature)
+
+CREATE OR REPLACE TRANSIENT SCHEMA SANDBOX WITH MANAGED ACCESS -- managed schemas are better
+
+
+
+
+
+
+
+
+
+
+
+
+
+TRANSIENT SCHEMAS --> QUER DIZER QUE TODAS AS TABLES 
+
+CRIADAS 
+DENTRO DESSE SCHEMA SERAO TRANSIENT..
+
+
+
+
+
+
+
+
+
+COMO ESSA STAGING SERÁ UMA TABLE EM QUE 
+
+
+FAREMOS TRUNCATE AND LOAD 
+
+IN A DAILY BASIS,
+
+NAO PRECISAMOS MANTER NENHUMA PERMANENT TABLE,
+
+
+
+POR ISSO 1 TRANSIENT SCHEMA...
+
+
+
+
+
+
+
+
+
+
+
+--> JÁ O "TARGET SCHEMA" SERÁ NORMAL,
+
+
+PQ TEREMOS PERMANENT TABLES NO SEU INTERIO...
+
+
+
+
+
+
+
+
+
+
+
+--> O SANDBOX DEVERÁ SER DE TRANSIENT TAMBÉM,
+PQ SERÁ PARA DEVELOPMENT ACTIVITIES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> CRIAMOS ESSES ROLES,
+
+COM ESTES COMANDOS:
+
+
+
+
+
+
+
+
+
+
+
+
+USE ROLE SECURITYADMIN;
+
+CREATE OR REPLACE ROLE STAGING_ROLE;
+
+GRANT ROLE STAGING_ROLE TO ROLE SCHEMAADMIN;
+
+CREATE OR REPLACE ROLE TARGET_ROLE;
+
+GRANT ROLE TARGET_ROLE TO ROLE SCHEMAADMIN;
+
+CREATE OR REPLACE ROLE SANDBOX_ROLE;
+
+GRANT ROLE SANDBOX_ROLE TO ROLE SCHEMAADMIN;
+
+
+
+
+
+
+
+
+
+
+
+
+
+RODAMOS ESSES STATEMENTS....
+
+
+
+ESSES ROLES SAO CRIADOS,
+
+
+E ENTAO SAO ATTACHEADOS NO SCHEMAADMIN...
+
+
+
+
+
+
+
+
+
+
+
+
+--> A PRÓXIMA PARTE É 
+
+
+""ASSIGN THE USAGE ACCESS FOR THESE ROLES,
+
+TO THE DATABASE SALESDB...""
+
+
+
+
+
+
+
+
+
+
+para isso, temos estes statements:
+
+
+
+
+
+
+
+
+USE ROLE SCHEMAADMIN;
+
+
+GRANT USAGE ON DATABASE SALESDB TO ROLE STAGING_ROLE;
+
+GRANT USAGE ON SCHEMA SALESDB.STAGING TO ROLE STAGING_ROLE;
+
+GRANT USAGE ON DATABASE SALESDB TO ROLE TARGET_ROLE;
+
+GRANT USAGE ON SCHEMA SALESDB.TARGET TO ROLE TARGET_ROLE;
+
+GRANT USAGE ON DATABASE SALESDB TO ROLE SANDBOX_ROLE;
+
+GRANT USAGE ON SCHEMA SALESDB.SANDBOX TO ROLE SANDBOX_ROLE;
+
+
+
+
+
+
+
+
+
+
+A PRÓXIMA COISA QUE FAREMOS É CRIAR 1 TABLE 
+
+
+
+
+NO SCHEMA DE "STAGING",
+
+
+
+e entao 
+
+
+
+fazer GRANT DOS PRIVILEGES 
+
+
+
+NELE (
+select, insert, delete, update, truncate 
+
+
+),
+
+
+ao role de "STAGING_ROLE">..
+
+
+
+
+
+
+
+
+
+
+
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+
+-- CREATE TABLES IN STAGING:
+
+
+
+
+
+
+USE ROLE SCHEMAADMIN;
+
+USE SCHEMA STAGING;
+
+CREATE OR REPLACE TRANSIENT TABLE staging_employee_table (
+    NAME VARCHAR,
+    AGE NUMBER
+);
+
+
+GRANT SELECT, INSERT, DELETE, UPDATE, TRUNCATE ON TABLE staging_employee_table
+TO ROLE STAGING_ROLE;
+
+
+
+-------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+AÍ USAMOS ESSE ROLE,
+
+E AÍ 
+
+
+USAMOS O SCHEMA DE STAGING, PARA AÍ RODAR 1 QUERY NA TABLE...
+
+
+
+
+
+
+
+USE ROLE STAGING_ROLE;
+USE SCHEMA STAGING;
+
+
+
+
+
+
+SELECT * FROM staging_employee_table;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> TESTAMOS SE É POSŚIVEL O DROP NA TABLE,
+
+
+E NAO SERÁ POSSÍVEL (
+    pq NAO TEREMOS PRIVILEGES SUFICIENTES; 
+
+    PROVIDENCIAMOS 
+
+    APENAS SELECT,INSERT,DELETE,UPDATE E TRUNCATE 
+
+    A ESSE ROLE de "STAGING_ROLE"...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+-_> DEPOIS DISSO,
+
+
+
+PODEMOS FAZER A MESMA COISA COM O TARGETSCHEMA...
+
+
+
+
+
+
+
+
+
+
+
+
+--- Create tables in TARGET SCHEMA..
+
+
+
+
+
+
+
+USE ROLE SCHEMAADMIN;
+
+USE SCHEMA TARGET;
+
+
+
+
+CREATE OR REPLACE TRANSIENT TARGET_EMPLOYEE_TABLE (
+    NAME VARCHAR,
+    AGE NUMBER
+);
+
+
+GRANT SELECT, INSERT, UPDATE ON TABLE TARGET_EMPLOYEE_TABLE 
+TO ROLE TARGET_ROLE;
+
+
+
+
+
+-------------------------
+
+
+
+
+
+
+
+
+FINALMENTE, TROCAMOS PARA O SCHEMA "SANDBOX",
+
+
+E AÍ CONFERIMOS TODOS OS PRIVILEGES (também o de create e drop objects)
+
+para o role de "SANDBOX_ROLE",
+
+
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--- GRANT ALL PRIVILEGES ON SANDBOX 
+
+
+
+USE ROLE SCHEMAADMIN;
+USE SCHEMA SANDBOX;
+GRANT ALL PRIVILEGES ON SCHEMA SANDBOX TO ROLE SANDBOX_ROLE;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> FAZEMOS ISSO PARA QUE O DEVELOPER POSSA CRIAR E DROPPAR QUAISQUER 
+
+OBJECTS QUE ELE QUISER, NESSE SCHEMA...
+
+
+
+
+
+------------------------
+
+
+
+
+
+
+
+POR FIM, TEMOS QUE CRIAR O FUNCTIONAL ROLE DE 
+
+"DEVELOPER",
+
+
+e entao 
+
+O ASSIGNAR 
+
+
+AO "SYSADMIN" (
+    roll it back to the system,
+
+    para manter a hierarquia...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+--> para isso, RODAMOS ASSIM:
+
+
+
+
+
+
+
+
+
+USE ROLE SECURITYADMIN;
+
+CREATE OR REPLACE ROLE DEVELOPER;
+
+
+
+GRANT ROLE DEVELOPER TO ROLE SYSADMIN;
+
+
+
+
+
+
+
+--------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+ISSO FEITO, TAMBÉM PRECISAMOS DAR GRANT 
+
+
+DE USAGE EM ALGUMA WAREHOUSE, PARA ESSE ROLE,
+
+PARA QUE 
+ELE CONSIGA 
+
+RODAR QUERIES...
+
+
+(pq ele é um developer)..
+
+
+
+
+
+
+EX:
+
+
+
+
+
+
+
+
+
+
+GRANT USAGE ON WAREHOUSE MY_WAREHOUSE TO ROLE DEVELOPER;
+
+
+
+
+
+
+
+
+--------------------------------------------
+
+
+
+
+
+
+
+
+
+DEOPIS DISSO,
+
+ASSIGNAMOS ESSE ROLE A 1 USER...
+
+
+
+
+
+
+
+
+
+
+
+
+ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+
+GRANT ROLE DEVELOPER TO USER PRADEEP;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+FINALMENTE,
+
+
+
+O QUE TEMOS QUE FAZER É 
+
+
+
+ADICIONAR ESSES ROLES (staging, sandbox e target)
+
+
+
+AO DEVELOPER ROLE,
+
+
+
+E AÍ 
+
+
+FAZER ROLL BACK 
+
+DE ESSE ROLE 
+
+
+
+AO ROLE DE "SYSADMIN",
+
+
+tipo assim:
+
+
+
+
+
+
+
+
+
+
+
+
+USE ROLE SECURITYADMIN;
+
+
+
+CREATE OR REPLACE ROLE DEVELOPER;
+
+
+
+
+GRANT ROLE STAGING_ROLE TO ROLE DEVELOPER;
+GRANT ROLE TARGET_ROLE TO ROLE DEVELOPER;
+GRANT ROLE SANDBOX_ROLE TO ROLE DEVELOPER;
+
+
+GRANT ROLE DEVELOPER TO ROLE SYSADMIN; -- roll back developer role to sysadmin role...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CERTO, COM ISSO MANTEMOS A HIERARQUIA,
+
+
+E ESTE DIAGRAMA:
+
+
+
+
+
+
+               SYSADMIN (grants privileges to database and schema objects to other roles)
+
+                    |
+                    |
+
+                SCHEMAADMIN (actually creates the schemas and database objects in the schemas... full control over that )
+
+
+    STAGE_ROLE    TARGET_ROLE      SANDBOX_ROLE 
+
+        |              |                |
+
+        ---->       DEVELOPER   <--------
+                (can use each of these roles,
+                to do different things on each 
+                schema)
+
+                       |
+                       |
+                       |
+                       V 
+                    
+                    SYSADMIN
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> POR FIM,
+TROCAMOS PARA O ROLE DE DEVELOPER E...
+
+
+
+
+
+
+
+--> checamos se a database de "salesdb" 
+
+aparece... ela aparece...
+
+
+
+
+
+
+USE ROLE DEVELOPER;
+
+USE SCHEMA STAGING;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AGORA DEVEMOS VER SE PODEMOS ACESSAR OS SCHEMAS OU NAO...
+
+
+
+
+
+
+
+
+
+PODEMOS VER OS 3 SCHEMAS, SEM PROBLEMAS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> PARA TESTAR, USAMOS O SCHEMA DE "STAGING",
+
+E ENTAO TENTAMOS CRIAR 1 TABLE:
+
+
+
+
+
+
+
+
+
+
+USE ROLE DEVELOPER;
+
+USE SCHEMA STAGING;
+
+
+
+CREATE TABLE TEST_TBL1 (
+    A VARCHAR
+); 
+
+
+
+
+
+
+
+
+
+--> ISSO VAI FALHAR, É CLARO,
+
+
+PQ 
+
+NAO ASSIGNAMOS PRIVILEGES 
+
+PARA QUE O ROLE DE DEVELOPER,
+
+QUE TEM O ROLE DE "STAGING_ROLE",
+
+
+
+CONSIGA CRIAR E DROPPAR TABLES 
+
+
+NESSE SCHEMA DE "STAGING"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+AÍ TROCAMOS PARA O SANDBOX,
+
+E AÍ 
+
+
+CONSEGUIMOS 
+
+
+CRIAR A TABLE,
+
+
+PQ 
+
+
+
+TEMOS PRIVILEGES PARA ISSO (
+    pq temos o role de "SANDBOX_ROLE"
+
+
+    vinculado ao ROLE DE DEVELOPER...
+)
+
+
+
+
+
+
+
+
+EX:
+
+
+
+
+
+
+
+
+USE ROLE DEVELOPER;
+
+
+
+USE SCHEMA SANDBOX;
+
+
+CREATE OR REPLACE TABLE EXAMPLE_TABLE (
+    A VARCHAR
+);
+
+
+
+
+
+
+
+
+
+
+
+
+--> O PROFESSOR MOSTRA A ORGANIZACAO
+ 
+
+ DOS ROLES, 
+ LÁ 
+
+
+ NA 
+
+
+ ABA "ACCOUNT -> ROLES"....
+
+
+
+
+
+
+
+
+
+
+
+
+
+ Com isso,
+
+
+ CONSEGUIMOS RESOLVER O PRIMEIRO PROBLEMA,
+
+ QUE ERA 
+
+
+
+
+
+
+""" 
+
+1) O ROLE QUE GANHAR PERMISSION DE "CREATE DATABASE" 
+
+PODE CRIAR DB, SCHEMA E SCHEMA-RELATED OBJECTS 
+
+SEM QUALQUER TIPO DE RESTRIÇÃO...
+
+
+"""" 
+
+
+
+
+
+
+
+conseguimos limitar isso, por meio da criacao de 1 hierarquia, 
+
+como fizemos agora...

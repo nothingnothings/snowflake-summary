@@ -1,0 +1,996 @@
+
+
+
+
+
+
+AGORA VOLTAMOS à NOSSA DISCUSSAO INICIAL,
+
+
+
+PARA TENTARMOS 
+
+
+
+
+
+
+CRIAR 1 OUTPUT 
+
+QUE IDENTIFIQUE 
+
+
+
+A "COLUMN FILL RATE" (null vs preenchidos) 
+
+
+
+de 1 table,
+
+tipo algo assim:
+
+
+
+
+
+
+
+
+
+
+-- Pass table name to procedure and get fill rate of all columns.
+
+--COLUMN_NAME	FILL_RATE
+--    ABC	    0.98
+--    DEF	    0.81
+--    GHK	    0.27
+
+
+
+
+
+
+
+---------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+NAS AULAS ANTERIORES,
+
+ENTENDEMOS 
+
+
+
+
+COMO PODEMOS USAR LOOPS (com while, for loops e o call de "result_set.next()", que é OBRIGATÓRIO)
+
+
+
+
+E COMO PODEMOS USAR 
+
+__BINDS__ (para inserir values dinamicos,
+de nossas columns, dentro de select statements, dentro de nossas 
+
+procedures)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> NESSA LECTURE,
+
+
+USAREMOS ESSES RECURSOS 
+
+
+
+PARA __ CONSEGUIR __ O USE-CASE 
+
+
+
+DE "GET COLUMN FILL RATE FOR THE TABLE"...
+
+
+
+
+
+
+
+
+
+
+
+--> PARA ISSO, 
+
+DEVEMOS 
+
+
+RAPIDAMENTE VISUALIZAR COMO SE PARECE NOSSA PROCEDURE:
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE PROCEDURE COLUMN_FILL_RATE(TABLE_NAME VARCHAR)
+    RETURNS VARIANT NOT NULL
+    LANGUAGE JAVASCRIPT
+    AS 
+$$ 
+    var my_sql_command = "SELECT COUNT(*) AS CNT FROM " + TABLE_NAME + ";";
+    var statement1 = snowflake.createStatement({
+        sqlText: my_sql_command
+    });
+    var result_set1 = statement1.execute();
+
+    result_set1.next(); /// always a good idea 
+
+
+    var my_sql_command_2 = "SELECT * FROM " + TABLE_NAME + " LIMIT 10;";
+    var statement2 = snowflake.createStatement({
+        sqlText: my_sql_command_2 
+    });
+
+    var result_set2 = statement2.execute();
+
+
+    var cnt = result_set1.getColumnValue(1);
+    var array_of_rows = [];
+
+
+
+    var row_num = 0;
+    var row_as_json = {};
+
+
+
+    var column_name;
+
+
+    while (result_set2.next()) {
+        // Put each row in a variable, of type JSON.
+
+
+        // For each column in the row...
+
+        for (var col_num = 0; col_num < result_set2.getColumnCount(); col_num = col_num + 1) {
+            var col_name = result_set2.getColumnName(col_num + 1);
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+-> NA PRIMEIRA PARTE/COMANDO,
+
+
+estamos 
+
+
+
+"CALCULANDO O NÚMERO TOTAL DE RECORDS 
+
+NA TABLE PASSADA COMO PARAMETER, a essa procedure""..
+
+
+
+
+
+
+
+
+
+
+
+-> NA SEGUNDA PARTE, ESTAMOS APENAS PEGANDO 10 RECORDS (
+
+    na verdade, isso nao é necessário,
+
+    mas vamos pegar esses 10 records 
+    para compreendermos a estrutura da table...
+). NEssa segunda parte, 
+
+estamos armazenando esses 10 records em 1 result set,
+também (result_set2)....
+
+
+
+
+--> a segunda parte foi executada apenas para conseguirmos 
+o número de columns na table....
+
+
+
+
+
+
+
+
+
+
+
+
+
+em "var cnt = result_set1.getColumnValue(1)",
+
+
+
+ESTAMOS JUSTAMENTE BUSCANDO 
+
+O VALUE (único value, pq foi 1 aggregate function de "COUNT(*)")
+
+
+
+RETORNADO POR AQUELE RUN DE "statement1.execute()",
+
+
+que justamente acabou armazenado na variable de 
+
+"result_set1"....
+
+
+
+
+
+
+
+
+
+
+
+--> estamos pegando esse value (provavelmente 1 number)
+
+
+E O ARMAZENANDO EM UMA VARIABLE,
+
+POR ISSO 
+
+
+
+""
+
+var cnt = result_set1.getColumnValue(1)
+
+""
+
+
+
+
+
+
+
+
+
+
+
+depois disso,
+
+o professor definiu 1 array vazio,
+
+
+"row_as_json",
+
+
+
+
+
+
+
+
+
+var row_as_json = [];
+
+
+
+
+
+
+
+
+
+
+FINALMENTE,
+
+
+AGORA TEMOS A ÚLTIMA PARTE DO CÓDIGO:
+
+
+
+
+
+
+
+
+    while (result_set2.next()) {
+        // Put each row in a variable, of type JSON.
+
+
+        // For each column in the row...
+
+        for (var col_num = 0; col_num < result_set2.getColumnCount(); col_num = col_num + 1) {
+            var col_name = result_set2.getColumnName(col_num + 1);
+
+
+
+            var my_sql_command_3 = "SELECT ROUND(COUNT(*)/" + CNT + " , 2") AS ROW_COUNT FROM " + TABLE_NAME + " WHERE " + COL_NAME + " IS NOT NULL;";
+
+            //return cnt;
+
+
+            var statement3 = snowflake.createStatement(
+                {
+                    sqlText: my_sql_command_3
+                }
+            );
+
+
+            result_set3.next(); -- again, it is a good idea to execute this.
+
+            var col_value = result_set3.getColumnValue(1); -- we are allowed to execute ".getColumnValue" on this result_set object BECAUSE WE CALLED ".next()" before..
+
+            row_as_json = {
+                ColumnName: col_name,
+                column_value: col_value
+            }  
+
+            array_of_rows.push(row_as_json);          
+
+        }
+
+    }
+
+    table_as_json = {"key1": array_of_rows};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+EX:
+
+
+
+
+
+
+
+
+var my_sql_command_3 = "SELECT ROUND(COUNT(*)/" + CNT + " , 2") AS ROW_COUNT FROM " + TABLE_NAME + " WHERE " + COL_NAME + " IS NOT NULL;";
+
+
+
+
+
+
+
+
+
+
+
+
+isso vai 
+
+
+""count all the records in which x column is not null"...
+
+
+
+
+
+
+-> DIVIDIMOS ESSE VALOR 
+
+
+PELO "TOTAL AMOUNT OF COUNTS 
+
+IN THE TABLE",
+
+
+
+
+O QUE NOS DÁ O FILL RATE 
+
+DAQUELA COLUMN EM PARTICULAR...
+
+
+
+
+
+
+
+
+
+--> E AÍ FAZEMOS ROUND DE TUDO ISSO PARA APENAS 2 DECIMAL VALUES (
+
+    com round(x, 2)...
+)
+
+
+
+
+
+
+--> AÍ EXECUTAMOS 
+
+ESSE STATEMENT,
+
+
+
+
+E AÍ 
+
+
+ESTAMOS ARMAZENANDO O RESULT DESSE STATEMENT 
+
+
+
+EM "result_set3",
+
+
+nessa variable...
+
+
+
+
+
+
+
+
+
+POR FIM, ESTAMOS CRIANDO 1 JSON OBJECT,
+
+
+
+com 
+
+
+row_as_json = {
+    ColumnName: col_name,
+    column_value: col_value
+};
+
+
+
+
+
+
+
+
+
+
+E AÍ ESTAMOS FAZENDO PUSH DE ISSO TUDO EM 1 ARRAY....
+
+
+
+
+
+
+
+
+
+
+array_of_rows.push(row_as_json);
+
+
+
+
+
+
+
+
+
+POR FIM,
+QUANDO O WHILE LOOP ACABOU/ACABA,
+
+
+
+
+
+
+TEMOS ESTE TRECHO:
+
+
+
+
+
+
+
+
+
+
+table_as_json = {
+    "key1": array_of_rows
+};
+
+
+
+for (var col_num = 0; col_num < result_set2.getColumnCount(); col_num = col_num + 1) {
+
+
+var my_sql_command_4 = "INSERT INTO TABLE_FILL_RATE VALUES (:1, :2);";
+
+var statement4 = snowflake.createStatement(
+    {
+        sqlText: my_sql_command_4,
+        binds: [
+            table_as_json.key1[col_num].ColumnName,
+            table_as_json.key1[col_num].column_value
+        ]
+    }
+)
+
+
+statement4.execute();
+}
+
+
+return table_as_json;
+
+
+
+
+
+
+
+
+
+
+
+
+
+POR FIM, O QUE ESTAMOS FAZENDO É O PARSING 
+
+DESSE 
+
+JSON OBJECT,
+
+
+
+E AÍ O INSERT 
+
+DESSE 
+RESULT, PARSEADO,
+
+EM 1 TABLE 
+
+que terá 
+
+"column_name"
+
+
+e "fill_rate" como columns (por isso ":1" e ":2")...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+o PROPÓSITO DO "result_set2"
+
+ 
+
+É JUSTAMENTE APENAS SEGURAR 10 RECORDS,
+
+
+
+10 RECORDS DA TABLE,
+
+
+QUE JÁ BASTARAO PARA NOS MOSTRAR "quantos columns a table tem"...
+
+
+
+
+
+
+
+(
+    é por isso que no for loop temos este trecho,
+
+    de "result_set2.getColumnCount()"
+)
+
+
+
+
+
+
+PRECISAMOS DO COUNT PQ VAMOS POR DENTRO DE TODAS AS COLUMNS,
+
+PARA AÍ INSERIRMOS 
+
+
+
+NA "TABLE_FILL_RATE" table 
+
+
+os values de 
+
+"column_name" e "fill_rate"...
+
+
+
+
+
+
+
+
+ASSIM QUE TUDO ESTÁ PRONTO,
+
+
+RETORNAMOS A TABLE COMO JSON... (
+
+    por isso "return table_as_json"...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+O CÓDIGO COMPLETO FICA ASSIM:
+
+
+create or replace procedure column_fill_rate(TABLE_NAME varchar)
+  returns VARIANT NOT NULL
+  language javascript
+  as     
+  $$  
+    var my_sql_command = "select COUNT(*) CNT from "+ TABLE_NAME +";"
+    var statement1 = snowflake.createStatement( {sqlText: my_sql_command} );
+    var result_set1 = statement1.execute();
+    result_set1.next();
+    
+    var my_sql_command2 = "select * from "+ TABLE_NAME +" LIMIT 10 ;"
+    var statement2 = snowflake.createStatement( {sqlText: my_sql_command2} );
+    var result_set2 = statement2.execute();
+    
+    var cnt = result_set1.getColumnValue(1);
+    var array_of_rows = [];
+    
+    
+    var row_num = 0;
+    row_as_json = {};
+    
+    var column_name;
+    
+      while (result_set2.next())  {
+        // Put each row in a variable of type JSON.
+         
+        // For each column in the row...
+        for (var col_num = 0; col_num < result_set2.getColumnCount(); col_num = col_num + 1) {
+          var col_name =result_set2.getColumnName(col_num+1);
+          
+         var my_sql_command3 = "select round(count(*)/"+cnt+",2) RW_CNT from "+ TABLE_NAME +" where "+col_name+" IS NOT NULL;"
+         
+         // return cnt;
+         var statement3 = snowflake.createStatement( {sqlText: my_sql_command3} );
+      
+           result_set3 = statement3.execute();
+          
+           result_set3.next();
+           var col_value = result_set3.getColumnValue(1);
+          
+           row_as_json = { ColumnName : col_name ,column_value : col_value}
+          
+           array_of_rows.push(row_as_json)
+          }
+          
+        }   
+        
+      table_as_json = { "key1" : array_of_rows };
+      
+         for (var col_num = 0; col_num < result_set2.getColumnCount(); col_num = col_num + 1) {
+         
+         var my_sql_command4 = "insert into Table_fill_rate values (:1 , :2 ) "
+      
+         var statement4 = snowflake.createStatement( {sqlText: my_sql_command4,binds: [table_as_json.key1[col_num].ColumnName,table_as_json.key1[col_num].column_value]} );
+      
+         statement4.execute();
+         
+         }
+ 
+  return table_as_json; 
+  $$
+  ;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PERCEBA:
+
+
+
+
+
+---> ESSE NAO É A MANEIRA MAIS EFICIENTE DE 
+
+ESCREVER 1 PROCEDURE.... --> MAS O PROFESSOR 
+
+A UTILIZA PQ 
+
+
+PODE-SE EXPLICAR VÁRIOS CONCEITOS ATRAVÉS DELA...
+
+
+
+
+
+
+
+
+
+
+--> aquela linha de 
+
+
+"table_as_json = {"key1" array_of_rows}"
+
+
+
+NAO É TOTALMENTE NECESSÁRIA,
+
+
+PQ NAO PRECISAMOS CRIAR ESSE JSON OBJECT,
+
+
+E NAO PRECISAMOS O PARSEAR POR MEIO 
+DAQUELE FOR LOOP...
+
+
+
+
+
+
+
+
+--> MAS ELE AINDA DEIXA ISSO NO CÓDIGO,
+
+
+PQ ISSO AJUDA 
+
+
+A ENTENDER CONCEITOS DE STORED PROCEDURE...
+
+
+
+
+
+
+
+
+
+
+--> DE VOLTA AO SNOWFLAKE,
+
+
+
+TEMOS ESTES CÓDIGOS:
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE TABLE TABLE_FILL_RATE 
+(
+    COLUMN_NAME VARCHAR,
+    FILL_RATE NUMBER(38,2)
+);
+
+
+-- call/execute procedure
+CALL COLUMN_FILL_RATE('CUSTOMER');
+
+
+
+
+-- check fill_Rates in table "TABLE_FILL_RATE"...
+SELECT * FROM TABLE_FILL_RATE;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+O OUTPUT FICOU TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+
+COLUMN_NAME	FILL_RATE
+C_CUSTKEY	1
+C_NAME	1
+C_ADDRESS	1
+C_NATIONKEY	1
+C_PHONE	1
+C_ACCTBAL	1
+C_MKTSEGMENT	1
+C_COMMENT	1
+
+
+
+
+
+
+
+
+
+
+
+
+-> TEMOS 8 ROWS, TODOS PREENCHIDOS 100%...
+
+
+
+
+
+O PROFESSOR POPULA A TABLE COM ALGUNS ROWS COM VALUE DE NULL, PARA 
+VER 
+
+
+SE 
+
+
+
+O OUTPUT DA PROCEDURE É ALTERADO...
+
+
+
+
+-- Let's put some scenarios for our procedure and test it
+
+select * from customer
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ficamos com "C_ADDRESS" COM 0.40,
+
+pq apenas 40% DOS RECORDS FORAM POPULATED..
+
+
+
+
+
+
+
+
+--> AGORA DEVEMOS GO AHEAD E CHECK COMO NOSSA PROCEDURE 
+
+VAI HANDLAR ERROR SCENARIOS...
+
+
+
+
+

@@ -1,0 +1,165 @@
+-a, --accountname TEXT
+
+Your account identifier. Honors $SNOWSQL_ACCOUNT.
+
+-u, --username TEXT
+
+Username to connect to Snowflake. Honors $SNOWSQL_USER.
+
+-d, --dbname TEXT
+
+Database to use. Honors $SNOWSQL_DATABASE.
+
+-s, --schemaname TEXT
+
+Schema in the database to use. Honors $SNOWSQL_SCHEMA.
+
+-r, --rolename TEXT
+
+Role name to use. Honors $SNOWSQL_ROLE.
+
+-w, --warehouse TEXT
+
+Warehouse to use. Honors $SNOWSQL_WAREHOUSE.
+
+-h, --host TEXT
+
+Host address for the connection. Honors $SNOWSQL_HOST. (Deprecated)
+
+-p, --port INTEGER
+
+Port number for the connection. Honors $SNOWSQL_PORT. (Deprecated)
+
+--region TEXT
+
+Region. Honors $SNOWSQL_REGION. (Deprecated; use -a or –accountname instead)
+
+-m, --mfa-passcode TEXT
+
+Token to use for multi-factor authentication (MFA)
+
+--mfa-passcode-in-password
+
+Appends the MFA passcode to the end of the password.
+
+--abort-detached-query
+
+Aborts a query if the connection between the client and server is lost. By default, it won’t abort even if the connection is lost.
+
+--probe-connection
+
+Test connectivity to Snowflake. This option is mainly used to print out the TLS (Transport Layer Security) certificate chain.
+
+--proxy-host TEXT
+
+(DEPRECATED. Use HTTPS_PROXY and HTTP_PROXY environment variables.) Proxy server hostname. Honors $SNOWSQL_PROXY_HOST.
+
+--proxy-port INTEGER
+
+(DEPRECATED. Use HTTPS_PROXY and HTTP_PROXY environment variables.) Proxy server port number. Honors $SNOWSQL_PROXY_PORT.
+
+--proxy-user TEXT
+
+(DEPRECATED. Use HTTPS_PROXY and HTTP_PROXY environment variables.) Proxy server username. Honors $SNOWSQL_PROXY_USER. Set $SNOWSQL_PROXY_PWD for the proxy server password.
+
+--authenticator TEXT
+
+Authenticator: ‘snowflake’, ‘externalbrowser’ (to use any IdP and a web browser), https://<okta_account_name>.okta.com (to use Okta natively), or ‘oauth’ to authenticate using OAuth.
+
+-v, --version
+
+Shows the current SnowSQL version, or uses a specific version if provided as a value.
+
+--noup
+
+Disables auto-upgrade for this run. If no version is specified for -v, the latest version in ~/.snowsql/ is used.
+
+-D, --variable TEXT
+
+Sets a variable to be referred by &<var>. -D tablename=CENUSTRACKONE or –variable db_key=$DB_KEY
+
+-o, --option TEXT
+
+Set SnowSQL options. See the options reference in the Snowflake documentation.
+
+-f, --filename PATH
+
+File to execute.
+
+-q, --query TEXT
+
+Query to execute.
+
+--config PATH
+
+Path and name of the SnowSQL configuration file. By default, ~/.snowsql/config.
+
+-P, --prompt
+
+Forces an interactive password prompt to allow you to specify a password that differs from the one stored in the $SNOWSQL_PWD environment variable.
+
+-M, --mfa-prompt
+
+Forces a prompt for the second token for MFA.
+
+-c, --connection TEXT
+
+Named set of connection parameters to use.
+
+--single-transaction
+
+Connects with autocommit disabled. Wraps BEGIN/COMMIT around statements to execute them as a single transaction, ensuring all commands complete successfully or no change is applied.
+
+--private-key-path PATH
+
+Path to private key file.
+
+--disable-request-pooling
+
+Disables connection pooling.
+
+-U, --upgrade
+
+Force upgrade of SnowSQL to the latest version.
+
+-K, --client-session-keep-alive
+
+Keep the session active indefinitely, even if there is no activity from the user.
+
+-?, --help
+
+Show this message and exit.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+PARA ME CONECTAR, O FORMATO FICOU ASSIM:
+
+
+
+
+snowsql -a uu18264.us-east-2.aws -u nothingnothings
+
+
+
+
+
+
+
+OK... AGORA ESTOU CONECTADO, NO TERMINAL DO VSCODE,
+
+
+nessa conta snowflake...

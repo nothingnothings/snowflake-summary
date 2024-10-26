@@ -1,0 +1,261 @@
+
+
+
+
+
+
+
+
+3 LAYERS:
+
+
+
+
+
+
+
+
+
+
+CLOUD SERVICES 
+
+
+
+
+
+
+
+
+VIRTUAL WAREHOUSE 
+
+
+
+
+
+
+
+
+
+
+DATA STORAGE 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DATA STORAGE --> STORES ALL TABLE DATA AND QUERY RESULTS...
+
+
+
+
+-_> HOSTAMOS O SNOWFLAKE NA AWS,
+
+
+POR ISSO TUDO É ARMAZENADO NO S3 DA AWS....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+VIRTUAL WAREHOUSE --> HANDLA 
+
+QUERY EXECUTION....
+
+
+
+
+
+---> QUERY EXECUTION EM WATCHER MACHINES --> MUSCLE DA MÁQUINA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CLOUD SERVICES ->  COLLECTION DE SERVICOS QUE 
+
+MANAGEIAM VIRTUAL WAREHOUSES,
+
+
+TRANSACTIONS E METADATA 
+
+INFORMATION...
+
+
+
+
+--> PROVIDENCIA ACCESS CONTROL,
+
+
+
+
+USER STATISTICS E 
+
+
+QUERY OPTIMIZATION,
+
+
+
+
+E OUTROS SERVICOS 
+
+
+
+
+
+
+
+
+
+
+-> É O CÉREBRO DO SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ALGUMAS DAS 
+
+FEATURES IMPORTANTES 
+
+DO SNOWFLAKE DEPENDEM 
+
+DA COMPREENSAO DA ARQUITETURA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> TIME-TRAVEL, DROP, 
+
+
+UNDROP,
+
+
+ZERO-COPY CLONE,
+
+
+
+TODAS ELAS DEPENDEM DESSA ARQUITETURA..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> SABEMOS MAIS SOBRE O QUE 
+
+AS COISAS ACONTECEM 
+
+
+NO BACKGROUND --> VC PODE ECONOMIZAR CUSTOS...
+
+
+
+
+
+
+
+VAI TER CUIDADO QUANDO ESCREVER AS QUERIES...
+
+
+
+
+
+
+
+
+
+PARA CADA QUERY RODADA NO SNOWFLAKE,
+
+
+
+VC RECEBERÁ CUSTOS....
+
+
+
+
+
+
+
+
+agora veremos algumas das 
+
+
+vantagens 
+
+de SHARED DISK ARCHITECTURES...
+
+
+

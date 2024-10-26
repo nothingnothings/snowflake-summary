@@ -1,0 +1,224 @@
+
+
+
+
+
+
+PRECISAMOS DESSE INTEGRATION OBJECT 
+
+PARA NOS CONECTARMOS AO AMAZON S3...
+
+
+
+
+
+
+
+
+--> PARA ISSO,
+ 
+ O PROFESSOR ESCREVE ASSIM:
+
+
+
+
+
+
+
+
+
+
+ --- AWS S3 Configuration 
+
+CREATE OR REPLACE STORAGE INTEGRATION S3_INTEGRATION
+    TYPE=external_stage
+    STORAGE_PROVIDER=S3
+    ENABLED=TRUE
+    STORAGE_AWS_ROLE_ARN='arn:aws:iam::*******************:role/snowflake'
+    STORAGE_ALLOWED_LOCATIONS=('<bucket-url>');
+
+
+DESC INTEGRATION S3_INTEGRATION;
+
+
+
+
+
+
+
+
+
+
+
+
+
+PRECISAMOS DESSE DESC 
+
+
+PARA 
+
+PEGAR 
+
+
+O 
+
+
+"STORAGE_AWS_EXTERNAL_ID"
+
+
+E "STORAGE_AWS_IAM_USER_ARN",
+
+
+
+
+QUE PRECISAMOS 
+
+COLOCAR
+
+
+
+NO TRUSTED relationships,
+
+
+NO AWS IAM (
+
+
+    aquele json...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> essa parte de cima é chata,
+
+podemos configurar as coisas de maneira errada...
+
+
+
+
+
+
+
+
+copie esses 2 values,
+
+
+e  aí cole no JSON...
+
+
+
+
+
+
+
+
+
+
+
+
+COM ISSO, COM A CRIACAO DESSE INTEGRATION OBJECT,
+
+
+
+FIZEMOS O PRIMEIRO PASSO..
+
+
+
+
+O SEGUNDO PASSO É INTEGRAR ISSO COM 1 STAGE,
+
+COMO FIZ HÁ POUCO:
+
+
+
+
+
+
+ --- AWS S3 Configuration 
+
+CREATE OR REPLACE STORAGE INTEGRATION S3_INTEGRATION
+    TYPE=external_stage
+    STORAGE_PROVIDER=S3
+    ENABLED=TRUE
+    STORAGE_AWS_ROLE_ARN='arn:aws:iam::*******************:role/snowflake'
+    STORAGE_ALLOWED_LOCATIONS=('<bucket-url>');
+
+
+DESC INTEGRATION S3_INTEGRATION;
+
+
+
+
+
+-- integrate storage integration object with stage
+CREATE OR REPLACE STAGE DEMO_DB.PUBLIC.S3_EXTERNAL_STAGE
+    URL='s3://new-snowflake-course-bucket/CSV/'
+    STORAGE_INTEGRATION=S3_INTEGRATION
+    FILE_FORMAT=DEMO_DB.FILE_FORMATS.MY_CSV_FORMAT;
+
+
+
+
+
+---------------------------
+
+
+
+
+
+
+
+
+
+PODEMOS LISTAR OS ARQUIVOS QUE EXISTEM NESSE STAGE,
+
+
+
+com 
+
+
+LIST @stage_name...
+
+
+
+
+
+
+
+
+
+
+
+MAS GANHEI UM ERROR:
+
+
+
+
+
+Error assuming AWS_ROLE. Please verify the role and externalId are configured correctly in your AWS policy.
+
+
+
+
+
+preciso revisar a parte do role 
+
+desse integration object...
+
+
+
+
+
+
+
+
+ok... agora funcionou...

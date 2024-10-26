@@ -1,0 +1,199 @@
+
+
+
+
+
+
+
+
+
+
+
+QUICK OVERVIEW -> 
+
+
+
+
+
+
+
+APRENDEMOS NESSA SECTION:
+
+
+
+
+
+
+1) COMO MICRO PARTITIONS (table_files)
+
+SAO CRIADAS....
+
+
+
+2) TIVEMOS 1 LONGA DISCUSSAO SOBRE MICRO PARTITIONS NO SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+3) VIMOS O QUE ACONTECE QUANDO ENVIAMOS 1 QUERY AO SNOWFLAKE...
+
+
+
+
+
+
+
+
+4) VIMOS COMO NOSSA QUERY É PROCESSADA,
+
+
+E COMO 
+
+
+
+A QUERY PULLA HEADER FILES 
+
+LÁ DA MICRO PARTITION,
+
+
+E COMO 
+
+
+
+ELA É PROCESSADA NA VIRTUAL WAREHOUSE....
+
+
+
+
+
+
+
+5) COMO O CLUSTERING SE COMPORTA UNDER THE HOOD...
+
+
+
+
+
+
+
+
+
+6) COMO CONSEGUIR 
+
+CLUSTERING INFORMATION,
+
+
+E O QUE É CLUSTERING DEPTH...
+
+
+
+
+
+
+7) VIMOS COMO ENTENDER A CLUSTERING INFORMATION...
+
+
+
+
+
+
+
+
+
+
+8) VIMOS TAMBÉM PRECAUCOES A SEREM TOMADAS QUANDO APLICAMOS 
+
+CLUSTERING..
+
+
+
+
+
+
+
+
+9) VIMOS TBM A RAZAO DE SEMPRE APLICAR 
+CLUSTERING EM 1 TABLE SER 1 PESSIMA IDEIA...
+
+
+
+
+
+
+
+
+10) TAMBÉM DISCUTIMOS SOBRE COMO 
+
+ESCOLHER AS CLUSTERING KEYS, COM BASE NA CARDINALIDADE (
+    escolher columns com baixa cardinalidade...
+)
+
+
+11) vimos que a ordem de columns escolhidas para o clustering 
+importa (menor cardinalidade para maior cardinalidade)....
+
+
+
+
+
+
+
+Every time data loads in to table.
+ Micro partitions will re group based on the clustering key.
+ If data size is huge, re clustering cost will increase.
+
+
+
+
+
+While data loading , I will order data by columns on which i filter data frequently.
+
+
+
+
+
+
+GOOD IDEA.. --> 
+
+
+Micro partitions in back-end will remain well grouped.
+ Remember it is not similar to applying clustering key.
+  Clustering will re group micro partitions based
+   on recently loaded data. But doing an order by,
+    will not re group old micro partitions but it 
+    will only ensure better grouping while loading data to table.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+My table size is 5 TB.  Daily i am inserting data into table, 
+of around 500 MB. My table performance is slow. I want
+ to apply clustering on the table.
+
+
+
+
+
+--> YOU SHOULD COMPARE PERFORMANCE VS COST. ONCE YOU HAVE THAT 
+BENCHMARK SET, BASED ON THAT YOU SHOULD DECIDE IF 
+YOU WANT TO APPLY CLUSTERING OR NOT.

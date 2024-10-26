@@ -1,0 +1,605 @@
+
+
+
+
+
+
+
+OK... AGORA CONTINUAMOS NOSSA DISCUSSAO....
+
+
+
+
+
+
+
+
+--> AGORA TEMOS 1 ROLE, "MY_ROLE",
+
+
+
+ASSIGNADO AO NOSSO USER, "PRADEEP"....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AGORA DEVEMOS TENTAR QUERIAR A DATA, USANDO ESSE ROLE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS PARA CONSEGUIRMOS QUERIAR DATA 
+
+COM 
+
+1 USER,
+
+PRECISAMOS DE ACESSO A 1 WAREHOUSE...
+
+
+
+
+
+
+
+
+
+
+--> PODEMOS CONFERIR ESSE ACESSO COM O ROLE DE "SYSADMIN" (faz manage 
+de WAREHOUSE E OUTROS SYSTEM-RELATED OBJECTS, também schema objects)
+
+
+
+
+
+
+
+
+--> SE NAO FAZEMOS ISSO, NENHUMA WAREHOUSE FICA DISPONÍVEL A ESSE 
+
+ROLE...
+
+
+
+
+
+
+POR ISSO ESCREVEMOS:
+
+
+
+
+
+
+
+USE ROLE SYSADMIN;
+
+
+
+
+GRANT USAGE ON WAREHOUSE my_warehouse TO ROLE MY_ROLE;
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> COM ISSO, PODEREMOS 
+
+
+
+VISUALIZAR E ESCOLHER ESSA WAREHOUSE, COM ESSE ROLE...
+
+
+
+
+
+
+
+
+
+
+--> OK... 
+
+
+
+
+
+---> PARA DAR (GRANT) USAGE DE 1 WAREHOUSE PARA 
+
+1 ROLE,
+
+PODEMOS 
+
+
+USAR OU 
+
+
+O "SECURITYADMIN" OU O "SYSADMIN"..
+
+
+
+
+
+
+
+
+
+
+
+
+--> certo... com isso,
+
+
+
+
+USAMOS O "SECURITYADMIN" ROLE,
+
+
+
+E AÍ RODAMOS 1 COMANDO PARA REVOGAR PERMISSION 
+
+
+DE USAGE NESSA WAREHOUSE:
+
+
+
+
+
+
+
+
+REVOKE USAGE ON WAREHOUSE my_warehouse FROM ROLE MY_ROLE;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+depois conferimos a usage, mais uma vez:
+
+
+
+
+
+
+
+
+GRANT USAGE ON WAREHOUSE my_warehouse TO ROLE MY_ROLE;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+A USAGE TAMBÉM PODE SER REVOGADA PELO "SYSADMIN"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+USE ROLE SYSADMIN;
+
+
+
+
+
+
+
+REVOKE USAGE ON WAREHOUSE MY_WAREHOUSE FROM ROLE MY_ROLE;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+E AÍ CONFERIMOS A USAGE, MAIS UMA VEZ:
+
+
+
+
+
+
+USE ROLE SYSADMIN;
+
+
+
+GRANT USAGE ON WAREHOUSE MY_WAREHOUSE TO ROLE MY_ROLE;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+FINALMENTE, AGORA PODEMOS USAR ESSE ROLE DE "MY_ROLE"
+
+
+e entao usar a warehouse, para queriar 
+
+a database:
+
+
+
+
+
+
+
+
+
+
+
+
+USE ROLE MY_ROLE;
+
+
+
+
+
+SELECT * FROM "SNOWFLAKE_SAMPLE_DATA"."TPCH_SF1"."CUSTOMER";
+
+
+
+
+
+
+
+
+
+
+
+
+
+RESUMINDO:
+
+
+
+
+
+
+
+
+
+
+1) COM O SECURITYADMIN (e apenas com ele/accountadmin), PODEMOS ASSIGNAR 
+
+1 USER 
+
+A 1 ROLE (e vice-versa)...
+
+
+
+
+
+
+
+2) USANDO OU O SYSADMIN OU O SECURITYADMIN,
+
+VC PODE ASSIGNAR WAREHOUSES AOS SEUS ROLES...
+
+
+
+
+
+
+
+
+
+
+
+3) PARA QUERIAR, 
+
+PELO MENOS 1 WAREHOUSE PRECISA SER ASSIGNADA AO ROLE QUE VC 
+ESTÁ USANDO...
+
+
+
+
+
+
+4) TANTO O "SYSADMIN" COMO O "SECURITYADMIN"
+
+
+PODEM GRANT E REVOKE PERMISSION EM 1 WAREHOUSE,
+
+aos roles...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... QUER DIZER QUE AGORA SOMOS CAPAZES DE QUERIAR 
+
+COM SUCESSO A DATA,
+
+
+com os warehouses....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> CERTO... ENTRETANTO, AQUI DEVEMOS FAZER UMA DISTINÇÃO:
+
+
+
+
+
+
+
+
+
+
+1) PODEMOS, SIM, QUERIAR A DATA, USANDO AS WAREHOUSES,
+
+pq agora o nosso role está com a permission de "USAGE"...
+
+
+
+
+
+
+
+
+
+
+2) ENTRETANTO, NAO TEMOS ACESSO AOS COMANDOS DE 
+
+
+"ALTER WAREHOUSE <warehouse_name> SUSPEND;"
+
+
+
+e 
+
+"ALTER WAREHOUSE <warehouse_name> RESUME;"
+
+
+
+
+
+
+
+
+
+
+
+
+
+3) PARA CONSEGUIRMOS ACESSO A ESSES COMANDOS/PERMISSION,
+
+
+
+PRECISAMOS 
+
+
+
+DA PERMISSION DE "OPERATE" EM CIMA DESSAS WAREHOUSES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+When you suspend a warehouse, 
+Snowflake immediately shuts down
+ all idle compute resources for the
+  warehouse, but allows any compute resources
+   that are executing statements to 
+   continue until the statements complete,
+    at which time the resources are shut down
+     and the status of the warehouse 
+     changes to “Suspended”.
+
+
+
+
+
+
+
+
+
+
+
+QUER DIZER QUE A PERMISSION DE 
+
+"USAGE"
+
+NAO NOS DEIXA "RESUME" OU "SUSPEND" AS NOSSAS WAREHOUSES 
+
+EXPLICITAMENTE...
+
+
+
+
+
+
+O CÓDIGO É ESTE:
+
+
+
+
+
+
+
+GRANT OPERATE ON WAREHOUSE MY_WAREHOUSE TO ROLE MY_ROLE;
+
+
+
+
+
+
+
+
+
+
+
+-> COM "OPERATE",
+
+FICAMOS CAPAZES DE 
+
+
+
+RESUME E SUSPEND ESSA WAREHOUSE...
+
+
+
+
+
+
+
+
+
+EX:
+
+
+
+ALTER WAREHOUSE MY_WAREHOUSE SUSPEND;
+
+
+
+ALTER WAREHOUSE MY_WAREHOUSE RESUME;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+AGORA SABEMOS A IMPORTANCIA DO PRIVILEGE DE "OPERATE" 
+
+
+
+
+NAS WAREHOUSES...
+
+
+
+
+
+
+
+
+
+
+
+--> NAS PRÓXIMAS AULAS VEREMOS MAIS STEPS NECESSÁRIAS PARA 
+CONSEGUIRMOS CRIAR DATABASES,
+com esse role...

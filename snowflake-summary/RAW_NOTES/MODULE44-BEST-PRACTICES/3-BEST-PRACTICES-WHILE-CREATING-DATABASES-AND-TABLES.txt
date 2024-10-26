@@ -1,0 +1,516 @@
+
+
+
+
+
+
+
+AGORA VEREMOS ALGUMAS DAS BEST PRACTICES QUE PODEMOS APLICAR 
+
+
+NA SNOWFLAKE DATABASE E TABLES...
+
+
+
+
+
+
+
+
+
+
+
+ALGUMAS DELAS:
+
+
+
+
+
+
+
+
+
+
+
+1) ALL STAGING TABLES SHOULD BE __TRANSIENT__...
+
+
+
+
+
+2) ALL PRODUCTION TABLES SHOULD BE __PERMANENT__...
+
+
+
+
+
+3) WHILE CREATING TABLES, GIVE PROPER DATATYPES 
+
+
+
+
+
+4) ALWAYS RUN UPDATES ON ____STAGING TABLES__ 
+
+before PUSHING DATA TO PROD TABLES....
+
+
+
+
+5) DEVELOPMENT DATABASE SHOULD BE TRANSIENT.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+RECAPITULANDO:
+
+
+
+
+
+
+
+
+
+
+1) TRANSIENT --> DESABILITA O USO DE 
+
+"FAILSAFE",
+
+
+O QUE ECONOMIZA STORAGE E COST...
+
+
+
+
+
+
+1.1) STAGING AREAS/DATABASES DEVEM SER 
+
+TRANSIENT..
+
+
+
+
+
+
+
+
+
+
+-> ISSO VAI IMPEDIR O SNOWFLAKE DE 
+
+FAZER BACKUPS CONTÍNUOS DESSA DATABASE... ----> COMO STAGING 
+
+AREAS 
+
+SEMPRE FAZEM 
+
+
+"TRUNCATE AND LOAD",
+
+
+
+
+
+
+
+VC NAO PRECISA DE FAILSAFE 
+
+
+PARA ESSE TIPO DE TABLE/DATABASE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2) SUAS PROD DATABASES DEVEM SER PERMANENT...
+
+NAO USE A KEYWORD "TRANSIENT" COM ESSE TIPO DE DATABASE...
+
+
+
+FAÇA ISSO PARA QUE VC TENHA "FAILSAFE" 
+QUANDO O RETENTION PERIOD ACABAR...
+
+
+
+
+
+
+
+3) QUANDO CRIAR TABLES,
+
+USE 
+
+DATATYPES ADEQUADOS... 
+
+
+
+
+
+
+
+
+3.1) QUANDO VC USAR O SNOWFLAKE,
+
+VC NAO VAI 
+
+
+PRECISAR FAZER QUERY OPTIMIZATION --> COMO 
+
+ELE ACTUALLY FUNCIONA NO BACKEND:
+
+
+
+
+QUANDO VC COMECA A FAZER LOAD DE DATA NAS TABLES,
+
+O SNOWFLAKE VAI AUTOMATICAMENTE MANTER ALGUNS "STATS"
+
+NA TABLE,
+
+COMO PARTE DA METADATA DESSA TABLE...
+
+
+
+
+--> QUER DIZER QUE __ SE COLOCAMOS PROPER DATA TYPES,
+
+COMO "INTEGER", 'VARCHAR(x)",
+
+
+
+O
+ SNOWFLAKE VAI "KEEP" OS "PROPER STATS" 
+
+
+ DA DATA QUE VC 
+
+
+ VAI CARREGAR NA TABLE...
+
+
+
+
+
+
+
+ --> O SNOWFLAKE COLETA TODOS ESSES STATS POR CONTA PRÓPRIA...
+
+
+
+
+
+
+
+ --> E TUDO ISSO É LEVERAGED, QUANDO ALGUÉM FAZ QUERY NESSA TABLE (
+    o que quer dizer que é bem melhor do que usar 
+
+    o data type de "variant"
+ )
+
+
+
+
+
+ --> É POR ISSO QUE É BEM MELHOR DAR PROPER DATA TYPES 
+
+ E PROPER 
+
+ DATA TYPE LENGTHS A SUAS TABLES...
+
+
+
+
+
+
+
+
+
+ 4) SEMPRE RODE "UPDATES" NAS SUAS STAGING TABLES
+
+
+ __ ANTES__ DE FAZER PUSH 
+
+
+ DE DATA __ NAS SUAS PRODUCTION TABLES...
+
+
+
+
+
+
+
+
+
+
+
+PARA ENTENDER ISSO, DEVEMOS CONSIDERAR ESTE SCENARIO,
+
+VISTO 
+
+NA AULA ANTERIOR, DE CLONING:
+
+
+
+
+
+
+[              ETL           LOAD       ]           [          ANALYTICS          ]
+
+
+                                                                                    |-------> TABLEAU 
+                                                                                    |
+SOURCE 1   --                                                  [ DASHBOARD VIEWS ] ---------> POWER BI  
+            |                                                       |               |
+            |                                                       |               |-------> TIBC SPOTFIRE
+            |                                                       |
+SOURCE 2   --------> STAGE DB -----> PROD DB -------------> PROD DB CLONE
+            |                                                       |
+            |                                                       |
+            |                                                       |
+            |                                                       USER VIEWS 
+SOURCE 3 ---                                                        |
+                                                                    |
+                                                                 YOUR COMMON USERS   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DIGAMOS QUE VC 
+
+ESTÁ FETCHEANDO DATA DE DIFERENTES SOURCES,
+
+
+E QUE VC ENTAO ESTÁ CARREGANDO ESSA 
+
+
+DATA NA "STAGING TABLE".. (stage db)...
+
+
+
+
+
+
+
+
+
+
+
+--> EXISTIRAO CASES EM QUE 
+VC 
+
+PRECISARÁ 
+
+
+RODAR _ UPDATES_ NA SUA TABLE...
+
+
+
+
+
+
+
+
+
+
+
+VOCE PODE REALIZAR ESSE UPDATE DE 2 MANEIRAS:
+
+
+
+
+
+1) A PRIMEIRA MANEIRA É 
+
+""DIRECTLY PUSH THE DATA, FROM 
+THE STAGING AREA INTO THE 
+
+PRODUCTION AREA "".... depois, na production area,
+
+vc vai rodar 1 update.... ESSA É A PRIMEIRA MANEIRA...
+
+
+
+
+
+
+
+
+
+2) A SEGUNDA MANEIRA, MELHOR, É 
+
+""ONCE YOU GET THE DATA, INCREMENTAL DATA, 
+
+PARA DENTRO DA STAGING DATABASE"",
+
+
+
+"VC PODE RODAR OS UPDATE STATEMENTS __DENTRO __ DA 
+STAGING DATABASE (que nao tem FAILSAFE), 
+
+PARA SÓ ENTAO, MAIS TARDE, FAZER PUSH DA DATA 
+PARA DENTRO 
+
+DA PRODUCTION DB"....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+QUAL É A DIFERENCA ENTRE OS 2 APPROACHES?
+
+
+
+
+
+
+
+
+
+NO PRIMEIRO APPROACH,
+
+EM QUE VC PRIMEIRAMENTE FAZ PUSH DE DATA NA PRODUCTION DATABASE 
+
+E SÓ ENTAO RODA O UPDATE STATEMENT,
+
+
+
+
+O __ SNOWFLAKE__ É FORÇADO __ A ESCANEAR 
+
+
+UMA QUANTIDADE __ IMENSA__ DE PARTITIONS NO BACKEND,
+
+NESSA SUA PRODUCTION TABLE (COM TODA A DATA) 
+
+PARA __ CONSEGUIR ENCONTRAR OS RECORDS, PARA CONSEGUIR OS 
+
+UPDATAR....
+
+
+
+
+(E ISSO AUMENTARÁ SEU PROCESSING TIME CONSIDERAVELMENTE)...
+
+
+
+
+
+
+
+
+NO SEGUNDO APPROACH, SE VC FAZ ISSO NA SUA STAGING DATABASE,
+
+COM INCREMENTAL DATA,
+
+
+VC 
+
+NAO TEM QUE ESCANEAR 1 MONTE DE DATA,
+
+
+
+
+PQ SUA DATA SEMPRE SERÁ "INCREMENTAL", NESSE STAGING DB...
+
+
+
+(
+    quer dizer que ECONOMIZAREMOS UM MONTE DE 
+    PROCESSING COST,
+    SE FAZEMOS ISSO NA STAGING AREA...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+5) A DEVELOPMENT DATABASE DEVE SEMPRE SER __tRANSIENT_...
+
+
+
+
+
+ISSO PARA QUE TODAS AS TABLES E SCHEMAS FIQUEM "TRANSIENT", POR DEFAULT....
+
+
+
+
+
+COM ISSO, FICAMOS SEM FAILSAFE, O QUE É BOM...
+
+
+
+
+
+E, COM ISSO, TODOS OS OBJECTS NO INTERIOR DA DATABASE SERAO TRANSIENT,
+
+ECONOMIZANDO CÓDIGO...

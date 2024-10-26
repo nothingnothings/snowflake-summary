@@ -1,0 +1,83 @@
+{
+    "_id": {
+      "$oid": "594350a9a7986c085b0fe358"
+    },
+    "contributors": null,
+    "coordinates": null,
+    "created_at": "Mon Nov 07 22:18:10 +0000 2011",
+    "entities": {
+      "hashtags": [],
+      "urls": [],
+      "user_mentions": [
+        {
+          "id": 203712142,
+          "id_str": "203712142",
+          "indices": [
+            0,
+            12
+          ],
+          "name": "にこ",
+          "screen_name": "flowers0712"
+        }
+      ]
+    },
+    "favorited": false,
+    "geo": null,
+    "id": {
+      "$numberLong": "133669599576203265"
+    },
+    "id_str": "133669599576203265",
+    "in_reply_to_screen_name": "flowers0712",
+    "in_reply_to_status_id": {
+      "$numberLong": "133668606927052800"
+    },
+    "in_reply_to_status_id_str": "133668606927052800",
+    "in_reply_to_user_id": 203712142,
+    "in_reply_to_user_id_str": "203712142",
+    "place": null,
+    "retweet_count": 0,
+    "retweeted": false,
+    "source": "<a href=\"http://tabtter.jp\" rel=\"nofollow\">Tabtter</a>",
+    "text": "@flowers0712 おはよう(o^∇^o)ﾉいよいよだよ(●´艸｀)お祝いしなくちゃね",
+    "truncated": false,
+    "user": {
+      "contributors_enabled": false,
+      "created_at": "Sat Jun 26 05:48:11 +0000 2010",
+      "default_profile": false,
+      "default_profile_image": false,
+      "description": "好きなアーティストはJinAkanishi☆基本ジャニ好きｗ※Please do not delete the signature called kokochi of the illustration※RT多いです。こっそりフォローはリフォロー出来ません。気がつかないから^_^;宜しくお願いします☆",
+      "favourites_count": 22,
+      "follow_request_sent": null,
+      "followers_count": 663,
+      "following": null,
+      "friends_count": 344,
+      "geo_enabled": false,
+      "id": 159736612,
+      "id_str": "159736612",
+      "is_translator": false,
+      "lang": "ja",
+      "listed_count": 18,
+      "location": "",
+      "name": "ここち",
+      "notifications": null,
+      "profile_background_color": "C0DEED",
+      "profile_background_image_url": "http://a0.twimg.com/profile_background_images/279381086/image2.jpg",
+      "profile_background_image_url_https": "https://si0.twimg.com/profile_background_images/279381086/image2.jpg",
+      "profile_background_tile": true,
+      "profile_image_url": "http://a0.twimg.com/profile_images/1616897410/aikom_normal.jpg",
+      "profile_image_url_https": "https://si0.twimg.com/profile_images/1616897410/aikom_normal.jpg",
+      "profile_link_color": "0084B4",
+      "profile_sidebar_border_color": "C0DEED",
+      "profile_sidebar_fill_color": "DDEEF6",
+      "profile_text_color": "333333",
+      "profile_use_background_image": true,
+      "protected": false,
+      "screen_name": "nakokochi",
+      "show_all_inline_media": false,
+      "statuses_count": 55592,
+      "time_zone": "Tokyo",
+      "url": "http://twitpic.com/photos/nakokochi",
+      "utc_offset": 32400,
+      "verified": false
+    }
+  }

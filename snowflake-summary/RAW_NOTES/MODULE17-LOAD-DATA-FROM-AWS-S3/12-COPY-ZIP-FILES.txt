@@ -1,0 +1,169 @@
+
+
+
+
+
+
+
+agora veremos mais 1 pequeno detalhe..
+
+
+
+
+
+
+
+
+
+
+-> DIGAMOS QUE TEMOS FILES NO S3,
+
+
+MAS ESSAS FILES ESTAO EM UM OUTRO FORMATO...
+
+
+
+
+
+
+
+EX:
+
+
+
+
+
+
+
+
+
+-- COPY ZIP FILES 
+
+
+
+CREATE OR REPLACE STAGE MY_S3_ZIP_STAGE 
+    STORAGE_INTEGRATION=S3_EXTERNAL_STAGE
+    URL='s3://new-snowflake-course-bucket/'
+    FILE_FORMAT=MY_CSV_FORMAT
+
+
+
+
+TRUNCATE TABLE EMP_EXT_STAGE;
+
+
+
+
+
+
+
+COPY INTO EMP_EXT_STAGE_TABLE
+FROM (
+    SELECT 
+    T.$1,
+    T.$2,
+    T.$3,
+    T.$4,
+    T.$5,
+    T.$6 FROM @MY_S3_ZIP_STAGE
+)
+ON_ERROR='CONTINUE';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK...
+
+
+
+
+LÁ NA S3,
+
+PERCEBEMOS QUE NOSSOS ARQUIVOS 
+
+
+ESTAO EM FORMATO ".ZIP"...
+
+
+
+
+
+
+
+-->  recebemos a mensagem de que 
+
+foi   "PARTIALLY loaded"..
+
+
+
+
+
+
+
+
+
+--> APENAS 1 VALUE DE NULL FOI CARREGADO...
+
+
+
+
+
+
+
+
+
+
+
+--> O QUE DEVEMOS ENTENDER É QUE 
+QUANDO 
+
+TENTAMOS 
+
+
+CARREGAR 1 ZIP FOLDER,
+
+ISSO 
+
+
+VAI DAR 1 ERRO... --------> QUER DIZER QUE 
+
+NAO PODEMOS 
+
+COPIAR 
+
+ARQUIVOS ZIP PARA DENTRO DAS TABLES 
+
+SNOWFLAKE....
+
+
+
+
+
+
+
+
+
+
+-----> SE VC RECEBER FILES COM .ZIP,
+
+
+VC PRECISA UNZIPPAR ESSA FILE MANUALMENTE,
+
+AÍ EXTRAIR AS FILES CSV E ENTAO COLOCAR NO BUCKET...
+
+
+
+
+(só gzip é suportado pelo snowflake, além de csv, parquet e json)
+

@@ -1,0 +1,375 @@
+
+
+
+
+
+
+
+NESSA LICAO,
+
+DISCUTIREMOS SOBRE 
+
+A OPTION DE "FILE"
+
+
+E 
+
+OPTION DE "PATTERN",
+
+
+
+
+
+COM O COMANDO DE COPY..
+
+
+
+
+
+
+
+
+
+
+CONSIDERE O SEGUINTE EXEMPLO:
+
+
+
+
+
+
+
+
+VC TEM QUE CARREGAR MILHARES DE FILES,
+MAS VC 
+
+QUER
+
+
+
+CARREGAR FILES ESPECÍFICAS DENTRO 
+DA TABLE 
+
+SNOWFLAKE..
+
+
+
+
+
+
+
+NESSE CASO,
+PODEMOS USAR A OPTION DE FILES,
+TIPO ASSIM:
+
+
+
+copy into emp
+from @my_s3_stage
+file_format = (type = csv field_optionally_enclosed_by='"')
+FILES=('employees01.csv', 'employees_error_file0.csv',
+'employee_error_file_1.csv');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... É CLARO QUE ESSAS FILES EXISTEM NA LOCATION S3...
+
+
+
+
+
+
+
+
+
+
+--> QUANDO RODAMOS ESSE COPY COMMAND,
+
+
+APENAS O CONTEÚDO DESSAS FILES 
+
+SERÁ 
+
+
+CARREGADO PARA DENTRO DA TABLE DE EMPLOYEE...
+
+
+
+
+
+
+
+
+
+
+--> GANHAMOS 1 ERROR,
+
+
+
+Date "Krishna"
+
+nao é válida....
+
+
+
+
+
+
+
+
+
+
+
+--> o "ON_ERROR" está settado como 
+
+'ABORT_STATEMENT"....
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> SE QUISERMOS OVERWRITTAR 
+
+
+ESSA OPTION,
+
+
+TEMOS QUQE DEIXAR "ON_ERROR='CONTINUE'"...
+
+
+
+
+
+
+
+
+
+
+
+--> SEMPRE É MELHOR DEIXAR "ON_ERROR=CONTINUE",
+
+
+
+
+na production...
+
+
+
+
+
+
+
+
+
+
+
+-> COM "ON_ERROR=CONTINUE",
+
+
+
+
+
+
+FICAMOS COM:
+
+
+
+
+
+
+PARTIALLY_LOADED 
+LOADED 
+PARTIALLY_LOADED...
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE ALGUNS RECORDS FORAM REJEITADOS...
+
+
+
+
+
+
+--> A MAIN IDEA, QUANDO USAMOS "FILES",
+
+É ESPECIFICAR AS FILES E AS CARREGAR PARA DENTRO DA TABLE...
+
+
+
+
+
+
+
+
+
+
+
+--> OK, MAS E SE QUISERMOS FAZER O CONTRÁRIO;
+
+CARREGAR TODAS AS FILES EM SEU BUCKET,
+
+COM EXCECAO DE UMA OU ALGUMAS FILES....
+
+
+
+
+
+
+--> BEM, A SINTAXE DE " FILE !=" nao funciona,
+nao foi implementada
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+já se vc quiser SELECIONAR APENAS FILES ESPECÍFICAS
+
+POR MEIO DE PATTERNS,
+
+USE A OPTION DE "pATTERN",
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+
+copy into emp
+from @my_s3_stage
+file_format = (type = csv field_optionally_enclosed_by='"')
+pattern='.*employees0[1-5].csv'
+FILES !=('employees01.csv', 'employees_error_file0.csv',
+'employee_error_file_1.csv');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> COM ESSA PATTERN OPTION,
+
+PODEMOS PASSAR 1 REGULAR EXPRESSION PARA 
+
+
+CARREGAR 
+
+
+EMPLOYEES QUE 
+
+COMECEM 
+
+
+
+COM 0 e depois 1,2,3,4,5..
+
+
+
+
+
+
+
+
+CERTO...
+
+
+faz sentido...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+LESSONS LEARNED:
+
+
+
+
+
+
+
+
+
+1) USING FILE OPTION YOU CAN LOAD SPECIFIC FILES INTO SNOWFLAKE TABLE 
+
+
+
+
+2) YOU CANT USE NEGATION (!=)
+
+
+
+
+
+
+
+
+3) HOW TO USE PATTERN OPTION....
+
+
+
+
+
+
+

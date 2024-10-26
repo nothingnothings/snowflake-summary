@@ -1,0 +1,2133 @@
+
+
+
+
+NESSA LECTURE,
+
+FALAREMOS SOBRE ERROR SCENARIOS E ERROR HANDLING...
+
+
+
+
+
+
+
+
+
+
+--> ERRORS, E COMO OS RESOLVER...
+
+
+
+
+
+
+--> ERROR SCENARIOS:
+
+
+
+
+
+
+1) WHAT IF MY TABLE IS EMPTY AND 
+
+
+__ WHAT__ HAPPENS _IF I PASS JUNK VALUES 
+
+AS ARGUMENT...
+
+
+
+
+
+
+
+
+
+
+
+COMO PODEMOS FAZER COM QUE NOSSA 
+
+
+PROCEDURE HANDLE ESSE ERROR?
+
+
+
+
+
+
+
+
+
+
+"EXCEPTIONS" EM PROCEDURES PODEM 
+
+SER HANDLADAS POR MEIO 
+
+
+DO USO DE TRY-CATCH BLOCKS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+PARA O CASO QUE ESTAMOS DISCUTINDO AGORA,
+
+TEMOS 2 CENÁRIOS:
+
+
+
+
+
+
+
+CALL COLUMN_FILL_RATE('EXEMPLO'); -- Table is empty 
+
+
+CALL COLUMN_FILL_RATE('dasdad asdadsa'); -- Irregular parameter (junk value)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> O PRIMEIRO CASO É UMA TABLE COM EMPTY DATA...
+
+
+
+
+
+
+
+
+--> SE PASSAMOS 
+
+ESSA TABLE A NOSSA PROCEDURE,
+
+
+
+ELA DEVE RETORNAR 1 MENSAGEM DE ERROR CORRETA (e talvez loggar o error)...
+
+
+
+
+
+
+
+
+
+
+--> com o segundo parameter,
+
+também 
+
+devemos handlar.. (retornar mensagem de erro)...
+
+
+
+
+
+
+
+
+
+--> O PROFESSOR NOS MOSTRA OUTRO OPERATOR,
+
+
+O "RLIKE"... --> é usado com 
+
+
+SELECT... 
+
+
+TIPO 
+
+
+"SELECT RLIKE",
+
+ou 
+
+
+""
+SELECT * 
+FROM author 
+WHERE aut_name RLIKE '^w';
+""
+
+
+
+
+
+
+
+
+--> ESSE TIPO DE OPERATOR, "RLIKE", 
+
+
+EXISTE APENAS NO MYSQL (nao existe no postgresql)...
+
+
+
+
+
+--> NO NOSSO CÓDIGO SQL, TEMOS ISTO:
+
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE PROCEDURE COLUMN_FILL_RATE(TABLE_NAME VARCHAR)
+    RETURNS VARIANT -- NOT NULL
+    LANGUAGE JAVASCRIPT 
+    AS 
+    $$ 
+
+
+    //input check 
+    var input_pattern = "SELECT RLIKE('" + TABLE_NAME + "', '[a-zA-Z0-9_]+')";
+
+    var statement0 = snowflake.createStatement({
+        sqlText: input_pattern
+    });
+
+
+    //return input_pattern;
+    var result_set0 = statement0.execute();
+    result_set0.next();
+    reg_status = result_set0.getColumnValue(1);
+
+
+
+    if(reg_status === false) {
+        return TABLE_NAME + " is not a table";
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+essa é a primeira parte... checaremos 
+
+se o nome da table é correto (
+    se nao é junk values,
+
+    se nao é um monte de values separados,
+
+    como "assa assass"
+), usando regular expressions...
+
+
+
+
+
+"reg_status" será true ou false...
+
+
+
+
+
+
+
+
+
+
+
+
+
+-_> com base nessa true/false condition,
+
+
+
+vamos handlar irregular parameters,
+
+
+
+
+que passaremos à procedure....
+
+
+
+
+
+
+
+com aquele if block:
+
+
+
+
+
+
+
+
+
+
+    if(reg_status === false) {
+        return TABLE_NAME + " is not a table";
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DEPOIS DISSO,
+
+
+
+
+
+
+TEMOS O RESTO DA LÓGICA... --------> O RESTO DA LÓGICA 
+
+
+
+SERVE PARA HANDLAR 
+
+O ERROR DE 
+
+
+""TABLE NAME É CORRETO, NAO É JUNK VALUES,
+
+MAS A TABLE ESTÁ COM 0 RECORDS""...
+
+
+
+
+
+
+
+
+
+
+tipo assim:
+
+
+
+
+
+    try {
+        var my_sql_command = "SELECT COUNT(*) AS CNT FROM " + TABLE_NAME + ";";
+
+        var statement1 = snowflake.createStatement({
+            sqlText: my_sql_command
+        });
+
+        var result_set1 = statement1.execute();
+
+        result_set1.next();
+    } catch (err) {
+
+        return "Failed: " + err;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+    -----> COM ISSO, ESTAMOS ENCAPSULANDO TODO 
+    ESSE CÓDIGO COM 1 BLOCK TRY-CATCH....
+
+
+
+
+    -> SE QUALQUER ERRO INESPERADO ACONTECER 
+
+    ENQUANTO É EXECUTADO 
+
+    ESSE STATEMENT DE "SELECT COUNT(*)",
+
+
+
+
+    imediatamente entraremos no CATCH...
+
+
+
+
+
+
+
+
+
+
+
+
+
+MAS ESSE BLOCK É O DE ERRORS GENÉRICOS...
+
+
+
+
+
+
+
+
+
+
+
+DEPOIS TEMOS O BLOCK USADO PARA "NÚMERO DE RECORDS 
+É 0"...
+
+
+
+
+
+
+É ESTE:
+
+
+
+
+
+
+var cnt = result_set1.getColumnValue(1);
+
+
+
+if (cnt === 0) {
+    return TABLE_NAME + " is empty "
+}
+
+
+try {
+
+    var my_sql_command2 = "SELECT * FROM" + TABLE_NAME + " LIMIT 10;";
+    var statement2 = snowflake.createStatement(
+        {
+            sqlText: my_sql_command2
+        }
+    );
+    var result_set2 = statement2.execute();
+
+} catch (err) {
+    return 'Failed: ' + err;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... AQUI ESTAMOS PEGANDO O NÚMERO DE 
+
+COLUMNS, ISSO POR MEIO DO SIMPLES USO DE 1 SELECT 
+
+COM LIMIT...
+
+
+
+
+
+
+-> SE QUALQUER UNEXPECTED ERROR ACONTECE,
+
+
+FAZEMOS CATCH COM O TRY-CATCH BLLOCK...
+
+
+
+
+
+
+
+--> depois disso, temos mais 1 sequencia de código:
+
+
+
+
+
+
+
+
+
+
+
+    var array_of_rows = [];
+
+
+
+    var row_num = 0;
+
+    var row_as_json = {};
+    
+
+    var column_name;
+
+
+
+
+    ....
+
+
+
+
+
+
+
+
+
+    MAIS PARA BAIXO, NO FOR LOOP, O PROFESSOR COLOCA 
+
+    OUTRO TRY-CATCH BLOCK:
+
+
+
+
+
+
+
+
+
+      table_as_json = { "key1" : array_of_rows };
+
+
+
+      try {
+
+        for (var col_num = 0; col_num < result_set2.getColumnCount(); col_num = col_num + 1) {
+         
+         var my_sql_command4 = "insert into Table_fill_rate values (:1 , :2 ) "
+               var my_sql_command4 = "insert into Table_fill_rate values (:1 , :2 ) "
+      
+         var statement4 = snowflake.createStatement( {sqlText: my_sql_command4,binds: [table_as_json.key1[col_num].ColumnName,table_as_json.key1[col_num].column_value]} );
+      
+         statement4.execute();
+         
+      } catch (err) {
+        return: 'Failed: ' + err;
+      }
+         }
+ 
+
+
+
+
+
+
+
+
+
+ O PROFESSOR ENVOLVE ESSE FOR INTEIRO 
+
+
+ NESSE TRY-CATCH...
+
+
+
+
+
+
+
+
+
+
+
+
+ --> OU SEJA,
+
+
+
+ SE ACONTECER QUALQUER ERROR DURANTE 
+
+ O INSERT DOS VALUES NA TABLE,
+
+
+
+ POR MEIO DESTE COMANDO 
+
+    "insert into Table_fill_rate values (:1 , :2 ) ",
+
+
+
+
+
+
+
+O ERROR SERÁ CAPTURADO PELO CATCH BLOCK...
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+O PROFESSOR DIZ QUE DEVEMOS, AQUI, OBSERVAR 2 COISAS:
+
+
+
+
+
+
+
+1) QUANDO ESTAMOS EXPECTING "KNOWN ERRORS",
+
+
+TIPICAMENTE USAMOS  ___IF CONDITIONS__ E COMPARANDO 
+
+
+O VALUE DA VARIÁVEL/RESULT_SET COM _ O VALUE QUE VAI CAUSAR O 
+ERROR... --> se esse value específico é detectado,
+
+acabamos com a execution da procedure, com o retorno de 1 varchar de erro...
+
+
+
+
+
+
+2) QUANDO __NÃO TEMOS CERTEZA__ SOBRE O ERRO 
+
+QUE PODEMOS ENCONTRAR: ENCAPSULAMOS NOSSO CÓDIGO 
+
+COM O TRY-CATCH BLOCK,
+
+DEIXANDO O CATCH BLOCK RETORNAR O ERROR AO CONSOLE...
+
+
+
+
+
+
+(isso é visto no run do FOR LOOP...)
+
+
+(também é visto no COUNT, select count,
+
+em que colocamos 1 try catch genérico antes 
+
+do catch de error por conta de "records are zero")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-_> ESSES SAO OS 2 CASES QUE ESTAMOS TENTANDO 
+CAPTURAR USANDO O TRY-CATCH...
+
+
+
+
+
+
+
+
+
+
+
+-> OK... AGORA VOLTAMOS AO SNOWFLAKE 
+
+
+
+E CRIAMOS ESSA PROCEDURE...
+
+
+
+
+
+O CÓDIGO INTEIRO FICOU ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+create or replace procedure column_fill_rate(TABLE_NAME varchar)
+  returns VARIANT --NOT NULL
+  language javascript
+  as     
+  $$  
+  
+    // Input check
+  
+    var input_pattern = "select rlike('" +TABLE_NAME +"','[a-zA-Z0-9_]+')"
+    var statement0 = snowflake.createStatement( {sqlText: input_pattern} );
+
+    //return input_pattern;
+    var result_set0 = statement0.execute();
+    result_set0.next();
+    reg_status = result_set0.getColumnValue(1)
+
+    //return reg_status;
+    
+     
+    if (reg_status == false){
+     return  TABLE_NAME +" is not a table "}
+     
+      
+  
+  try {
+    var my_sql_command = "select COUNT(*) CNT from "+ TABLE_NAME +";"
+    var statement1 = snowflake.createStatement( {sqlText: my_sql_command} );
+    var result_set1 = statement1.execute();
+    result_set1.next();
+     } 
+   catch (err) 
+     {
+     
+     return "Failed: " + err; 
+     
+     }
+    var cnt = result_set1.getColumnValue(1);
+    
+    
+    if (cnt == 0){
+     return  TABLE_NAME +" is empty "}
+     
+
+    try { 
+    var my_sql_command2 = "select * from "+ TABLE_NAME +" LIMIT 10 ;"
+    var statement2 = snowflake.createStatement( {sqlText: my_sql_command2} );
+    var result_set2 = statement2.execute();
+    }
+    
+    catch (err)
+    
+    {
+    
+    return "Failed: " + err;
+    
+    }
+    
+    //return result_set2.getColumnType(1);
+    var array_of_rows = [];
+    
+    
+    var row_num = 0;
+    row_as_json = {};
+    
+    var column_name;
+    
+      while (result_set2.next())  {
+        // Put each row in a variable of type JSON.
+         
+        // For each column in the row...
+        for (var col_num = 0; col_num < result_set2.getColumnCount(); col_num = col_num + 1) {
+          var col_name =result_set2.getColumnName(col_num+1);
+          
+          
+         
+         var my_sql_command3 = "select round(count(*)/"+cnt+",2) RW_CNT from "+ TABLE_NAME +" where "+col_name+" IS NOT NULL;"
+         
+         // return cnt;
+         var statement3 = snowflake.createStatement( {sqlText: my_sql_command3} );
+      
+           result_set3 = statement3.execute();
+          
+           result_set3.next();
+           var col_value = result_set3.getColumnValue(1);
+          
+           row_as_json = { ColumnName : col_name ,column_value : col_value}
+          
+           array_of_rows.push(row_as_json)
+          }
+          
+        }   
+        
+      // return array_of_rows
+        
+      table_as_json = { "key1" : array_of_rows };
+      
+      //return  table_as_json;
+       
+       try{
+         for (var col_num = 0; col_num < result_set2.getColumnCount(); col_num = col_num + 1) {
+         
+         var my_sql_command4 = "insert into Table_fill_rate values (:1 , :2 ) "
+      
+         var statement4 = snowflake.createStatement( {sqlText: my_sql_command4,binds: [table_as_json.key1[col_num].ColumnName,table_as_json.key1[col_num].column_value]} );
+      
+          statement4.execute();
+         
+         }
+       }
+    catch (err)
+    {
+    
+    return "Failed: " + err;
+    
+    }
+ 
+  // return table_as_json; 
+  $$
+  ;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> O PROFESSOR CRIA E RODA ESSA PROCEDURE LÁ NO 
+
+SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+
+ELE EXECUTA ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CALL COLUMN_FILL_RATE('CUSTOMER_2');
+
+
+
+
+
+
+
+
+
+
+
+--> quando o professor faz isso, 
+
+
+ele recebe 
+
+
+"CUSTOMER_2 is empty", sinal que 
+
+nosso error handling funcionou...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AGORA TEMOS O SEGUNDO CASE,
+
+JUNK VALUES:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CALL COLUMN_FILL_RATE("CUSTOMER_2 ADSSDASD"); -- JUNK VALUES...
+
+
+
+
+
+
+
+
+
+
+
+
+ganhamos "is not a table"...
+
+
+
+
+
+
+
+
+
+
+
+
+->  ATÉ AGORA DISCUTIMOS SOBRE 
+
+"GRACEFUL EXECUTION OF STORED PROCEDURE"...
+
+
+
+
+
+
+--> ele dá uma error message,
+
+
+
+e nao crasha...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> ISSO É BOM, PQ SE ESSA PROCEDURE FOR CHAMADA 
+
+
+EM 1 APP,
+
+
+O APP NAO VAI CRASHAR (
+
+
+    pq em 1 newer application,
+
+    vc nao vai expect que a application 
+
+    faça throw de 1 message abrupta e "terminate"
+)
+
+
+
+
+
+
+
+
+
+--> MAS, SE A PROCEDURE É CHAMADA 
+POR 1 
+
+"ETL JOB",
+
+
+
+NÓS "EXPECT" QUE __ O ERROR FAÇA "BUBBLE UP",
+
+
+E QUE A PROCEDURE EM SI FALHE...
+
+
+
+
+
+
+--> CASO CONTRÁRIO, EM ETL JOBS,
+
+
+A "PROCEDURE STATUS" VAI MOSTRAR COMO "SUCCEEDED",
+
+
+e os outros 
+
+DOWNSTREAM JOBS podem acabar executando,
+
+
+CAUSANDO DISCREPÂNCIA 
+
+
+
+NA SUA DATA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AGORA MODIFICAREMOS NOSSA PROCEDURE,
+
+
+TUDO PARA QUE ELA FAÇA "RECORD" 
+
+
+DO ERRO EM 1 TABLE SEPARADA,
+
+AO MESMO TEMPO QUE 
+
+
+
+FAZ THROW DE UMA MENSAGEM DE ERROR CORRETA E PARA 
+
+A PROCEDURE...
+
+
+
+
+
+
+
+
+
+
+
+
+--> veja este bloco:
+
+
+
+
+
+
+
+if (reg_status === false) {
+    return TABLE_NAME + " is not a table "
+}
+
+
+
+
+
+
+
+
+
+--> "RETURN" --> ISSO VAI "COMPLETE" A PROCEDURE,
+
+VAI MOSTRAR ESSA MENSAGEM,
+
+E A PROCEDURE SERÁ TIDA COMO "SUCCEEDED"...
+
+
+
+
+status --> succeeded (isso pde ser BOM ou RUIM, a depender do caso... 
+em ETL JOBS, pode ser RUIM...)
+
+
+
+
+
+
+
+
+--> NO CASO DO THROW,
+
+
+TEMOS O CONTRÁRIO: A ERROR MESSAGE É THROWN,
+
+E AÍ O PROCEDURE STATUS FICA COMO "FAILED"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AGORA CONSIDERE ESTE CÓDIGO:
+
+
+
+
+
+
+
+
+
+
+
+
+try {
+
+    var my_sql_command = "SELECT COUNT(*) AS CNT FROM " + TABLE_NAME + ";";
+    var statement1 = snowflake.createStatement(
+        {
+            sqlText: my_sql_command
+        }
+    );
+    var result_set1 = statement1.execute();
+    result_set1.next();
+} catch (err) {
+    
+
+    snowflake.execute({
+        sqlText: "INSERT INTO ERROR_LOG VALUES (?, ?, ?, ?),
+        binds: [err.code, err.state, err.message, err.stackTraceTxt]
+    });
+
+    throw err.message;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+COM ISSO, COM ESSE SNIPPET,
+
+
+GRAVAMOS OS ERRORS EM 1 TABLE SEPARADA, 
+
+ANTES DE FAZER THROW DE ERROR...
+
+
+
+
+
+
+
+
+
+
+
+
+PARA O INTUITO DE GRAVAR ERRORS,
+
+CRIAMOS ESTA TABLE:
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE TABLE error_log (
+    ERROR_CODE STRING,
+    ERROR_STATE STRING,
+    ERROR_MESSAGE STRING,
+    STACK_TRACE STRING
+);
+
+
+
+
+
+
+
+------->  ESSA TABLE VAI RECORDAR 
+TODA A ERROR-RELATED INFO...
+
+
+
+
+
+
+
+--> DEPOIS DISSO,
+
+DEPOIS DE FAZER 1 ENTRY 
+
+DE ESSE ERROR NESSA ERROR TABLE,
+
+
+
+VAMOS FAZER 1 THROW DE 1 ERROR MESSAGE 
+
+
+
+
+NO WEBCONSOLE...
+
+
+
+
+
+
+
+------> ESSE LOG DE ERRORS, AQUI, SERÁ FEITO 
+
+SEMPRE QUE ACONTECER ALGUM UNEXPECTED ERROR...
+
+
+
+
+
+
+
+
+
+
+--> COMO NÓS FAZEMOS O THROW DE 1 ERROR MESSAGE,
+
+COM 
+
+
+"throw err.message",
+
+
+
+O STATUS DA PROCEDURE EM SI ACABA COMO "FAILED"...
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK.... MAS O QUE VC TEM QUE ENTENDER É QUE 
+
+
+
+
+
+
+SE FIZÉSSEMOS O THROW MANUAL DE ERROR,
+
+
+DENTRO 
+
+
+
+DAQUELE TRY BLOCK,
+
+ISSO TAMBÉM SERIA CAPTURADO POR ESSE CATCH BLOCK...
+
+
+
+
+
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+
+try {
+
+    var my_sql_command = "SELECT COUNT(*) AS CNT FROM " + TABLE_NAME + ";";
+    var statement1 = snowflake.createStatement(
+        {
+            sqlText: my_sql_command
+        }
+    );
+    var result_set1 = statement1.execute();
+
+
+    if (some_condition) {
+        throw 'example error'; --- THIS WILL ALSO TRIGGER THE CATCH BLOCK..
+    }
+
+    result_set1.next();
+} catch (err) {
+    
+
+    snowflake.execute({
+        sqlText: "INSERT INTO ERROR_LOG VALUES (?, ?, ?, ?),
+        binds: [err.code, err.state, err.message, err.stackTraceTxt]
+    });
+
+    throw err.message;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+------> AQUELE CÓDIGO ALI:
+
+
+""
+
+    if (some_condition) {
+        throw 'example error'; --- THIS WILL ALSO TRIGGER THE CATCH BLOCK..
+    }
+
+"",
+
+
+
+
+
+
+
+
+
+ELE TAMBÉM SERÁ CAPTURADO PELO CATCH BLOCK....
+
+
+
+
+
+
+
+--> MAS O PROBLEMA, NO CASO,
+
+
+
+É QUE COM ESSE TRATAMENTO DE ERROR,
+
+
+que tem aquele trecho de insert do error na table de errors (
+
+
+    snowflake.execute({
+        sqlText: "INSERT INTO ERROR_LOG VALUES (?, ?, ?, ?),
+        binds: [err.code, err.state, err.message, err.stackTraceTxt]
+    });
+
+),
+
+
+
+
+
+
+
+
+AS COLUNAS (err.code, err.state, err.message, err.stackTraceText)
+
+
+FICARAO IRREGULARES,
+
+
+
+POIS TEREMOS APENAS 1 ÚNICA PROPRIEDADE definida (
+    a message, que está/estará como 'example error'
+)
+
+
+
+
+
+------> QUER DIZER QUE ISSO VAI FALHAR.... 
+
+
+
+para que isso funcione, precisamos 
+
+
+colocar a sintaxe de ":numero" 
+
+
+NESSA PARTE DE "ERROR LOGGING"...
+
+
+
+
+
+
+
+
+
+tipo algo assim:
+
+
+
+
+
+
+
+
+
+try {
+
+    var my_sql_command = "SELECT COUNT(*) AS CNT FROM " + TABLE_NAME + ";";
+    var statement1 = snowflake.createStatement(
+        {
+            sqlText: my_sql_command
+        }
+    );
+    var result_set1 = statement1.execute();
+
+
+    if (some_condition) {
+        throw 'example error'; --- THIS WILL ALSO TRIGGER THE CATCH BLOCK..
+    }
+
+    result_set1.next();
+} catch (err) {
+    
+
+    snowflake.execute({
+        sqlText: "INSERT INTO ERROR_LOG VALUES (:1, :2, :3, :4),
+        binds: [err.code, err.state, err.message, err.stackTraceTxt]
+    });
+
+    throw err.message;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... O PROFESSOR ENTAO CRIA A PROCEDURE,
+
+E TESTA OS ERROR SCENARIOS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ATÉ AGORA, DISCUTIMOS SOBRE COMO "FAIL"
+
+A PROCEDURE SE 1 ERRO ACONTECE...  ESSE TIPO DE BEHAVIOR 
+
+
+É BOM PARA _ ETL JOBS (pq aí o job inteiro falha, todas 
+as steps param)... --> PQ QUANDO RODAMOS ESSAS PROCEDURES 
+
+DENTRO DE ETL JOBS,
+
+NÓS "EXPECT" QUE ELAS VAO FAIL...
+
+
+
+
+
+
+
+
+
+
+
+
+--> AGORA VEREMOS MAIS 1 CENÁRIO,
+
+DE "TABLE DOES NOT EXIST"..
+
+
+
+
+
+
+
+
+
+
+
+--> O ERROR FOI CAPTURADO 
+
+
+PELO TRY-CATCH GENÉRICO,
+
+
+que entao fez log do error 
+
+na table de error_log,
+
+
+separada...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> SE QUERIAMOS ESSA TABLE,
+
+
+PODEMOS VER COMO O ERRO SE PARECE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> resumo:
+
+
+
+ESTAMOS FORÇANDO A PROCEDURE A "FAIL" COM A 
+
+MENSAGEM DE ERROR ADEQUADA,
+
+
+E OS UNEXPECTED ERRORS QUE ACONTECEM 
+
+
+
+ACABAM LOGGADOS 
+
+
+NESSA TABLE DE "error_log"...
+
+
+
+
+
+
+
+
+--> com isso,
+
+
+
+ficamos com um mecanismo confiável 
+
+de catch e log de errors...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ENTRETANTO,
+
+
+
+O PROFESSOR DIZ QUE HÁ MAIS UM CONCEITO QUE 
+
+PRECISA SER DISCUTIDO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> é o problema de 
+
+""NOT HAVING A DEBUG CONSOLE IN SNOWFLAKE""...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> O OUTRO CONCEITO A SER DISCUTIDO 
+
+
+
+É "ABOUT DOING LOGS __ WHILE __ DEVELOPING 
+STORED PROCEDURES"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PQ ENQUANTO DEVELOPAMOS PROCEDURES,
+
+
+É BOM SABERMOS 
+
+""COMO NOSSAS VARIABLES ESTAO SE PARECENDO"",
+
+
+
+
+como os valores estao chegando em cada variable...
+
+
+
+
+
+
+
+
+
+
+--> DATABASES RELACIONAIS CONVENCIONAIS,
+
+COMO O POSTGRES E ORACLE,
+
+
+QUANDO ESCREVEMOS PROCEDURES,
+
+PODEMOS 
+
+ACTUALLY 
+
+PRINTAR 
+
+OS STATEMENTS (variable values)
+
+
+NO LOG CONSOLE... --> E ISSO NOS AJUDA MT 
+
+
+
+A CONSTRUIR E DEBUG A PROCEDURE 
+
+
+
+
+DURANTE NOSSO TRABALHO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS, NO SNOWFLAKE,
+
+ESSA MESMA FEATURE NAO EXISTE... (nao podemos printar statement values)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUAL É A ""SOLUÇÃO""??
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> O PROFESSOR 
+
+
+
+
+DIZ QUE 
+
+
+É O USO 
+
+
+DE CÓDIGOS 
+
+
+COMO 
+
+
+
+"return input_pattern",
+
+
+
+
+
+
+
+
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+var input_pattern = "SELECT RLIKE('" + TABLE_NAME + "', '[a-zA-Z0-9_]+')";
+var statement0 = snowflake.createStatement(
+    {
+        sqlText: input_pattern
+    }
+)
+// return input pattern;
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE QUANDO ESTAMOS DEVELOPANDO,
+
+SE QUISERMOS 
+VISUALIZAR ESSE INPUT_PATTERN,
+
+
+
+TEMOS QUE _ FREQUENTEMENTE
+
+
+
+ESCREVER RETURN STATEMENTS,
+
+
+para ver o que 
+
+
+a procedure nos retornará...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+mesma coisa com o "reg_status"...
+
+
+
+
+
+
+
+
+EX:
+
+
+
+
+
+
+
+
+
+
+var input_pattern = "SELECT RLIKE('" + TABLE_NAME + "', '[a-zA-Z0-9_]+')";
+var statement0 = snowflake.createStatement(
+    {
+        sqlText: input_pattern
+    }
+)
+// return input pattern;
+
+var result_set0 = statement0.execute();
+
+result_set0.next();
+
+
+
+reg_status = result_set0.getColumnValue(1);
+// return reg_status;
+
+
+
+
+
+
+
+
+
+
+
+
+
+vamos escrevendo "return" para 
+
+
+cada parte do código em que estamos mais "doubtful"...
+
+
+
+
+
+
+
+
+
+
+
+
+ex:
+
+
+
+
+
+
+
+
+
+
+
+//return result_set2.getColumnType(1);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS É CLARO QUE ISSO É MT CUMBERSOME...
+
+
+
+PQ CADA VEZ QUE VC 
+
+
+
+VAI TER QUE:
+
+
+
+
+
+
+
+
+
+1) COMENTAR PARA DENTRO O RETURN STATEMENT 
+
+
+
+
+2) COMENTAR PARA FORA OS RETURN STATEMENTS ANTERIORES...
+
+
+
+
+
+3) RECRIAR A STORED PROCEDURE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> É CLARO QUE ESSA NAO É A MANEIRA CORRETA, TAMBÉM...
+
+
+
+
+
+A MELHOR MANEIRA SERIA CAPTURAR ESSAS STEPS 
+
+
+EM 1 STRING DIFERENTE,
+
+
+E AÍ PRINTAR ISSO 
+
+
+
+NO CONSOLE (mas 
+
+isso nao é possível no snowflake)...
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA CONSEGUIR FAZER ESSE LOGGING NO SNOWFLAKE,
+
+PRECISAMOS DE 
+
+1 
+
+WORKAROUND... VEREMOS ISSO NA PRÓXIMA AULA...

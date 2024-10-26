@@ -1,0 +1,541 @@
+
+
+
+
+
+
+PROFESSOR MOSTRA AS OPTIONS DOS VIRTUAL WAREHOUSES..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SIZE X-SMALL -->  
+
+
+
+
+
+
+
+
+
+
+
+
+maximum clusters ---> SIGNIFICA QUE QUANDO 
+
+
+AS QUERIES COMECAREM 
+
+A AUMENTAR MT,
+
+
+
+
+O SNOWFLAKE VAI AUTOMATICAMENTE SPIN UP 
+
+
+CLUSTERS, ATÉ O LIMITE DE 5...
+
+
+
+
+
+
+
+ASSIM QUE AS QUERIES FOREM PROCESSADAS,
+
+
+
+
+
+O NÚMERO DE CLUSTERS AUTOMATICAMENTE FAZ SPIN DOWN 
+
+PARA 1...
+
+
+
+
+
+(número mínimo)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+O PROFESSOR FALA SOBRE O AUTO-SCALE MODE:
+
+
+
+
+
+
+
+
+--> THIS MODE IS ENABLED BY SPECIFYING DIFFERENT 
+VALUES FOR MAXIMUM AND MINIMUM CLUSTERS...
+
+
+
+
+
+IN THIS MODE, SNOWFLAKE STARTS AND STOP CLUSTERS 
+AS NEEDED TO DYNAMICALLY MANAGE THE LOAD ON THE WAREHOUSE.
+
+
+THIS MODE IS EFFECTIVE FOR STATICALLY CONTROLLING 
+
+THE AVAILABLE RESOURCES (i.e. servers),
+
+
+
+PARTICULARLY IF YOU HAVE LARGE NUMBERS 
+
+OF CONCURRENT USER 
+
+
+SESSIONS AND/OR QUERIES,
+
+
+
+AND THE NUMBERS DO NOT FLUCTUATE SIGNIFICANTLY..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CONTINUANDO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... MAS SE COLOCAMOS 5 EM MAXIMUM E 5 EM MINIMUM,
+
+
+
+
+
+FICAREMOS COM SEMPRE 5 CLUSTERS...
+
+
+
+
+
+
+
+
+-------> quer dizer que o warehouse estará 
+TRAVADO nesse "maximized mode"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> "MAXIMIZED MODE" --------> é um MODE ESPECIAL....
+
+
+
+
+
+
+
+É HABILITADO QUANDO ESPECIFICAMOS 
+
+OS MESMOS VALUES PARA O MAXIMUM E MINIMUM CLUSTERS 
+(valores maiores do que 1)...
+
+
+
+
+
+
+
+
+
+
+--> NESSE MODO, QUANDO A WAREHOUSE É STARTADA,
+
+
+O SNOWFLAKE STARTA _ _TODOS OS CLUSTERS, 
+
+PARA QUE SEMPRE MAXIMUM RESOURCES FIQUEM DISPONÍVEIS 
+
+
+QUANDO A WAREHOUSE ESTÁ RODANDO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> USE ESSA OPTION/RECURSO 
+
+
+SE VC 
+
+__sEMPRE__ TIVER 
+
+MTAS QUERIES RODANDO EM PARALELO... 
+
+
+
+
+
+---> MTAS QUERIES RODANDO EM PARALELO,
+
+
+SEM VARIANCIA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> EM CENÁRIOS COMO ESSES,
+
+VC VAI QUERER 
+
+ACESSO A RESOURCES BEM GRANDES,
+
+
+E AÍ 
+
+VC VAI QUERER QUE SUAS QUERIES TERMINEM O MAIS RÁPIDO 
+POSSÍVEL,
+
+
+POR ISSO ESSE MODO...
+
+
+
+
+
+--> esse modo nao é inviável, portanto...
+
+
+
+
+
+
+
+
+
+
+--> MAS É BEM SITUACIONAL... -> QUANDO VC 
+
+
+ESCOLHER ESSE MAXIMIZED MODE,
+
+VC TAMBÉM
+DEVE 
+
+
+
+TER CUIDADO COM OS COSTS ASSOCIADOS 
+
+AOS SEUS CLUSTERS ---> PQ QUANDO 
+
+
+
+SEU WAREHOUSE 
+
+
+FICAR "ALIVE",
+
+
+
+TODOS OS SERVERS QUE ESTAO RODANDO NO BACKEND 
+
+FICARAO NA RUNNING CONDITION,
+
+O QUE QUER DIZER QUE 
+
+
+
+VC 
+
+
+SERÁ 
+
+
+COBRADO PELO RUN DESSES CLUSTERS, POR HORA, 
+
+
+
+RODANDO NO BACKGROUND...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> CERTO....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> DEPOIS DISSO....
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PROFESSOR CRIA MAIS 1 WAREHOUSE....
+
+
+
+
+
+
+
+
+
+
+
+--> ELE ESCOLHE XSMALL DNV...
+
+
+
+
+
+
+
+
+
+
+-> MAXIMUM CLUSTERS ELE COLOCA 1...
+
+
+
+
+
+
+
+--> aí teremos 1 warehouse criada,
+
+com 1 cluster apenas...
+
+
+
+
+
+
+
+
+
+
+--> 4X LARGE --> SE EU DEIXAR RODANDO 
+
+
+ESSE NEGÓCIO CONSECUTIVAMENTE POR 1 HORA,
+
+
+
+SEREI COBRADO EM 128 CRÉDITOS...
+
+
+
+
+(BEM CARO)...
+(128 servers rodando no background)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+xsmall -- 1 server, 1 credit por hora..
+
+
+
+small - 2 server, 2 credit por hora 
+
+
+
+medium - 4 server, 4 credit por hora 
+
+
+
+
+large - 8 server, 8 credit por hora 
+
+
+
+
+
+xlarge - 16 server, 16 credit por hora...
+
+
+
+
+
+
+
+
+64 dolares por hora... (esse é o custo xlarge)...
+
+
+
+
+1536 dolares por dia.... (business critical)
+
+
+
+46.080 dolares por mes... (business critical) - 4 dollar per credit
+
+
+34.560 dolares por mes (enterprise) - 3 dollar per credit
+
+
+23.040 dolares por mes (standard) - 2 dollar per credit
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+VC VAI CRIAR WAREHOUSES 
+
+
+MAIS FREQUENTEMENTE COM SQL COMMANDS...

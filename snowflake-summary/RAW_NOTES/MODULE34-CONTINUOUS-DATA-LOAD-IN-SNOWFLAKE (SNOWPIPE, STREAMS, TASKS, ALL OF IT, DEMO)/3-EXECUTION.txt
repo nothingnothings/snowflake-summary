@@ -1,0 +1,561 @@
+
+
+
+
+
+
+
+
+
+--> AGORA DEVEMOS EXECUTAR O CÓDIGO 
+
+
+
+
+DA ÚLTIMA LECTURE,
+
+PARA CONSEGUIR CARREGAR 
+
+DATA CONTINUAMENTE,
+
+ 
+ LÁ DO AWS S3...
+
+
+
+
+
+
+
+ --> A PRIMEIRA COISA QUE VC 
+
+ DEVE FAZER É CHECAR 
+
+ SE 
+
+
+
+
+SEU INTEGRATION OBJECT ESTÁ CONFIGURADO CORRETAMENTE...
+
+
+
+
+
+
+
+
+
+
+
+
+-->  AÍ PODEMOS RODAR NOSSO ARQUIVO SHELL,
+
+
+COM 
+
+
+
+
+sh upload_to_s3_my_version.sh
+
+
+
+
+
+
+
+o código todo do sh é este:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#!/bin/sh
+
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_aa.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_ab.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_ac.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_ad.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_ae.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_af.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_ag.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_ah.csv		s3://new-snowflake-course-bucket/CSV3/
+
+echo "Waiting for 60 seconds..."
+sleep 60
+echo "Task Completed"
+
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_ai.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_aj.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_ak.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_al.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_am.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_an.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_ao.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_ap.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_aq.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_ar.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_as.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_at.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_au.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_av.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_aw.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_ax.csv		s3://new-snowflake-course-bucket/CSV3/
+
+echo "Waiting for 90 seconds..."
+sleep 90
+echo "Task Completed"
+
+
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_ay.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_az.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_ba.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_bb.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_bc.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_bd.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_be.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_bf.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_bg.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_bh.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_bi.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_bj.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_bk.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_bl.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_bm.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_bn.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_bo.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_bp.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_bq.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_br.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_bs.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_bt.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_bu.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_bv.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_bw.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_bx.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_by.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_bz.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_ca.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_cb.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_cc.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_cd.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_ce.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_cf.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_cg.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_ch.csv		s3://new-snowflake-course-bucket/CSV3/
+
+
+echo "Waiting for 60 seconds..."
+sleep 60
+echo "Task Completed"
+
+
+
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_ci.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_cj.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_ck.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_cl.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_cm.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_cn.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_co.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_cp.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_cq.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_cr.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_cs.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_ct.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_cu.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_cv.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_cw.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_cx.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_cy.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_cz.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_da.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_db.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_dc.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_dd.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_de.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_df.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_dg.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_dh.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_di.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_dj.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_dk.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_dl.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_dm.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_dn.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_do.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_dp.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_dq.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_dr.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_ds.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_dt.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_du.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_dv.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_dw.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_dx.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_dy.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_dz.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_ea.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_eb.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_ec.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_ed.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_ee.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_ef.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_eg.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_eh.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_ei.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_ej.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_ek.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_el.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_em.csv		s3://new-snowflake-course-bucket/CSV3/
+
+echo "Waiting for 120 seconds..."
+sleep 120
+echo "Task Completed"
+
+
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_en.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_eo.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_ep.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_eq.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_er.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_es.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_et.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_eu.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_ev.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_ew.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_ex.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_ey.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_ez.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_fa.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_fb.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_fc.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_fd.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_fe.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_ff.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_fg.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_fh.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_fi.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_fj.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_fk.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_fl.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_fm.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_fn.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_fo.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_fp.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_fq.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_fr.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_fs.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_ft.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_fu.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_fv.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_fw.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_fx.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_fy.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_fz.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_ga.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_gb.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_gc.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_gd.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_ge.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_gf.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_gg.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_gh.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_gi.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_gj.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_gk.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_gl.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_gm.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_gn.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_go.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_gp.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_gq.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_gr.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_gs.csv		s3://new-snowflake-course-bucket/CSV3/
+
+echo "Waiting for 60 seconds..."
+sleep 60
+echo "Task Completed"
+
+
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_gt.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_gu.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_gv.csv		s3://new-snowflake-course-bucket/CSV3/
+aws s3 cp /home/arthur/Downloads/archive-ticket/parking_gw.csv		s3://new-snowflake-course-bucket/CSV3/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ENQUANTO ESSAS FILES SAO UPLOADADAS,
+
+
+
+PODEMOS CHECAR O STATE DE NOSSAS TABLES...
+
+
+
+
+
+
+
+
+
+OK, A DATA ESTÁ SENDO COPIADA...
+
+
+
+
+
+
+
+
+MAS HÁ UM PROBLEMA COM O SNOWPIPE, NO ENTANTO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DIGAMOS QUE FAZEMOS TRUNCATE DE TODAS AS TABLES..
+
+
+
+
+
+
+
+
+
+--> E DIGAMOS QUE REMOVEMOS TODA A DATA DO S3...
+
+
+
+
+
+
+
+
+
+
+
+
+--> SE TENTARMOS ENVIAR ESSAS MESMAS FILES CSV,
+
+MAIS UMA VEZ,
+
+COM O COMANDO SH,
+
+
+VAMOS FALHAR...
+
+
+
+
+
+
+--> VAMOS FALHAR PQ O SNOWPIPE 
+
+
+QUE USAMOS JÁ TERÁ REGISTRADO OS NOMES DESSAS FILES...
+
+
+(
+
+     e ele nao gosta/se recusa a enviar data 
+
+     de files com MESMO NOME...
+)
+
+
+
+
+
+
+
+
+
+
+
+--> PARA VERIFICAR ISSO, BASTA RODAR 
+
+
+
+
+ALTER PIPE DEMO_DB.PUBLIC.SNOWPIPE REFRESH;
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> VEREMOS QUE TEMOS MTAS FILES JÁ REGISTRADAS 
+
+
+COMO "SENT"...
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE SE QUEREMOS 
+
+
+
+CARREGAR 
+
+ESSA FILE MAIS UMA VEZ,
+
+
+SOMOS __ OBRIGADOS_ A RECRIAR O SNOWPIPE OBJECT (
+    ou renomear o arquivo...
+)
+
+
+
+
+
+
+
+
+
+
+--> mas 1 catch é que 
+
+SE VC RECRIAR O SNOWPIPE,
+
+VC VAI __ PERDER__ TODA A METADATA 
+
+DO SNOWPIPE...
+
+
+
+
+
+
+
+--> E SE VC REUPLOADAR A MESMA 
+
+FILE QUE 
+
+
+VC HAVIA COPIADO ANTES,
+
+
+ISSO VAI ACABAR 
+
+
+DEIXANDO SUA TABLE COM DUPLICATES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ESSE É UM PROBLEMA,
+
+UM PROBLEMAO...
+
+
+
+
+
+
+
+
+
+--> PRECISAMOS ENCONTRAR 1 SOLUCAO 
+
+
+A ESSE PROBLEMA...
+
+
+
+
+
+
+
+OK... VIMOS COMO INTEGRAR TODAS ESSAS FEATURES...
+
+
+
+
+

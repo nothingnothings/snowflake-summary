@@ -1,0 +1,273 @@
+
+
+
+
+
+
+
+AGORA VEREMOS 2 OPTIONS 
+
+
+NO COMMAND DE COPY..
+
+
+
+
+
+
+
+
+
+
+"ENFORCE_LENGTH"
+
+
+
+E 
+
+
+"TRUNCATECOLUMNS"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CRIAMOS A  TABLE ASSIM:
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE TABLE emp (
+    first_name VARCHAR(10),
+    LAST_NAME VARCHAR(10),
+    EMAIL VARCHAR(10),
+    STREETADDRESS VARCHAR(10),
+    CITY VARCHAR(10),
+    START_DATE VARCHAR(10)
+);
+
+
+
+
+
+
+TEMOS ESTE CÓDIGO:
+
+
+
+COPY INTO emp
+FROM @demo_db.external_stages.my_s3_stage
+FILE_FORMAT=(TYPE=CSV 
+field_optionally_enclosed_by='"')
+ON_ERROR='CONTINUE'
+TRUNCATECOLUMNS=TRUE;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+COM "TRUNCATECOLUMNS=TRUE",
+
+
+
+VALUES MT COMPRIDOS INSERIDOS NA TABLE SERAO CORTADOS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ok,
+
+
+
+
+MAS E O QUE FAZ A OUTRA OPTION,
+
+DE 
+
+
+"ENFORCE_LENGTH"?
+
+
+
+
+
+
+
+
+
+
+NO STAGE OBJECT,
+
+
+O "ENFORCE_LENGTH" default é de "TRUE"...
+
+
+
+
+
+
+COM ISSO COMO TRUE,
+
+
+
+SE O LENGTH DA COLUMN FOR EXCEDIDO,
+
+É FEITO O THROW DE 1 ERROR...
+
+
+(o copy command vai fail)....
+
+
+
+
+
+
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+COPY INTO emp
+FROM @demo_db.external_stages.my_s3_stage
+FILE_FORMAT=(TYPE=CSV 
+field_optionally_enclosed_by='"')
+ON_ERROR='CONTINUE'
+ENFORCE_LENGTH=FALSE;
+
+
+
+
+
+
+
+
+
+
+
+com isso o copy command nao vai falhar,
+e a data será carregada na table......
+
+
+
+
+
+
+
+
+--> SE VC DEFINIR COMO "FALSE",
+
+
+
+ELE VAI TRUNCATE AS COLUMNS COM 
+
+
+VALUE DIFERENTE DE 10...
+
+
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE 
+
+
+
+
+AS 2 PROPERTIES FAZEM ALGO BEM PARECIDO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OS 2 SAO PARECIDOS,
+
+
+MAS QUEM REALMENTE FAZ ENFORCE 
+
+DESSA LENGTH É O 
+
+"ENFORCE_LENGTH" --> E SE VC O DEFINE COMO FALSE,
+
+
+
+A COLUMN SERÁ TRUNCATED AUTOMATICAMENTE (
+    nem mesmo precisaremos escrever 
+
+    "TRUNCATECOLUMNS=true",
+
+    pq isso já será feito,
+
+    automaticamente,
+
+    quando definimos "ENFORCE_LENGTH" como true...
+)
+
+
+
+
+
+
+OK...

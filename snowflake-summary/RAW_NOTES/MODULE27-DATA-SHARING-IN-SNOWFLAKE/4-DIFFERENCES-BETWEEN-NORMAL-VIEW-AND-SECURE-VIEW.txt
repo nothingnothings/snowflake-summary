@@ -1,0 +1,835 @@
+
+
+
+
+
+
+
+
+
+QUAL É A DIFERENCA ENTRE SECURE VIEWS E 
+
+NORMAL VIEWS....
+
+
+
+
+
+
+
+
+
+
+
+
+--> O SNOWFLAKE SÓ PERMITE O SHARE 
+
+DE SECURE VIEWS ENTRE CONTAS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> O PROFESSOR CRIA 2 VIEWS,
+
+UMA NORMAL E UMA SECURE...
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE VIEW SALES.PUBLIC.CUSTOMER_DATA
+AS SELECT C_NAME, C_MKTSEGMENT, C_ACCTBAL
+FROM SALES.PUBLIC.CUSTOMER;
+
+
+
+
+
+CREATE OR REPLACE SECURE VIEW SALES.PUBLIC.CUSTOMER_DATA_SECURE
+AS SELECT C_NAME, C_MKTSEGMENT, C_ACCTBAL
+FROM SALES.PUBLIC.CUSTOMER;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> DEPOIS DISSO,
+ 
+
+ ELE GARANTE USAGE AO ROLE DE "PUBLIC",
+
+ NESSA CONTA A,
+
+
+ A ESSAS VIEWS...
+
+
+
+
+
+
+
+
+
+ EX:
+
+
+
+
+ GRANT USAGE ON DATABASE SALES TO ROLE PUBLIC;
+ GRANT USAGE ON SCHEMA SALES.PUBLIC TO ROLE PUBLIC;
+
+
+
+
+ GRANT SELECT ON SALES.PUBLIC.CUSTOMER_DATA TO ROLE PUBLIC;
+ GRANT SELECT ON SALES.PUBLIC.CUSTOMER_DATA_SECURE TO ROLE PUBLIC;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ OK, AGORA TEMOS ACCESS A ESSAS VIEWS, NESSAS CONTAS....
+
+
+
+
+
+
+
+
+
+
+
+
+
+ --> DEPOIS DISSO, ABRIMOS OUTRA TAB,
+
+
+
+ COM O ROLE DE PUBLIC...
+
+
+
+
+
+
+
+
+
+
+ RODAMOS "SHOW VIEWS",
+
+
+ para ver todas as views..
+
+
+
+
+
+
+
+
+
+
+
+
+ --> O ROLE VERÁ AS 2 
+
+ VIEWS...
+
+
+
+
+ --> A DIFERENCA 
+ É QUE 
+
+
+
+
+
+A COLUMN DE "text" 
+
+
+DA SECURE VIEW ESTÁ EM __ BRANCO__...
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE A VIEW DEFINITION NAO 
+
+PODE SER VISUALIZADA...
+
+
+
+
+
+
+
+
+
+
+--> a view definition pode ser bem mais complexa,
+
+
+envolver 1 monte de columns --> AÍ A PESSOA 
+
+
+
+PODERÁ 
+
+
+VER 
+
+
+
+COMO A DATA ESTÁ SENDO CONSTRUÍDA,
+
+A PARTIR DO PROVIDER (falha de seguranca)...
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS SE USAMOS 1 SECURE VIEW,
+
+
+NAO É POSSÍVEL 
+
+VER DEFINICAO 
+
+ALGUMA 
+
+
+SOBRE 
+
+A TABLE... -------> ELE NEM MESMO VAI SABER 
+
+
+
+SE A COISA QUE ESTÁ SENDO EXPOSTA A ELE 
+
+É UMA VIEW, OU SE É UMA TABLE....
+
+
+
+
+
+
+
+
+
+--> É POR ISSO QUE O SNOWFLAKE 
+
+NAO PERMITE O SHARE DE VIEWS NORMAIS ENTRE CONTAS...
+
+
+
+
+
+
+
+
+
+
+
+-- ESSA É A PRIMEIRA RAZAO...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+MAS HÁ UMA SEGUNDA RAZAO....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2) DIGAMOS QUE, HIPOTETICAMENTE,
+
+O 
+
+SNOWFLAKE 
+
+
+PERMITE O SHARE DE NORMAL VIEWS...
+
+
+
+
+
+
+
+
+--> AGORA IMAGINE, HIPOTETICAMENTE,
+
+QUE NA SUA COMPANHIA VC 
+
+
+POSSA ESCOLHER 
+
+ENTRE 
+
+
+UMA SECURE VIEW E UMA NORMAL VIEW -------> ISSO DEPENDE 
+
+
+DE 
+
+A QUE 
+
+BUSINESS TEAM VC ESTÁ EXPONDO A DATA --> MAS SE VC 
+
+ESTÁ USANDO 
+
+
+
+
+
+UMA __ SECURE __ VIEW,
+
+
+
+SUA QUERY OPTIMIZATION VAI CERTAMENTE SER MENOR,
+
+
+
+E TALVEZ 
+DEMORE MAIS TEMPO... 
+
+
+
+
+
+
+
+COM NORMAL VIEWS,
+
+
+O SNOWFLAKE REALIZA MTAS OUTRAS OPTIMIZATION TECHNIQUES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--. MAS COM SECURE VIEWS 
+
+ESSAS OPTIMIZATION THINGS SAO 
+
+PERDIDAS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA DEMONSTRAR ISSO,
+
+
+O PROFESSOR CRIA 1 VIEW 
+
+
+
+
+EM QUE ELE EXPÕE A DATA 
+
+
+ANTES 
+
+DE ELA SER CRIADA...
+
+
+
+
+
+
+
+
+
+
+
+--> TIPO ASSIM:
+
+
+
+CREATE OR REPLACE VIEW SALES.PUBLIC.DATA_NORMAL
+AS SELECT C_NAME, C_MKTSEGMENT, C_ACCTBAL
+FROM SALES.PUBLIC.CUSTOMER
+WHERE C_MKTSEGMENT='AUTOMOBILE';
+
+
+
+
+
+CREATE OR REPLACE SECURE VIEW SALES.PUBLIC.DATA_SECURE
+AS SELECT C_NAME, C_MKTSEGMENT, C_ACCTBAL
+FROM SALES.PUBLIC.CUSTOMER
+WHERE C_MKTSEGMENT='AUTOMOBILE';
+
+
+
+
+
+
+
+
+
+
+
+SELECT * FROM SALES.PUBLIC.CUSTOMER
+WHERE C_MKTSEGMENT='AUTOMOBILE';
+
+
+
+
+
+
+
+
+
+
+
+
+nessa table, temos várias infos como "C_MKTSEGMENT"...
+
+
+
+
+
+
+
+QUANDO CRIO 1 VIEW,
+
+
+QUERO APENAS EXPOR
+
+
+
+
+
+
+A INFO SOBRE O C_MKTSEGMENT (AUTOMOBILE)
+
+PARA ESSAS 3 COLUMNS...
+
+
+
+
+
+
+
+
+
+
+
+--> É POR ISSO QUE O PROFESSOR CRIA 2 VIEWS,
+
+UMA NORMAL E UMA SECURE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ASSIM QUE ELE AS CRIOU,
+
+
+
+ELE TEVE DE ASSIGNAR PERMISSION MAIS UMA VEZ,
+
+PARA O ROLE DE PUBLIC (
+
+    vc precisa fazer isso sempre que vc roda 
+    "create or replace" nas views...
+)
+
+
+
+
+
+
+
+
+
+
+
+--> OK, MAS AÍ RODAMOS 
+
+
+
+
+
+
+
+
+
+
+SHOW VIEWS;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- AÍ ANALISAMOS A DIFERENCA ENTRE AS 2 VIEWS...
+
+
+
+
+
+
+
+
+
+
+--> DIGAMOS QUE A DATA ESTÁ EXPOSTA...
+
+
+
+
+
+
+
+
+
+--> COMO CONSUMER, POSSO TER 1 DÚVIDA... ----->
+
+
+
+
+""SERÁ 
+
+
+QUE HÁ ALGUMA INFO, NA VIEW QUE FOI SHARED,
+
+
+
+QUE MOSTRA QUE A TABLE POSSUI ALGUMA INFO SOBRE "HOUSEHOULD""...?
+
+
+
+
+
+
+
+
+
+
+
+--> nesse caso, posso rodar esta query:
+
+
+
+
+
+
+
+SELECT 
+*
+FROM SALES.PUBLIC.DATA_NORMAL
+WHERE 1(iff(C_MKTSEGMENT='HOUSEHOULD', 0, 1)) = 1 LIMIT 10
+
+
+
+
+SELECT 
+*
+FROM SALES.PUBLIC.DATA_SECURE
+WHERE 1(iff(C_MKTSEGMENT='HOUSEHOULD', 0, 1)) = 1 LIMIT 10
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> NESSE CASO, A PESSOA VAI RODAR ESSA QUERY,
+
+
+
+PARA CHECAR SE REALMENTE EXISTE ESSE VALUE..
+
+
+
+--> "se existir alguma household information,
+
+
+0 DEVE SER RETORNADO"... ------> e, se 0 FOR RETORNADO,
+
+
+
+O RUN DE "="
+
+FICARÁ 
+
+
+"0 = 1",
+
+
+
+
+O QUE VAI RETORNAR 1 ERROR....
+
+
+
+
+
+
+
+
+
+--> COM ISSO, SABEREMOS QUE EXISTE ALGO CHAMADO "HOUSEHOLD" 
+
+
+
+DENTRO DA TABLE...
+
+
+
+
+
+
+
+
+
+
+
+--> GANHAMOS O ERRO "DIVISION BY ZERO",
+
+que indica exataemnte isso, que existe 
+
+
+1 
+
+
+value de "HOUSEHOLD"
+
+
+DENTRO 
+
+DA UNDERLYING TABLE..
+
+
+
+
+
+
+
+(
+    isso é uma falha de segurança....
+)
+
+
+
+
+
+
+
+
+
+
+----> MAS SE TENTAMOS RODAR ESSA MESMA QUERY NA SECURE VIEW,
+
+
+O RESULTADO É DIFERENTE..
+
+
+
+
+
+
+
+
+
+
+-> A QUERY RODA,
+
+
+
+
+MAS __ NAO DÁ NENHUMA INFO SOBRE HOUSEHOLD --> NAO DÁ NENHUMA 
+
+
+
+INFO SOBRE O HOUSEHOLD,
+
+NENHUMA PISTA AO USER,
+
+
+PISTA DE QUE EXISTE ALGUMA INFO SOBRE O HOUSEHOLD... (
+
+    A ÚNICA COISA QUE ELE FEZ FOI IGNORAR A CONDITION DE "WHERE"
+
+    COMPLETAMENTE, ANTES DE RODAR A QUERY....
+)
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE A FILTER CONDITION FOI COMPLETAMENTE 
+
+
+
+IGNORADA...
+
+
+
+
+
+
+
+
+
+--> ESSA É A MAIN DIFFERENCE:
+
+
+
+
+""USER PODE ESCREVER ADVANCED/SOPHISTICATED 
+
+QUERY FUNCTIONS"", UDF QUERY FUNCTIONS,
+
+E AÍ 
+
+PODE FACILMENTE "TAKE A GUESS"
+
+SOBRE UNDERLYING DATA 
+
+ENTREGUE A ELE...
+
+
+
+
+
+
+
+
+
+
+
+--> E ISSO TUDO PODE SER EVITADO SE VC USAR 
+1 
+SECURE VIEW,
+
+E SE EXPOR APENAS A DATA NECESSÁRIA 
+
+
+AOS CONSUMER ACCOUNTS (
+
+    é por isso que  consumer accounts só podem 
+
+    usar/ter compartilhadas 
+
+    secure views consigo....
+)

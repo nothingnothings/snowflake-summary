@@ -1,0 +1,511 @@
+
+
+
+
+CONTINUANDO...
+
+
+
+
+
+
+
+
+
+NESSA LECTURE, TENTAREMOS INSERIR UM NOVO 
+
+RECORD 
+
+NA TABLE de nome "call_center"...
+
+
+
+
+
+
+
+
+
+
+
+--> PARA ISSO, TEMOS ESTE CÓDIGO:
+
+
+
+
+
+
+-- CREATE SAMPLE TABLE FROM SAMPLE DATA --- 
+CREATE OR REPLACE TABLE DEMO_DB.PUBLIC.CALL_CENTER 
+AS 
+SELECT * FROM SNOWFLAKE_SAMPLE_DATA.TPCDS_SF100TCL.CALL_CENTER;
+
+
+
+
+
+
+--- Create dynamic table, from sample table --- 
+CREATE OR REPLACE DYNAMIC TABLE DEMO_DB.PUBLIC.CALL_CENTER_DYNAMIC
+    TARGET_LAG='1 MINUTE'
+    WAREHOUSE=COMPUTE_WH
+    AS 
+SELECT * FROM DEMO_DB.PUBLIC.CALL_CENTER;
+
+
+
+ALTER DYNAMIC TABLE DEMO_DB.PUBLIC.CALL_CENTER_DYNAMIC REFRESH;
+
+
+
+INSERT INTO DEMO_DB.PUBLIC.CALL_CENTER
+SELECT * FROM DEMO_DB.PUBLIC.CALL_CENTER
+WHERE CC_CALL_CENTER_SK=1;
+
+
+
+
+
+
+
+
+
+
+
+
+OK... ESPERAMOS ALGUNS MINUTOS,
+
+
+E AÍ RODAMOS O REFRESH,
+
+PARA VER 
+
+
+
+COMO FUNCIONAM AS COISAS NO BACKGROUND...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NA QUERY PROFILE,
+
+PODEMOS VER O
+
+
+QUE ACONTECE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+PEGOU 60 RECORDS + 61 --> 121 RECORDS....
+
+
+
+
+
+
+
+AÍ A MÁQUINA TENTOU ENTENDER SE ERA UM 
+
+
+
+INSERT, UPDATE, DELETE...
+
+
+
+
+
+
+
+
+
+
+
+
+--------->> ELE VAI IDENTIFICAR QUAIS RECORDS 
+
+
+FORAM DELETADOS, INSERTED, UPDATED....
+
+
+
+
+
+
+
+
+
+
+
+
+--> ENTRETANTO, NO CASO DAS DYNAMIC TABLES,
+
+
+
+
+
+
+O SNOWFLAKE ESTÁ FAZENDO ESSA 
+
+PARTE 
+
+
+DE 
+
+"TRACKING" NO NOSSO LUGAR... (on your behalf)...
+
+
+
+
+
+
+
+
+
+
+
+--------> QUER DIZER QUE O SNOWFLAKE ESTÁ 
+
+
+TRACKANDO TODAS ESSAS CHANGES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> e o snowflake detectou que 
+
+
+era 1 record sendo inserted...
+
+
+
+
+
+
+
+
+
+
+
+OK.. TODAS ESSAS CHANGES 
+
+SERAO 
+
+
+TRACKED PELO SNOWFLAKE,
+
+ON OUR BEHALF...
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- AGORA RODAMOS O UPDATE NA TABLE:
+
+
+
+
+
+
+
+
+UPDATE DEMO_DB.PUBLIC.CALL_CENTER 
+SET CC_CALL_CENTER_ID='TESTING DYNAMIC'
+WHERE CC_CALL_CENTER_SK=1;
+
+
+
+
+
+
+
+
+
+--> isso updatou 2 records....
+
+
+
+
+
+
+
+
+--> 2 records foram inserted, 2 foram deleted...
+
+
+
+
+
+
+
+
+
+--_> ISSO ACONTECEU PQ 
+
+
+
+O SNOWFLAKE ARMAZENA, NO BACKGROUND,
+
+TODA A DATA EM FILES (
+
+    É SEMPRE REMOCAO DE FILES INTEIRAS,
+
+    E ADICAO DE FILES INTEIRAS,
+
+
+
+    POR CONTA DOS S3 BUCKETS...
+)
+
+
+
+
+
+
+
+
+
+
+
+--> podemos refreshar...
+
+
+
+
+
+
+
+
+
+
+
+mesmo plan de antes...
+
+
+
+
+
+
+
+
+
+
+
+
+DEVEMOS ENTENDER QUE 
+
+
+O SNOWFLAKE 
+
+
+
+FAZ 
+ESSE MAPPING COMPLEXO 
+
+
+PARA DETERMINAR 
+
+QUAL RECORD FOI INSERIDO,
+DELETADO, UPDATADO,
+
+
+
+TUDO ON YOUR BEHALF...
+
+
+
+
+
+
+
+
+
+
+
+
+--> E ELE MANTÉM A FINAL DATA NESSA DYNAMIC 
+
+TABLE,
+
+
+
+QUE É 
+
+
+
+MANTIDA PELO SNOWFLAKE... --> E VC NAO TEM 
+
+
+NENHUM ACESSO DIRETO 
+
+
+A ESSA DYNAMIC TABLE...
+
+
+
+
+
+
+
+
+
+
+
+
+--> O QUE INTERESSA É QUE 2 
+
+RECORDS SAO 
+
+
+
+DELETADOS,
+
+
+
+E 2 SAO INSERIDOS... --> ISSO TUDO 
+
+ACONTECE 
+
+GRAÇAS AO CHANGE TRACKING (
+    uso de streams....
+)
+
+
+
+
+
+
+
+
+
+
+
+
+--> AS DYNAMIC TABLES DEPENDEM 
+
+
+
+
+DE STREAMS.... --> o snowflake 
+
+cria esse workflow, com streams,
+
+
+para nós...
+
+
+
+
+
+
+
+
+
+
+
+SE DELETAMOS 2 RECORDS,
+
+A MESMA COISA ACONTECE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+O INSERT, UPDATE E DELETE SAO MT SIMILARES,
+
+COM AS DYNAMIC TABLES.... ---------> E O SNOWFLAKE 
+
+
+ESTÁ SEGUINDO ESSE STANDARD METHOD PARA DETERMINAR 
+
+
+
+SE 
+OS RECORDS SAO DELETED, INSERTED OU UPDATED...
+
+
+
+
+
+
+
+
+(
+    1 operation similar é realizada,
+
+    nao interessa se é del, updat, insert...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... É ASSIM QUE AS ACTIONS VAO MUDAR 
+
+OS RECORDS ARMAZENADOS NA DYNAMIC TABLE...
+
+
+
+
+
+
+

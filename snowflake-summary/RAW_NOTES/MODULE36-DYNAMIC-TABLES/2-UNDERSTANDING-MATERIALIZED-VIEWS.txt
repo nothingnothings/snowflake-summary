@@ -1,0 +1,504 @@
+
+
+
+
+
+
+
+AGORA TENTAREMOS COMPREENDER MAIS SOBRE MATERIALIZED VIEWS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> QUANDO AS UTILIZAMOS,
+
+
+
+
+TEMOS ESTE ESQUEMA:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+MATERIALIZED VIEWS:
+
+
+
+
+
+
+
+
+
+RUNS 
+[MATERIALIZED VIEW] <-----------> [QUERY PROCESS] ---------> TABLE 
+                          I 
+                          I
+                          I 
+                          I
+                          I 
+                [PERSISTED QUERY RESULT]
+
+
+
+
+
+-----------------------------------------
+
+
+
+
+
+
+
+OK... TEMOS 1 MATERIALIZED VIEW...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> O QUE ELA FARÁ, NO CASO,
+
+É O TRIGGER DE 1 PROCESS, 1 QUERY PROCESS,
+
+
+EM CIMA DA TABLE...
+
+
+
+
+
+
+--> AÍ A MATERIALIZED VIEW VAI ENVIAR O RESULT DE VOLTA...
+
+
+
+
+
+
+
+
+
+
+
+---> CERTO... MAS AQUI, NO CASO DA MATERIALIZED VIEW,
+
+
+
+
+NÓS SEMPRE VAMOS "PERSIST" O QUERY RESULT (result set)...
+
+
+
+
+
+
+
+
+
+-->  QUER DIZER QUE QUANDO UMA MATERIALIZED VIEW É CRIADA,
+
+ELA __ PERSISTE__... ELA É TIPO UM RESULTADO INSTANTANEO,
+
+
+PRÉ-GRAVADO/COMPUTADO...
+
+
+
+
+
+
+
+
+
+
+
+SEMPRE QUE OCORRER ALGUMA CHANGE NA TABLE ORIGINAL,
+
+
+O SNOWFLAKE VAI REFRESHAR A MATERIALIZED VIEW,
+
+
+E AÍ O RESULTADO VAI PERSISTIR, NOVAMENTE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+---> QUER DIZER QUE 
+
+
+O SNOWFLAKE VAI:
+
+
+
+""TAKE THE RESPONSIBILITY OF 
+
+CAPTURING THE CHANGES WHICH HAPPEN ON TOP 
+OF THIS TABLE 
+
+AND THEN PERSIST THE RESULT, IN THIS MATERIALIZED VIEW""....
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> mas, no caso de snowflake materialized views,
+
+
+SÓ PODEMOS CRIÁ-LAS 
+
+
+EM CIMA DE 1 ÚNICA TABLE (sem joins, portanto),
+
+
+E SEM O USO DE SUBQUERIES, GROUP BY E ORDER BY STATEMENTS....
+
+
+
+
+
+
+
+-_> queries nao podem ser mt complexas...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AGORA DEVEMOS ENTENDER ALGUMAS DAS ___DESVANTAGENS
+ 
+
+ DAS MATERIALIZED VIEWS...
+
+
+
+
+
+
+
+
+
+
+
+
+ DESVANTAGENS:
+
+
+
+
+
+
+
+ 1) QUERIES COMPLEXAS NAO PODEM SER ESCRITAS...
+
+
+
+
+
+
+
+
+ 2) PERSISTENT RESULT REFRESH NAO FICA SOB NOSSO CONTROLE 
+ (é feito pelo snowflake, automaticamente...)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ --> DIGAMOS QUE TEMOS 1 TABLE IMENSA...
+
+
+MTOS TB --> vc nao vai querer que 
+
+
+SUA VIEW SEJA REFRESHADA TODA VEZ QUE 
+
+
+1 CHANGE OCORRE 
+
+NA SUA MAIN TABLE....
+
+
+
+
+
+
+
+
+
+
+
+EX: ""ESSA TABLE É MUDADA A CADA 1 HORA... --> VC QUER 
+
+QUE ESSE PERSISTENT QUERY RESULT 
+SEJA REFRESHADO EM 1 DAILY BASIS,
+
+E NAO 
+
+A CADA HORA""...
+
+
+
+
+
+
+
+
+
+-> NO CASO DAS MATERIALIZED VIEWS,
+
+VC NAO TERÁ/TEM CONTROLE ALGUM SOBRE ISSO...
+
+
+
+
+
+
+
+
+
+
+--------------------------
+
+
+
+
+
+
+
+
+
+
+
+JÁ, COM AS NORMAL VIEWS,
+
+
+TEMOS ESTAS DESVANTAGENS:
+
+
+
+
+
+1) QUERY IS PROCESSED __ ON DEMAND,
+
+AND RESULT IS NOT PERSISTED....
+
+
+
+
+
+
+
+
+
+
+
+
+
+QUER DIZER QUE CADA VEZ QUE 1 USER 
+
+TIVER DE RODAR 1 VIEW,
+
+
+ELE TEM QUE 
+
+"CONSUMIR" ESSA VIEW... (
+    ou seja,
+
+    re-rodar tudo... --> A QUERY SERÁ FIRED NO BACKEND,
+
+    EM CIMA DA TABLE,
+
+    E AÍ O RESULT, BRAND-NEW,
+
+    SERÁ MANDADO DE VOLTA... sem qualquer uso de cache...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK... MAS COMO PODEMOS NOS SOBREPOR A ESSAS DESVANTANGENS,
+
+
+
+
+COMO PROVIDENCIAR UMA NOVA SOLUTION?
+
+
+
+
+
+
+
+
+
+ESSA SOLUCAO DEVE:
+
+
+
+
+1) NOS PERMITIR O WRITE DE QUERIES COMPLEXAS,
+
+
+EM CIMA DE MÚLTIPLAS TABLES...
+
+
+
+
+
+
+2) DEVEMOS SER CAPAZES DE "PERSIST THE QUERY RESULT"...
+                    (guardar result sets, cache..)
+
+
+
+
+3) DEVEMOS SER CAPAZES DE DETERMINAR 
+
+
+COM _ QUANTA__ FREQUENCIA 
+
+
+
+O "PERSISTENT RESULT" DEVE SER REFRESHADO...
+
+
+
+
+
+
+
+
+--> isso é algo que o outro professor TENTOU NOS MOSTRAR,
+
+mas que nao funcionava/nao funciona mt bem...
+
+
+
+
+
+
+
+
+
+
+
+
+PODEMOS FAZER ISSO TUDO,
+
+
+O SNOWFLAKE JÁ PROVIDENCIOU UMA SOLUTION QUE 
+
+SUPERA ESSAS ADVANTAGES....
+
+
+
+
+
+
+
+
+
+
+o nome dessa solution é 
+
+
+"""DYNAMIC TABLE"""...
+
+
+
+
+
+
+
+
+AGORA VEREMOS COMO CRIAR DYNAMIC TABLES,
+
+
+E 
+
+
+AS VÁRIAS VANTAGENS ASSOCIADAS AO SEU USO...

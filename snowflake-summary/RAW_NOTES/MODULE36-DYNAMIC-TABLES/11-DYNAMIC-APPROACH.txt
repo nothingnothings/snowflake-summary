@@ -1,0 +1,746 @@
+
+
+
+
+
+
+
+
+
+AGORA TENTAREMOS RESOLVER O CENÁRIO DE ANTES,
+
+
+AQUELE CENÁRIO DE 
+
+
+
+
+
+''''''
+
+
+
+
+
+--> DIGAMOS QUE TEMOS 2 STAGE TABLES:
+
+
+
+
+
+
+
+
+
+
+1) STAGE TABLE 1 
+
+
+
+
+
+
+
+
+2) STAGE TABLE 2...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AGORA DIGAMOS QUE CARREGAMOS DATA PARA DENTRO 
+
+DESSAS 2 TABLES,
+
+
+
+DE UM MODO INCREMENTAL...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AÍ, IMAGINE QUE,
+
+
+
+DEPOIS QUE A DATA É CARREGADA NAS 2 STAGE TABLES,
+
+
+
+
+
+
+APLICAMOS 
+
+
+1 JOIN EM CIMA 
+
+DAS 2 TABLES (
+
+
+APPLY JOIN AND BUSINESS LOGIC,
+SELECTING THE COLUMNS...
+
+)
+
+
+
+
+
+
+
+
+
+--> COM ISSO, CRIAREMOS 1 TERCEIRA TABLE,
+
+INTERMEDIATE TABLE,
+
+
+COM BASE NA JOIN CONDITION...
+
+
+
+
+
+
+
+
+
+
+
+--> DEPOIS DE CRIAR O JOIN ENTRE ESSAS 2 TABLES,
+
+
+
+FINALMENTE 
+
+
+TENTAREMOS 
+
+
+MERGEAR 
+
+
+ESSA DATA TODA,
+JOINADA,
+
+EM 1 
+
+
+FINAL TABLE....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ESSA FINAL TABLE TERÁ A DATA 
+
+
+
+VINDA DAS 2 STAGING TABLES, data que 
+
+vai sair 
+
+
+da INTERMEDIATE TABLE...
+
+
+
+
+
+
+
+
+---------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+agora tentaremos resolver isso, com a ajuda de 
+
+1 dynamic table...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA RESOLVER ESSE CENÁRIO,
+
+
+
+TEREMOS:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1) AS 2 STAGING TABLES
+
+
+
+
+
+
+
+2) A PARTIR DESSAS 2 TABLES,
+
+TEREMOS A "DYNAMIC TABLE" (e mais nada)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> O QUE SIGNIFICA ESSA DYNAMIC TABLE?
+
+
+
+
+
+
+SIGNIFICA QUE 
+
+""ELA VAI CRIAR 1 MATERIALIZED RESULT"",
+
+
+
+
+1 MATERIALIZED RESULT QUE VAI SER MAINTAINED 
+
+PELO SNOWFLAKE 
+
+(
+    COM RESPEITO A UPDATES, INSERTS E DELETES... 
+
+    VC NAO PODE INSERIR/UPDATAR E DELETAR 
+
+    ROWS MANUALMENTE/DIRETAMENTE NESSA FINAL TABLE...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ALÉM DISSO,
+
+
+DEVEMOS ENTENDER QUE, NO PRIMEIRO CENÁRIO,
+
+TRADICIONAL,
+
+
+
+
+
+
+NÓS ESTÁVAMOS ACTUALLY FAZENDO "TRUNCATE"
+
+
+DAS STAGING TABLES,
+
+
+CRIANDO A INTERMEDIATE TABLE E SÓ 
+
+ENTAO 
+
+FAZENDO 
+
+
+O MERGE 
+
+DO INTERMEDIATE TABLE COM A  FINAL TABLE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS COM ESTE CENÁRIO, CENÁRIO 2,
+
+COM A AJUDA DA DYNAMIC TABLE,
+
+
+NAO DEVEMOS FAZER 
+
+O
+ TRUNCATE DAS STAGE TABLES... --> PQ SE VC 
+
+ __ FIZER__ TRUNCATE _ DAS STAGE TABLES,
+
+ O 
+
+ MATERIALIZED RESULT CONTIDO 
+
+
+ NA DYNAMIC TABLE (na verdade, É A DYNAMIC TABLE EM SI)
+
+
+
+
+ ACABARÁ REFRESHED,
+
+ E AÍ 
+
+
+ __ SÓ SEREMOS CAPAZES DE VISUALIZAR 
+
+A DATA NAS STAGING TABLE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OU SEJA,
+
+SE VC FOR USAR 1 DYNAMIC TABLE PARA RESOLVER 
+
+ESSE CENÁRIO,
+
+
+
+
+NUNCA FAÇA TRUNCATE DE SUAS 
+
+STAGING TABLES,
+
+
+
+
+
+
+
+PQ VOCE SEMPRE FARÁ O INSERT DE DATA NELAS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK, MAS COMO PODEMOS CRIAR A DYNAMIC TABLE 
+
+
+PARA RESOLVER ESSE CENÁRIO?
+
+
+
+
+
+
+
+
+com este código:
+
+
+
+
+
+
+
+
+
+
+---- LECTURE -- SCENARIO USING DYNAMIC TABLE ---- 
+
+
+
+
+
+CREATE OR REPLACE DYNAMIC TABLE DEMO_DB.PUBLIC.INTERMEDIATE_CUST_DATA_DYN_REFRESH
+    TARGET_LAG='1 MINUTE'
+    WAREHOUSE=compute_wh
+    AS
+    SELECT
+    A.C_CUSTKEY,
+    A.C_CUSTNAME,
+    A.C_ADDRESS,
+    B.O_ORDERSTATUS,
+    B.O_ORDERPRIORITY,
+    B.o_orderkey
+    FROM DEMO_DB.PUBLIC.CUSTOMER_STG AS A 
+    INNER JOIN 
+    DEMO_DB.PUBLIC.ORDERS_STG AS B
+    ON A.C_CUSTKEY = B.C_CUSTKEY;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... ESTAMOS CRIANDO ESSA DYNAMIC TABLE,
+
+E MANTENDO O TARGET_LAG
+
+
+COMO 1 MINUTE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ISSO VAI CRIAR A DYNAMIC TABLE...
+
+
+
+
+
+
+
+
+
+
+
+
+--> A DYNAMIC TABLE VAI GARANTIR 
+
+O PERSIST DO QUERY RESULT,
+
+E VAI 
+
+GARANTIR 
+
+
+A REALIZACAO DOS UPDATES, INSERTS E DELETES 
+
+
+EM CIMA 
+
+DO MATERIALIZED RESULT...
+
+
+
+
+
+
+
+
+
+
+
+
+--> OUTRA COISA QUE VC DEVE TER EM MENTE:
+
+
+
+
+
+--> COM ESSE APPROACH DO DYNAMIC TABLE,
+
+RESOLVEMOS TUDO COM 1 ÚNICA ETAPA...
+
+
+
+
+
+
+--> MAS NO APPROACH TRADICIONAL, TÍNHAMOS 
+
+3 ETAPAS (
+    1) create intermediate table 
+
+
+    2) MERGE DATA INTO FINAL TABLE
+
+
+    3) CREATE TASK, IN ORDER TO ORCHESTRATE THE 
+    CREATION/RECREATION OF INTERMEDIATE TABLE AND 
+    MERGING OF DATA INTO THE FINAL TABLE...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> TUDO ISSO, DO APPROACH TRADICIONAL,
+
+
+FOI TAKEN CARE POR 1 ÚNICO STATEMENT,
+
+
+DE CRIACAO 
+
+DA DYNAMIC TABLE,
+
+
+
+EM QUE ELA É CRIADA.... (ok, essa é a vantagem)..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> ENTRETANTO, AO MESMO TEMPO,
+
+VC DEVE TER EM MENTE QUE O  SNOWFLAKE 
+
+ESTÁ 
+
+REALIZANDO UM PROCESSO COMPLEXO 
+
+PARA MANTER ESSA 
+TABLE 
+
+
+REFRESHADA, NO BACKGROUND...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> OK, MAS QUAIS SAO ALGUMAS DAS VANTAGENS DA 
+DYNAMIC TABLE:
+
+
+
+
+
+
+1) DATA SEMPRE SERÁ REFRESHED QUICKLY... NAO PRECISAMOS 
+
+NOS PREOCUPAR COM O SCHEDULING DE REFRESHES..., DE QUALQUER 
+JOB...
+
+
+
+
+
+2) O SNOWFLAKE VAI HANDLAR A STORAGE E CHANGES 
+NO QUERY RESULT....
+
+(a parte do storage é handlada pelo snowflake,
+
+os inserts, deletes e updates também)
+
+
+
+
+
+
+
+3) SCD TYPE 2 É POSSÍVEL 
+
+NA DYNAMIC TABLE, MAS É MAIS DIFÍCIL... (
+    podemos manter a versao mais antiga do record,
+
+    junto com a versao mais nova...
+
+)
+
+
+
+
+
+
+
+4) A MAIOR PARTE DO CONTROLE, DO REFRESH-RATE E STORAGE,
+
+
+FICA POR PARTE DO SNOWFLAKE....
+
+
+
+
+
+
+
+--> NAO DEVEMOS CRIAR A DYNAMIC TABLE "JUST BECAUSE"...
+
+
+
+
+
+
+
+
+--> DEVEMOS AVALIAR 
+SE 
+
+
+DEVEMOS SEGUIR O APPROACH TRADICIONAL OU 
+
+SE 
+DEVEMOS 
+
+
+SEGUIR O APPROACH DA DYNAMIC TABLE...
+
+
+
+
+

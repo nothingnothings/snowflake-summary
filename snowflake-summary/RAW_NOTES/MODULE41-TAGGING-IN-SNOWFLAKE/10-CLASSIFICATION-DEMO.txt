@@ -1,0 +1,810 @@
+
+
+
+
+
+
+
+OK... AGORA VEREMOS O AUTO-CLASSIFICATION DAS COLUMNS,
+
+
+
+
+COM A FEATURE DE "DATA CLASSIFICATION" 
+
+DO SNOWFLAKE....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ESSA FEATURE, PROPOSTA PELO SNOWFLAKE,
+
+
+
+É ESSENCIALMENTE A MESMA COISA QUE O TAGGING QUE 
+
+VIMOS 
+
+NAS ÚLTIMAS LESSONS,
+
+
+MAS FEITA DE FORMA AUTOMÁTICA,
+
+
+PELO PRÓPRIO SNOWFLAKE....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ANTERIORMENTE, NAS AULAS ANTERIORES,
+
+NÓS "GO AHEAD TO A TABLE,
+
+LOOK AT ITS COLUMNS",
+
+e aí 
+
+attacheávamos/attacheamos 1 tag a cada column,
+
+
+de acordo com as tags que 
+
+
+consideramos pertinentes...
+
+
+
+
+
+
+
+
+
+
+
+MAS AGORA TEMOS ESTE CÓDIGO:
+
+
+
+
+
+
+
+
+
+----------------------- DATA CLASSIFICATION -----------------
+
+
+SELECT EXTRACT_SEMANTIC_CATEGORIES('REVENUE.TRANSPORT.AIRLINE');
+
+
+
+CREATE OR REPLACE TABLE TAG.GOVERNANCE.BANKING AS 
+SELECT * FROM "BANKING_DATA_ATLAS"."BANKING"."BISMS2020";
+
+
+
+
+
+
+
+
+-------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+O PROFESSOR NOS EXPLICA:
+
+
+
+
+
+
+O TAGGING MANUAL É BOM, SIM,
+
+
+MAS NEM SEMPRE É POSSÍVEL... --> PQ EM SISTEMAS ABSURDAMENTE LARGOS,
+
+
+
+COM 1 QUANTIDADE IMENSA DE TABLES,
+
+
+
+
+VC NAO PODE SEMPRE "GO AHEAD" 
+
+E ABRIR 
+
+CADA 1 DESSAS TABLES E TENTAR FAZER IDENTIFY DAS COLUMNS 
+
+COM TAG VALUES... (mt imprático)..
+
+
+
+
+
+
+
+
+--> ISSO SERIA UMA CLASSIFICAÇÃO MANUAL... 
+
+
+
+
+--> faríamos classification buckets MANUAIS...
+
+
+
+
+
+
+
+
+
+
+
+---> O PROCESSO DE IDENTIFYING E TAGGING DE 
+
+
+COLUMNS,
+
+AUTOMATIZADO,
+
+
+É CHAMADO DE 
+
+"CLASSIFICATION", NO SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> NESSA LECTURE, VEREMOS COMO O SNOWFLAKE VAI "cLASSIFY" TODA ESSA DATA...
+
+
+
+
+
+
+
+
+
+
+
+--> PARA CONSEGUIRMOS OBTER A CLASSIFICATION 
+
+DO QUE DISCUTIMOS ANTES,
+
+
+EM CATEGORIAS 
+
+"PRIVACY_CATEGORY" E "SEMANTIC_CATEGORY",
+
+
+essas duas de diferentes values,
+
+
+O QUE PRECISAMOS 
+
+
+FAZER 
+
+É USAR 
+
+
+
+
+
+A FUNCTION ___ EXTREMAMENTE ÚTIL 
+
+
+
+DE 
+
+
+
+
+"EXTRACT_SEMANTIC_CATEGORIES()"...
+
+
+
+
+
+--> VC DEVE PASSAR O NOME DA TABLE, A ESSA FUNCTION...
+
+
+
+
+
+
+
+
+EX:
+
+
+
+
+SELECT EXTRACT_SEMANTIC_CATEGORIES('REVENUE.TRANSPORT.AIRLINE');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ISSO VAI IR POR DENTRO 
+
+DAS COLUMNS,
+
+E AÍ VAI CLASSIFICAR A DATA,
+
+
+DE ACORDO 
+
+
+
+
+
+COM OS VALUES QUE O PROFESSOR MENCIONOU NA ÚLTIMA AULA...
+
+
+
+
+
+
+
+
+--> O RESULT DESSA QUERY 
+
+
+SERÁ UM JSON, 
+
+
+
+
+
+UM IMENSO JSON 
+
+
+
+COM CATEGORIAS (Tags)
+
+
+RECOMENDADAS PARA 
+
+
+CADA 
+
+
+
+1 DAS COLUMNS NA SUA TABLE....
+
+
+
+
+
+
+
+
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+
+"Airline Notes": {
+    "extra_info": {
+        "alternates": [],
+        "probability": "1.00"
+    },
+    "privacy_category": "QUASI_IDENTIFIER",
+    "semantic_category": "OCCUPATION"
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> ele sugere essas coisas, mas Às vezes pode estar ERRADO....
+
+
+
+
+
+
+
+--> ELE IDENTIFICA TUDO POR CONTA PRÓPRIA...
+
+
+
+
+
+
+
+
+"alternates" ---> dita alternativas possíveis de classificacao...
+
+
+
+
+
+
+
+"probability" --> se for "1.00", ele TEM 100% DE CERTEZA DE QUE 
+                  ESSA COLUMN PERTENCE A ESSA CATEGORIA...
+
+
+
+
+
+
+        
+
+    
+
+
+    mas se temos algo como "0.39", 
+
+
+    quer dizer que há 39% de isso ser classificado assim...
+
+
+
+
+
+
+
+
+--> AS POSSIBILIDADES SÓ APARECEM NAS "ALTERNATIVES" 
+
+SE A PROBABILIDADE FOR DE MAIS DE 15%...
+
+
+
+
+
+
+
+
+
+
+
+
+
+O PROFESSOR TEM MAIS ALGUMAS FUNCTIONS,
+
+QUE NOS AJUDAM A FORMATAR ESSA DATA, TIRAR DO FORMATO 
+
+JSON E COLOCAR EM TABULAR FORMAT:
+
+
+
+
+
+
+SELECT
+    f.key::varchar as column_name,
+    f.value:"privacy_category"::varchar as privacy_category,  
+    f.value:"semantic_category"::varchar as semantic_category,
+    f.value:"extra_info":"probability"::number(10,2) as probability,
+    f.value:"extra_info":"alternates"::variant as alternates
+  FROM
+  TABLE(FLATTEN(EXTRACT_SEMANTIC_CATEGORIES('tag.governance.banking')::VARIANT)) AS f;
+
+SELECT
+    f.key::varchar as column_name,
+    f.value:"privacy_category"::varchar as privacy_category,  
+    f.value:"semantic_category"::varchar as semantic_category,
+    f.value:"extra_info":"probability"::number(10,2) as probability,
+    f.value:"extra_info":"alternates"::variant as alternates
+  FROM
+  TABLE(FLATTEN(EXTRACT_SEMANTIC_CATEGORIES('revenue.transport.airline')::VARIANT)) AS f;
+
+
+SELECT
+    f.key::varchar as column_name,
+    f.value:"privacy_category"::varchar as privacy_category,  
+    f.value:"semantic_category"::varchar as semantic_category,
+    f.value:"extra_info":"probability"::number(10,2) as probability,
+    f.value:"extra_info":"alternates"::variant as alternates
+  FROM
+  TABLE(FLATTEN(EXTRACT_SEMANTIC_CATEGORIES('revenue.transport.airline')::VARIANT)) AS f;
+  
+  --if the probability is below the 0.80 threshold and the process identified other 
+  --possible semantic categories with a probability greater than 0.15
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ISSO TUDO MOSTRARÁ 
+
+AS SUGESTOES BEM CLARAMENTE...
+
+
+
+
+
+
+
+
+
+UMA VEZ QUE VC TENHA CONFIRMADO QUE 
+
+""OK, ESSA CLASSIFICATION ESTÁ BOA, ESTÁ OK"",
+
+
+
+
+
+
+SE VC ESTÁ OK COM ISSO,
+
+
+
+
+
+
+VC PODE CHAMAR 
+
+
+
+
+1 STORED PROCEDURE ESPECIAL,
+
+
+
+QUE É USADA PARA JUSTAMENTE APLICAR ESSE FORMATO DE TAGS (essa feature aí)
+
+
+
+NA SUA TABLE...
+
+
+
+
+
+
+
+
+
+
+A FUNCTION É ESTA:
+
+
+
+
+
+
+CALL ASSOCIATE_SEMANTIC_CATEGORY_TAGS('revenue.transport.airline', 
+    EXTRACT_SEMANTIC_CATEGORIES('revenue.transport.airline')
+);
+
+
+
+
+
+
+
+
+
+
+
+--> O QUE ISSO VAI FAZER:
+
+
+
+
+
+"" DE ACORDO COM A CLASSIFICATION QUE FOI FEITA PELO SNOWFLAKE,
+
+
+ELE VAI APLICAR 
+
+AS TAGS NAS COLUMNS""...
+
+
+
+
+
+
+
+
+
+
+
+
+--> SE ELE IDENTIFICOU QUE A PROBABILITY É 1.00 (100%),
+
+
+
+
+E IDENTIFICOU AS SEMANTIC_CATEGORY E PRIVACY_CATEGORY,
+
+para essa column,
+
+
+ELE 
+
+VAI 
+
+REALMENTE 
+
+APLICAR ESSAS TAGS, NAS  SUAS COLUMN....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SE VC TAGGAR SUAS COLUMNS POR MEIO DESSE APPROACH "AUTO",
+
+
+
+
+
+VC PODE CHECAR TODAS __SUAS TAGS___ (tagged objects, na verdade) COM 
+
+ESTE COMANDO:
+
+
+
+
+
+
+select *
+      from table(information_schema.tag_references_all_columns('revenue.transport.airline', 'table'));
+      
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AS TAGS AUTOMÁTICAS,
+
+NO CASO,
+
+
+FICAM COM ESTE FORMATO:
+
+
+
+
+
+
+
+
+
+TAG_DATABASE        TAG_SCHEMA      TAG_NAME                TAG_VALUE
+
+
+
+SNOWFLAKE           CORE            PRIVACY_CATEGORY          IDENTIFIER 
+SNOWFLAKE           CORE            PRIVACY_CATEGORY          QUASI-IDENTIFIER 
+
+
+SNOWFLAKE           CORE            SEMANTIC_CATEGORY          NAME
+SNOWFLAKE           CORE            SEMANTIC_CATEGORY          OCCUPATION
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... É ASSIM QUE ELE VAI APLICAR OS TAG VALUES,
+AUTOMATICAMENTE...
+
+
+
+
+
+(OBS: AS TAGS NAO SAO REFLETIDAS IMEDIATAMENTE 
+na table de "SNOWFLAKE.ACCOUNT_USAGE.TAG_REFERENCES",
+
+DEMORA 1 POUCO... UMAS 12 HORAS...)
+
+
+
+
+
+
+VC TAMBÉM PODE 
+
+SELECIONAR AS TAG_REFERENCES:
+
+
+
+
+
+
+      
+SELECT * FROM SNOWFLAKE.ACCOUNT_USAGE.TAG_REFERENCES
+    WHERE TAG_NAME = 'PRIVACY_CATEGORY'
+    AND TAG_VALUE = 'IDENTIFIER';
+
+
+
+
+
+
+
+--> ok... 
+
+
+
+
+
+
+
+ISSO TUDO É BEM ÚTIL...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+QUANDO CRIAMOS NOSSAS PRÓPRIAS TAGS,
+
+
+
+
+NOSSAS TAGS FICAM CRIADAS EM 1 SCHEMA DEFINIDO 
+
+
+POR NÓS...
+
+
+
+
+
+
+
+
+-> SE VC QUISER TER AJUDA 
+
+DO SNOWFLAKE PARA CLASSIFICAR SUA DATA,
+
+VC PODE LEVERAGE 
+
+ESSA 
+
+
+FEATURE DE "SEMANTIC_CATEGORY" E "PRIVACY_CATEGORY",
+
+para classificar sua data...

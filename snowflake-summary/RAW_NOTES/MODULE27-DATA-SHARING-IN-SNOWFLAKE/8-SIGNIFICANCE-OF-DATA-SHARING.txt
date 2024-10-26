@@ -1,0 +1,235 @@
+
+
+
+
+
+
+AGORA DISCUTIREMOS 
+
+
+ALGUNS DOS BENEFITS 
+
+
+SOBRE O USO DE DATA SHARING 
+
+
+NO SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAS AGORA IMAGINE QUE NAO USAMOS 
+DATA SHARING,
+
+E USAMOS 
+
+TRADITIONAL DATA TRANSFER TECHNIQUES (
+
+
+    ou seja,
+
+    com o uso de protocols
+
+
+    como FTP,
+
+    ou entao 
+
+
+    USAMOS 
+
+    ETL, extract load transfer,
+
+    ETL TOOLS PARA PULLAR DATA 
+
+    DE 1 
+
+    DATABASE SYSTEM 
+
+    E ENTAO 
+
+    PUSHAR ESSA DATA 
+
+    A OUTRO DATABASE SYSTEM...
+)
+
+
+
+
+
+
+
+
+TUDO ISSO CRIARÁ UM MONTE DE PROBLEMS,
+
+
+
+PODE CRIAR 1 MONTE DE "DATA SILOS",
+
+
+
+MT TRABALHO, MT TEMPO...
+
+
+
+
+
+
+
+
+
+
+--> TAMBÉM SEMPRE DEVEMOS 
+
+
+TER CUIDADO COM "QUANTA DATA FOI TRANSFERIDA CORRETAMENTE OU NAO",
+
+
+
+data transferida SEM 
+"TAMPERING COM A ORIGINAL INFORMATION", que tínhamos no source...
+
+
+
+
+
+
+
+
+
+
+
+
+
+-_> TODOS ESSES PROBLEMAS SURGEM QUANDO TENTAMOS USAR O METHOD 
+TRADICIONAL DE DATA SHARING....
+
+
+
+
+
+
+
+--> E TUDO ISSO SERÁ BEM CUSTOSO,
+
+
+E GASTARÁ MT TEMPO,
+
+POUCO EFICIENTE....
+
+
+
+
+
+
+--> COSTLY THING -------> MAS COM O SNOWFLAKE DATA SHARING 
+
+TECHNIQUE,
+
+
+TUDO O QUE TEMOS QUE FAZER É:
+
+
+
+
+1) CRIAR 1 SHARE OBJECT 
+
+
+
+2) PUBLICAR ESSA DATA À CONSUMER ACCOUNT...
+
+
+
+
+
+
+
+--> QUER DIZER QUE, EM POUCOS MINUTOS,
+
+PODEMOS 
+
+COMPARTILHAR DATA 
+À CONSUMER PARTY --> COM ISSO,
+
+
+PODEMOS FACILMENTE REMOVER A ETAPA DE "ETL",
+
+
+
+E AUMENTAR EM GRANDE PROPORCAO A EFFICIENCY...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DATA SHARING FOR DUMMIES ------> SAO DISCUTIDOS DIVERSOS 
+
+USE-CASES E SCENARIOS,
+
+COMO O DATA-SHARING PODE SER HELPFUL,
+
+
+
+
+E COMO __ VÁRIAS EMPRESAS TRABALHAM COM VENDA DE DATA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> VÁRIOS SCENARIOS --> SNAGAJOB ---> com a ajuda 
+
+
+do data share do snowflake,
+
+eles podem fazer todas essas coisas 
+
+
+
+em minutos...
+
+
+
+
+
+
+
+
+
+
+--> ESSES ERAM OS CONCEITOS DE DATA SHARING 
+
+E READER ACCOUNTS...
+
+
+
+

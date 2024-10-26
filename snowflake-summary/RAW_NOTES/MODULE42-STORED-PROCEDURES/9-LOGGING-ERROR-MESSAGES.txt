@@ -1,0 +1,2212 @@
+
+
+
+
+
+
+
+
+
+
+OK... AGORA DEVEMOS CONTINUAR NOSSA DICUSSAO...
+
+
+
+
+
+
+
+
+
+
+AGORA QUEREMOS VER COMO PODEMOS LOGGAR NOSSOS ERRORS,
+
+
+LOG DE ERRORS A MEDIDA QUE VAMOS PASSANDO 
+
+
+CADA STEP 
+
+
+NA NOSSA PROCEDURE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    o código atual é este:
+
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE PROCEDURE DO_LOG(MSG STRING) 
+    RETURNS STRING 
+    LANGUAGE JAVASCRIPT 
+    EXECUTE AS CALLER -- nova sintaxe 
+    AS
+    $$
+
+    // check if we should log - checks for session variable "do_log = true";
+
+    try {
+var statement = snowflake.createStatement({sqlText: `SELECT $do_log`}).execute();
+
+    } catch (err) {
+        return ''; //"swallow" the error, variable not set, so do not log anything.
+    }
+
+    statement.next();
+
+    if (statement.getColumnValue(1) == true) { // if the value is anything other than true, don't log.
+
+
+        try {
+            snowflake.createStatement({
+                sqlText: `CREATE TEMP TABLE IDENTIFIER ($log_table)
+                 IF NOT EXISTS (TS NUMBER, MSG STRING)`
+            }).execute();
+
+            snowflake.createStatement({
+                sqlText: `INSERT INTO IDENTIFIER ($log_table)
+                VALUES (:1, :2)`,
+                binds: [Date.now(), MSG]
+            }).execute();
+        } catch (error) {
+            throw error;
+        }
+
+    }
+    $$;
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> PARA CONSEGUIRMOS FAZER LOG DE __ CADA_ _ STEP 
+
+EM NOSSAS PROCEDURES,
+
+
+
+CRIAMOS UMA OUTRA PROCEDURE,
+
+AUXILIAR (tipo uma helper function),
+
+
+QUE TERÁ 
+
+
+O NOME DE "do_log"...
+
+
+
+
+
+
+
+
+
+
+
+
+--> CHAMAREMOS ESSA PROCEDURE DE DENTRO DE NOSSA MAIN PROCEDURE...
+
+
+
+(é PROVAVELMENTE POR ISSO que definimos aquela linha de "EXECUTE AS CALLER")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> essa procedure vai basicamente DEPENDER DE 2 SESSION 
+
+VARIABLES,
+
+
+QUE SERAO 
+
+
+"$do_log"
+
+
+
+E
+
+
+"$log_table"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> COM BASE NESSAS 2 SESSION VARIABLES,
+
+
+
+ESSA PROCEDURE DE LOG 
+
+
+VAI __ LOGGAR __A  MESSAGE 
+
+
+EM 1 LOG TABLE... (no nosso exemplo, essa table será "my_log_table")
+
+
+
+
+
+
+
+
+
+
+
+--> PARA SETTAR ESSAS SESSION VARIABLES,
+
+ESCREVEMOS ASSIM,
+
+
+
+NA NOSSA WORKSHEET:
+
+
+
+
+
+
+
+
+SET do_log = true; /// if TRUE, we enable logging. With false, the logging is disabled.
+SET log_table = 'my_log_table';  // The name of the temp table where log messages will go.
+
+
+
+CREATE OR REPLACE PROCEDURE DO_LOG(MSG STRING) 
+    RETURNS STRING 
+    LANGUAGE JAVASCRIPT 
+    EXECUTE AS CALLER -- nova sintaxe 
+    AS
+    $$
+
+    // check if we should log - checks for session variable "do_log = true";
+
+    try {
+var statement = snowflake.createStatement({sqlText: `SELECT $do_log`}).execute();
+
+    } catch (err) {
+        return ''; //"swallow" the error, variable not set, so do not log anything.
+    }
+
+    statement.next();
+
+    if (statement.getColumnValue(1) == true) { // if the value is anything other than true, don't log.
+
+
+        try {
+            snowflake.createStatement({
+                sqlText: `CREATE TEMP TABLE IDENTIFIER ($log_table)
+                 IF NOT EXISTS (TIMESTAMP NUMBER, MSG STRING)`
+            }).execute();
+
+            snowflake.createStatement({
+                sqlText: `INSERT INTO IDENTIFIER ($log_table)
+                VALUES (:1, :2)`,
+                binds: [Date.now(), MSG]
+            }).execute();
+        } catch (error) {
+            throw error;
+        }
+
+    }
+    $$;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK, MAS COMO ESSA PROCEDURE VAI ACESSAR ESSAS SESSION VARIABLES?
+
+
+
+
+
+
+
+
+
+
+--> ELA VAI CONSEGUIR ACESSAR SEUS VALUES 
+
+
+
+JUSTAMENTE 
+
+PQ 
+
+
+
+ELA É UMA "CALLER PROCEDURE" (
+    visto 
+
+    em "EXECUTE AS CALLER"
+)
+
+
+
+
+
+
+
+
+
+
+
+--> MAIS TARDE FALAREMOS SOBRE 
+
+
+
+
+""CALLER PROCEDURES"" E ""OWNER PROCEDURES""...
+
+
+
+
+
+
+
+
+
+
+
+
+--. por enquanto, apenas entenda 
+
+
+
+que, por ser uma CALLER PROCEDURE,
+
+
+
+NOSSA PROCEDURE CONSEGUE 
+
+ACESSAR AS SESSION VARIABLES, como "do_log" e "log_table"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> RESUMINDO:
+
+
+
+
+
+
+
+if (statement.getColumnValue(1) == true),
+
+
+
+
+SE ISSO ACONTECE,
+
+VAMOS QUERER 
+
+
+RODAR 
+
+AQUELES 
+
+
+
+2 
+
+STATEMENTS,
+
+QUE VAO:
+
+
+
+
+
+1) QUERER CRIAR 1 TEMPORARY TABLE, DE IDENTIFIER "$log_table" (essa session variable, definida anteriormente)...
+
+
+--> SE ESSA TABLE NAO EXISTE, ELE VAI CRIAR.... SE ELA JÁ EXISTE,
+
+ELE NAO VAI CRIAR  (por isso "IF NOT EXISTS")...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2) DEPOIS DISSO TEMOS O STATEMENT DE INSERT,
+
+
+
+QUE VAI INSERIR 
+
+
+
+
+VALUES de "Date.now()" e "MSG" (o parameter passado dentro de nossa procedure)...
+
+
+
+
+
+
+
+
+
+É POR ISSO QUE TEMOS 
+
+
+ESTA LINHA:
+
+
+
+           snowflake.createStatement({
+                sqlText: `INSERT INTO IDENTIFIER ($log_table)
+                VALUES (:1, :2)`,
+                binds: [Date.now(), MSG]
+            }).execute();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> QUER DIZER QUE 
+
+NOSSA TABLE TERÁ 
+
+
+1 field de timestamp/number,
+
+e outro 
+
+
+
+
+de MESSAGE, com 1 string...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-> ESSA É UMA PROCEDURE BEM SIMPLES...
+
+
+
+
+
+
+
+E SE QUALQUER ERROR ACONTECER DURANTE A CRIACAO DESSA TABLE 
+
+TEMPORÁRIA E DURANTE A INSERCAO DE VALORES NELA,
+
+
+
+ESSE ERROR SERÁ CAPTURADO 
+
+NO CATCH BLOCK...
+
+
+
+
+
+
+
+
+
+
+
+
+OK... A PROCEDURE É BEM SIMPLES... EXIGE 2 
+SESSION VARIABLES,
+
+
+sendo do_log e o nome da table temporária em que 
+
+vamos querer depositar essas messages..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK... MAS AGORA DEVEMOS VER COMO PODEMOS USAR 
+
+ESSA PROCEDURE 
+
+NO INTERIOR DE NOSSA OUTRA PROCEDURE,
+
+
+NA NOSSA MAIN PROCEDURE...
+
+
+
+
+
+
+
+
+
+--> FAZEMOS TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+create or replace procedure column_fill_rate(TABLE_NAME varchar)
+  returns VARIANT --NOT NULL
+  language javascript
+  EXECUTE AS CALLER
+  as     
+  $$  
+
+     var accumulated_log_messages = '';
+
+     function log(msg) {
+        snowflake.createStatement( { sqlText: `call do_log(:1)`, binds:[msg] } ).execute();
+        }
+  
+  // Input check
+  
+    var input_pattern = "select rlike('" +TABLE_NAME +"','[a-zA-Z0-9_]+')"
+    var statement0 = snowflake.createStatement( {sqlText: input_pattern} );
+    //return input_pattern;
+    var result_set0 = statement0.execute();
+    result_set0.next();
+    
+    reg_status = result_set0.getColumnValue(1)
+
+    accumulated_log_messages += 'regular expression result: '+reg_status+ '\n';
+    //return reg_status;
+    
+  
+    if (reg_status == false){
+     throw  TABLE_NAME +" is not a table "}
+  
+  
+  try {
+    var my_sql_command = "select COUNT(*) CNT from "+ TABLE_NAME +";"
+    var statement1 = snowflake.createStatement( {sqlText: my_sql_command} );
+    var result_set1 = statement1.execute();
+    result_set1.next();
+   
+     } 
+   catch (err) 
+     {
+     
+     snowflake.execute({
+      sqlText: `insert into error_log VALUES (?,?,?,?)`
+      ,binds: [err.code, err.state, err.message, err.stackTraceTxt]
+      });
+ 
+      if (accumulated_log_messages != '') {
+        log(accumulated_log_messages)
+        }
+      throw err.message;
+
+     }
+
+    
+
+     var cnt = result_set1.getColumnValue(1);
+     if (cnt == 0){
+     throw  TABLE_NAME +" is empty "} 
+     
+     accumulated_log_messages += 'count of records: '+cnt+ '\n';
+     
+
+    try { 
+    var my_sql_command2 = "select * from "+ TABLE_NAME +" LIMIT 10 ;"
+    var statement2 = snowflake.createStatement( {sqlText: my_sql_command2} );
+    var result_set2 = statement2.execute();
+    }
+    
+    catch (err)
+    
+    {
+    
+    snowflake.execute({
+      sqlText: `insert into error_log VALUES (?,?,?,?)`
+      ,binds: [err.code, err.state, err.message, err.stackTraceTxt]
+      });
+    
+    if (accumulated_log_messages != '') {
+        log(accumulated_log_messages)
+        }
+
+    throw "Failed: when trying to get schema of the table" ; 
+    
+    }
+
+
+
+    
+    accumulated_log_messages += 'column type of result set 2: '+result_set2.getColumnType(1)+ '\n';
+    //return result_set2.getColumnType(1);
+    var array_of_rows = [];
+    
+    
+    var row_num = 0;
+    row_as_json = {};
+    
+    var column_name;
+    
+      while (result_set2.next())  {
+        // Put each row in a variable of type JSON.
+         
+        // For each column in the row...
+        for (var col_num = 0; col_num < result_set2.getColumnCount(); col_num = col_num + 1) {
+          var col_name =result_set2.getColumnName(col_num+1);
+          
+          
+         
+         var my_sql_command3 = "select round(count(*)/"+cnt+",2) RW_CNT from "+ TABLE_NAME +" where "+col_name+" IS NOT NULL;"
+         
+         //accumulated_log_messages += 'count of records: '+cnt;
+         // return cnt;
+         var statement3 = snowflake.createStatement( {sqlText: my_sql_command3} );
+      
+           result_set3 = statement3.execute();
+          
+           result_set3.next();
+           var col_value = result_set3.getColumnValue(1);
+          
+           row_as_json = { ColumnName : col_name ,column_value : col_value}
+          
+           array_of_rows.push(row_as_json)
+          }
+          
+        }   
+       
+      //accumulated_log_messages += 'array of records: '+array_of_rows+ '\n'; 
+      // return array_of_rows
+        
+      table_as_json = { "key1" : array_of_rows };
+      
+      //return  table_as_json;
+       
+       try{
+         for (var col_num = 0; col_num < result_set2.getColumnCount(); col_num = col_num + 1) {
+         
+         var my_sql_command4 = "insert into Table_fill_rate values (:1 , :2 ) "
+      
+         var statement4 = snowflake.createStatement( {sqlText: my_sql_command4,binds: [table_as_json.key1[col_num].ColumnName,table_as_json.key1[col_num].column_value]} );
+      
+          statement4.execute();
+         
+         }
+       }
+    catch (err)
+    {
+    
+    throw "Failed: " + err;
+    
+    }
+
+   finally {
+
+           if (accumulated_log_messages != '') {
+        log(accumulated_log_messages)
+        }
+}
+
+
+
+ 
+  // return table_as_json; 
+  $$
+  ;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --> esse é o código completo,
+
+  que agora dissecaremos...
+
+
+
+
+
+
+
+
+
+
+
+  COMECAMOS ASSIM:
+
+
+
+
+
+  create or replace procedure column_fill_rate(TABLE_NAME varchar)
+  returns VARIANT --NOT NULL
+  language javascript
+  EXECUTE AS CALLER
+  as     
+  $$  
+
+     var accumulated_log_messages = '';
+
+
+
+
+
+
+
+
+
+
+
+    ------> COMEÇAMOS COM ESSA variable, "accumulated_log_messages"....
+
+
+
+
+
+
+--> essa variable será uma EMPTY STRING... 
+
+
+
+
+
+
+--> usaremos essa variable 
+
+pq 
+
+QUEREMOS QUE A PROCEDURE 
+
+
+ACUMULE LOG MESSAGES, 
+
+
+e que 
+
+
+entao insira 
+
+tudo de uma vez 
+
+só na table (e nao fique inserindo 1 record por vez)....
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> DEPOIS DISSO, NO INTERIOR DE NOSSA PROCEDURE,
+
+DEFINIREMOS 1 FUNCTION, FUNCTION QUE VAI JUSTAMENTE 
+
+EXECUTAR 
+
+A PROCEDURE DE "do_log" que escrevemos anteriormente:
+
+
+
+
+
+
+
+
+
+
+
+  create or replace procedure column_fill_rate(TABLE_NAME varchar)
+  returns VARIANT --NOT NULL
+  language javascript
+  EXECUTE AS CALLER
+  as     
+  $$  
+
+     var accumulated_log_messages = '';
+
+     function log(msg) {
+        snowflake.createStatement( { sqlText: `CALL do_log(:1)`, binds:[MSG] } ).execute();
+        }
+  
+
+
+
+
+
+
+
+
+
+
+
+ISSO VAI CHAMAR ESSA FUNCTION,
+
+E ENTAO PASSAR ESSA MESSAGE... isso fará com que 
+
+
+a procedure de "do_log" faça seu trabalho...
+
+
+
+
+
+
+
+
+
+
+
+
+--> DEPOIS DISSO, TEMOS LINHAS DE CÓDIGO NORMAIS:
+
+
+
+
+
+
+
+
+
+
+// Input check
+  
+    var input_pattern = "select rlike('" +TABLE_NAME +"','[a-zA-Z0-9_]+')"
+    var statement0 = snowflake.createStatement( {sqlText: input_pattern} );
+    //return input_pattern;
+    var result_set0 = statement0.execute();
+    result_set0.next();
+    
+    reg_status = result_set0.getColumnValue(1)
+
+
+
+
+
+
+
+
+
+
+
+--> NESSAS LINHAS, CHECAMOS SE 
+
+
+O PARAMETRO PASSADO PELO USER É CORRETO,
+
+
+SE NAO É JUNK VALUES (algo como "asdsasa asddssa")...
+
+
+
+
+
+
+
+
+
+
+
+--> nosso objetivo é capturar todos os logs 
+
+
+dentro de "accumulated_log_messages",
+
+para entao 
+
+
+inserir tudo isso, como 1 entry única,
+
+
+
+na table de "my_log_table", bem no FINAL DA PROCEDURE...
+
+
+
+(
+    COM ISSO, SOMOS MAIS EFICIENTES,
+
+    E O NÚMERO DE CALLS realizados 
+
+    ÀQUELA PROCEDURE 
+    TAMBÉM 
+
+    SERÁ REDUZIDO...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+--> para cumprir esse propósito,
+
+
+criamos essa function,
+
+
+
+de "log()",
+
+
+dentro da main procedure -------> FAREMOS ISSO 
+
+
+PARA QUE 
+
+
+
+O CALL DESSA PROCEDURE SEJA MAIS "CLEAN" E "NEAT"....
+
+
+
+(pq, caso contrário, teríamos de repetir a longa 
+linha de código 
+
+  snowflake.createStatement( { sqlText: `CALL do_log(:1)`, binds:[MSG] } ).execute();
+
+
+  EM MÚLTIPLOS LUGARES DE NOSSA PROCEDURE... e isso nao seria nada clean...
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> DEPOIS DISSO,
+
+
+temos estas linhas:
+
+
+
+
+
+
+
+
+// Input check
+  
+    var input_pattern = "select rlike('" +TABLE_NAME +"','[a-zA-Z0-9_]+')"
+    var statement0 = snowflake.createStatement( {sqlText: input_pattern} );
+    //return input_pattern;
+    var result_set0 = statement0.execute();
+    result_set0.next();
+    
+    reg_status = result_set0.getColumnValue(1)
+
+
+
+
+
+
+
+
+
+
+
+
+
+E ENTAO ISTO:
+
+
+
+
+
+
+
+    accumulated_log_messages += 'regular expression result: '+reg_status+ '\n';
+
+  
+    if (reg_status == false){
+     throw  TABLE_NAME +" is not a table "}
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> COMO VC PODE PERCEBER,
+
+AQUI ESTAMOS ADICIONANDO ESSA MESSAGE 
+
+DE 
+
+
+"regular expression result: true/false"
+
+
+
+À VARIABLE DE "accumulated_log_messages"...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> MAIS PARA FRENTE NO CÓDIGO,
+
+O PROFESSOR NOVAMENTE
+
+VAI ACUMULAR 
+
+
+MESSAGES nessa variable:
+
+
+
+
+
+
+
+
+  try {
+    var my_sql_command = "select COUNT(*) CNT from "+ TABLE_NAME +";"
+    var statement1 = snowflake.createStatement( {sqlText: my_sql_command} );
+    var result_set1 = statement1.execute();
+    result_set1.next();
+   
+     } 
+   catch (err) 
+     {
+     
+     snowflake.execute({
+      sqlText: `insert into error_log VALUES (?,?,?,?)`
+      ,binds: [err.code, err.state, err.message, err.stackTraceTxt]
+      });
+ 
+      if (accumulated_log_messages != '') {
+        log(accumulated_log_messages)
+        }
+      throw err.message;
+
+     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+OU SEJA,
+
+SE O CÓDIGO DENTRO DO TRY DÁ ERRO,
+
+ENTRAMOS NO CATCH BLOCK....
+
+
+
+DENTRO DO CATCH BLOCK,
+
+
+
+se já acumulamos alguma log message 
+
+nessa variable,
+
+
+
+FAZEMOS O LOG DELA, com a function de "log()",
+
+antes de 
+
+REALIZARMOS O THROW DESSE ERROR....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> COMO O PROFESSOR TRABALHA:
+
+
+
+""SEMPRE QUE EU QUERO VER 
+
+O VALUE DE ALGUMA VARIABLE,
+
+
+EU FAÇO LOG DESSA VARIABLE 
+
+
+`accumulated_log_messages` depois de 
+
+adicionar essa log message nessa variable""...
+
+
+
+
+
+
+
+
+
+
+
+
+OU SEJA,
+
+
+BASTA TOMAR ESTE TRECHO COMO EXEMPLO:
+
+
+
+
+
+
+
+accumulated_log_messages += 'count of records: ' +CNT+ '\n';
+
+
+
+
+
+
+
+
+
+
+isso vai somar essa string dentro 
+
+
+
+
+dessa variable...
+
+
+
+
+
+
+--> AÍ, NO FINAL DA NOSSA PROCEDURE,
+
+
+RODAMOS "log(accumulated_log_messages)",
+
+
+para 
+
+
+
+
+
+inserir tudo isso na nossa table,
+
+antes de dar throw de error....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OUTRO EXEMPLO, na mesma procedure:
+
+
+
+
+
+
+
+
+
+
+accumulated_log_messages += 'column type of result_set2: ' + result_set2.getColumnType(1) + '\n';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ISSO TUDO É MT ÚTIL QUANDO ESTAMOS FAZENDO DEVELOPMENT ACTIVITIES...
+
+
+
+
+
+
+
+
+
+
+--> COM ESSA PROCEDURE/FUNCTION,
+
+
+NAO TEMOS QUE SEMPRE FICAR ESCREVENDO 
+
+"return variable_name"
+
+
+
+
+NA NOSSA PROCEDURE 
+
+
+
+
+APENAS PARA SABERMOS QUAIS 
+
+VALUES ESTAO CHEGANDO NAS NOSSAS VARIABLES....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> COM ISSO, BEM AO FINAL DA PROCEDURE,
+
+
+TEMOS 1 BLOCK SUPER IMPORTANTE,
+
+QUE É O 
+
+"FINALLY",
+
+
+
+
+
+que 
+
+
+VAI 
+
+
+__ EXECUTAR ESSA FUNCTION DE "LOG",
+
+
+se detectar 
+
+
+que existem accumulated_log_messages...
+
+
+
+
+
+
+
+
+EX:
+
+
+
+
+
+
+   finally {
+
+           if (accumulated_log_messages != '') {
+        log(accumulated_log_messages)
+        }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+O CÓDIGO COMPLETO FICA ASSIM:
+
+
+
+
+
+
+
+
+
+create or replace procedure column_fill_rate(TABLE_NAME varchar)
+  returns VARIANT --NOT NULL
+  language javascript
+  EXECUTE AS CALLER
+  as     
+  $$  
+
+     var accumulated_log_messages = '';
+
+     function log(msg) {
+        snowflake.createStatement( { sqlText: `call do_log(:1)`, binds:[msg] } ).execute();
+        }
+  
+  // Input check
+  
+    var input_pattern = "select rlike('" +TABLE_NAME +"','[a-zA-Z0-9_]+')"
+    var statement0 = snowflake.createStatement( {sqlText: input_pattern} );
+    //return input_pattern;
+    var result_set0 = statement0.execute();
+    result_set0.next();
+    
+    reg_status = result_set0.getColumnValue(1)
+
+    accumulated_log_messages += 'regular expression result: '+reg_status+ '\n';
+    //return reg_status;
+    
+  
+    if (reg_status == false){
+     throw  TABLE_NAME +" is not a table "}
+  
+  
+  try {
+    var my_sql_command = "select COUNT(*) CNT from "+ TABLE_NAME +";"
+    var statement1 = snowflake.createStatement( {sqlText: my_sql_command} );
+    var result_set1 = statement1.execute();
+    result_set1.next();
+   
+     } 
+   catch (err) 
+     {
+     
+     snowflake.execute({
+      sqlText: `insert into error_log VALUES (?,?,?,?)`
+      ,binds: [err.code, err.state, err.message, err.stackTraceTxt]
+      });
+ 
+      if (accumulated_log_messages != '') {
+        log(accumulated_log_messages)
+        }
+      throw err.message;
+
+     }
+
+    
+
+     var cnt = result_set1.getColumnValue(1);
+     if (cnt == 0){
+     throw  TABLE_NAME +" is empty "} 
+     
+     accumulated_log_messages += 'count of records: '+cnt+ '\n';
+     
+
+    try { 
+    var my_sql_command2 = "select * from "+ TABLE_NAME +" LIMIT 10 ;"
+    var statement2 = snowflake.createStatement( {sqlText: my_sql_command2} );
+    var result_set2 = statement2.execute();
+    }
+    
+    catch (err)
+    
+    {
+    
+    snowflake.execute({
+      sqlText: `insert into error_log VALUES (?,?,?,?)`
+      ,binds: [err.code, err.state, err.message, err.stackTraceTxt]
+      });
+    
+    if (accumulated_log_messages != '') {
+        log(accumulated_log_messages)
+        }
+
+    throw "Failed: when trying to get schema of the table" ; 
+    
+    }
+
+
+
+    
+    accumulated_log_messages += 'column type of result set 2: '+result_set2.getColumnType(1)+ '\n';
+    //return result_set2.getColumnType(1);
+    var array_of_rows = [];
+    
+    
+    var row_num = 0;
+    row_as_json = {};
+    
+    var column_name;
+    
+      while (result_set2.next())  {
+        // Put each row in a variable of type JSON.
+         
+        // For each column in the row...
+        for (var col_num = 0; col_num < result_set2.getColumnCount(); col_num = col_num + 1) {
+          var col_name =result_set2.getColumnName(col_num+1);
+          
+          
+         
+         var my_sql_command3 = "select round(count(*)/"+cnt+",2) RW_CNT from "+ TABLE_NAME +" where "+col_name+" IS NOT NULL;"
+         
+         //accumulated_log_messages += 'count of records: '+cnt;
+         // return cnt;
+         var statement3 = snowflake.createStatement( {sqlText: my_sql_command3} );
+      
+           result_set3 = statement3.execute();
+          
+           result_set3.next();
+           var col_value = result_set3.getColumnValue(1);
+          
+           row_as_json = { ColumnName : col_name ,column_value : col_value}
+          
+           array_of_rows.push(row_as_json)
+          }
+          
+        }   
+       
+      //accumulated_log_messages += 'array of records: '+array_of_rows+ '\n'; 
+      // return array_of_rows
+        
+      table_as_json = { "key1" : array_of_rows };
+      
+      //return  table_as_json;
+       
+       try{
+         for (var col_num = 0; col_num < result_set2.getColumnCount(); col_num = col_num + 1) {
+         
+         var my_sql_command4 = "insert into Table_fill_rate values (:1 , :2 ) "
+      
+         var statement4 = snowflake.createStatement( {sqlText: my_sql_command4,binds: [table_as_json.key1[col_num].ColumnName,table_as_json.key1[col_num].column_value]} );
+      
+          statement4.execute();
+         
+         }
+       }
+    catch (err)
+    {
+    
+    throw "Failed: " + err;
+    
+    }
+
+   finally {
+
+           if (accumulated_log_messages != '') {
+        log(accumulated_log_messages)
+        }
+}
+
+
+
+ 
+  // return table_as_json; 
+  $$
+  ;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ESSE BLOCK VAI BASICAMENTE 
+
+
+CHAMAR ESSA FUNCTION,
+
+
+QUE CRIAMOS BEM NO INÍCIO DA PROCEDURE,
+
+
+E AÍ 
+
+VAI PASSAR 
+
+
+
+A VARIABLE 
+
+DE 
+
+
+"accumulated_log_messages"...
+
+
+
+
+
+
+
+
+--> finalmente,
+
+
+isso criará uma entry na table 
+
+de 
+
+"my_log_table"...
+
+
+
+
+
+
+
+
+
+
+
+
+--> COMO ESSE É UM BLOCK "FINALLY",
+
+
+
+ISSO SIGNIFICA QUE 
+
+
+__ MESMO _ SE A PROCEDURE FALHAR 
+
+
+ANTERIORMENTE,
+
+
+
+
+ESSE FINALLY SEMPRE 
+
+SERÁ 
+
+EXECUTADO... ----> O QUE QUER DIZER QUE,
+
+
+
+SE 
+
+EXISTIREM 
+
+
+
+
+
+VALUES NESSA "accumulated_log_messages",
+
+
+
+
+SERÁ EXECUTADA ESSA OUTRA PROCEDURE....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> A EXISTENCIA DESSAS MESSAGES AJUDA DURANTE 
+
+
+O DEBUGGING, 
+
+DURANTE A DEVELOPMENT ACTIVITY...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NOSSO OUTPUT,
+NA 
+
+
+TEMPORARY TABLE DE "my_log_table",
+
+
+fica tipo assim:
+
+
+
+
+
+
+
+
+
+
+
+TS                     MSG
+
+12122198184219         regular expression result: true   count of records: 10   column type of result set 2: number
+
+12122198184245         regular expression result: true   count of records: 10   column type of result set 2: number
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+E ESSA TABLE SERÁ UMA TEMPORARY TABLE,
+
+PARA QUE 
+
+
+
+APENAS PÓSSAMOS ENXERGÁ-LA DURANTE 
+
+ESSA SESSION...
+
+
+
+
+
+
+
+
+
+
+
+
+-> ISSO AJUDA MT,
+
+
+AJUDA A ENTENDER O QUE ESTÁ ACONTECENDO 
+
+DENTRO DA PROCEDURE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> AGORA DEVEMOS VER ALGUNS ERROR SCENARIOS...
+
+
+
+
+
+
+
+
+
+--> MAS ANTES DISSO, 
+
+
+O PROFESSOR NOS MOSTRA ALGO, NO CÓDIGO:
+
+
+
+
+
+
+
+
+
+
+
+
+--> TEMOS AQUELE TRECHO, LÁ NO INÍCIO:
+
+
+
+
+
+
+
+  try {
+    var my_sql_command = "select COUNT(*) CNT from "+ TABLE_NAME +";"
+    var statement1 = snowflake.createStatement( {sqlText: my_sql_command} );
+    var result_set1 = statement1.execute();
+    result_set1.next();
+   
+     } 
+   catch (err) 
+     {
+     
+     snowflake.execute({
+      sqlText: `insert into error_log VALUES (?,?,?,?)`
+      ,binds: [err.code, err.state, err.message, err.stackTraceTxt]
+      });
+ 
+      if (accumulated_log_messages != '') {
+        log(accumulated_log_messages)
+        }
+      throw err.message;
+
+     }
+
+
+
+
+
+
+
+
+
+--> NESSE TRECHO AÍ,
+
+
+
+tivemos de chamar "log(accumulated_log_messages)",
+
+
+
+para cases em que 
+
+
+algo deu errado... -----------> usamos isso para capturar 
+
+
+errors nessa step específica...
+
+
+
+
+
+
+
+
+-->  MAS O PROBLEMA É QUE 
+
+PRECISAMOS SABER 
+
+
+""EM QUE STEP DE NOSSA PROCEDURE ESSE 
+
+ERROR ACTUALLY ACONTECEU""...
+
+
+
+
+
+
+(basta observar que o output da message,
+
+lá na table de my_log_table,
+
+
+
+ficou com 
+
+apenas 
+
+
+""
+regular expression result: true
+"",
+
+
+
+sem mostrar o resto das linhas... sinal que essas linhas, posteriores,
+
+nao foram executadas, a execucao foi interrompida antes disso,
+
+com o THROW de 1 error....
+
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+PARA TESTAR ISSO, O PROFESSOR 
+
+
+
+FAZ CALL DA PROCEDURE COM 1 TABLE QUE NAO EXISTE (para triggar 
+esses try-catch):
+
+
+
+
+
+
+
+
+
+
+
+CALL COLUMN_FILL_RATE('CUSTOMER_5');
+
+
+
+
+
+
+
+
+ou seja,
+
+
+a procedure vai:
+
+
+
+1) PASSAR PELA PARTE DA REGULAR EXPRESSION (sem problemas)
+
+
+
+
+
+2) MAS NO MOMENTO EM QUE TENTAR REALIZAR 1 COUNT,
+
+ELE VAI FAIL...
+
+
+
+
+
+
+
+
+
+PODEMOS VISUALIZAR ISSO NA TABLE DE my_log_table,
+
+
+
+
+que agora está com 
+
+
+"regular expression result: true" (e mais nada)...
+
+
+
+
+
+
+
+
+
+--> COM ISSO, PODEMOS COMPREENDER
+ 
+ QUE O ERRO 
+
+
+ SE ORIGINOU 
+
+ DAQUELA PARTE DE 
+
+ "SELECT COUNT(*) AS CNT FROM " + TABLE_NAME + ";";
+
+
+
+
+
+
+
+
+
+
+
+
+
+ E VC PODE DESABILITAR ESSAS LOG MESSAGES 
+
+ DEPOIS 
+
+ DE TERMINAR O DEVELOPMENT...
+
+
+
+
+
+
+
+
+
+
+ --> MAS ATÉ VC TERMINAR DE DEVELOPAR 
+
+
+ A SUA PROCEDURE,
+ VC DEVE DEIXAR 
+
+ SEUS LOGS 
+
+ LIGADOS...
+
+
+
+
+ --> e as tables sao temporárias,
+
+ por isso é mt bom...
+
+
+
+
+
+
+
+
+
+
+
+ --> DEVEMOS LEVERAGE ESSA FUNCTION DE LOG, CRIADA PELO 
+ PROFESSOR...

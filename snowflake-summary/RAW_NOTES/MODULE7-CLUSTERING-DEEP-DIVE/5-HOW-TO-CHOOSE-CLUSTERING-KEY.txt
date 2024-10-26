@@ -1,0 +1,251 @@
+
+
+
+
+
+
+
+
+
+
+
+
+--> OK...
+
+
+
+
+
+
+AGORA VEREMOS COMO DEVEMOS ESCOLHER NOSSAS CLUSTERING KEYS 
+
+NO SNOWFLAKE....
+
+
+
+
+
+
+
+
+ESCOLHA CLUSTERING KEYS QUE:
+
+
+
+
+
+
+
+
+
+1) COLUMNS QUE SAO MAIS USADAS COM A CLAUSE DE 
+
+"WHERE"...
+
+(
+    DEVEMOS ESCOLHER ESSAS COLUMNS 
+
+    PQ QUANDO 1 USER SUBMITTA 1 QUERY 
+
+    COM ESSA CLUSTER KEY COMO FILTER,
+    AS 
+    MICRO PARTITIONS NO BACKEND SERAO ESCANEADAS SUPER RAPIDAMENTE...
+)
+
+
+
+
+--> isso resulta em 1 response time bem mais rápido...
+
+
+
+
+
+
+2) COLUMNS USADAS COM FREQUENCIA 
+
+COM JOIN CONDITIONS...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-->  IMAGINE ESTA QUERY:
+
+
+
+
+
+
+            SELECT A.EMPT_DEPT, B.EMP_NAME
+                FROM EMP B, DEP A 
+                WHERE B.DEPT_ID=A.DEPT_ID;
+
+
+
+
+
+
+
+
+
+
+
+
+--> SE VC TIVER DEPARTMENT_IDS 
+
+NAO TAO GRANULARES (cardinalidade),
+
+
+TIPO 20 DEPARTMENT_IDS DIFERENTES,
+
+
+
+VC PODE OS UTILIZAR 
+
+
+
+COMO CLUSTERING KEYS...
+
+
+
+
+
+
+
+
+
+
+3) A ORDEM PELA QUAL VC ESPECIFICA 
+CLUSTERING KEYS É IMPORTANTE...
+
+COMO REGRA GERAL,
+
+O SNOWFLAKE RECOMENDA 
+ORDENAR 
+AS COLUMNS COLOCADAS NO CLUSTER 
+
+NO SENTIDO "MENOR CARDINALIDADE -> MAIOR CARDINALIDADE"...
+
+
+
+A ORDEM ESPECIFICADA 
+também é usada para agrupar a data 
+no backend...
+
+
+
+
+
+
+
+
+
+
+COMO PODEMOS CONSEGUIR A CARDINALIDADE 
+
+DE 1 TABLE?
+
+
+
+
+
+basta:
+
+1) pegar o número total de rows em 1 table,
+ 
+ com 
+
+ SELECT COUNT(*) FROM <table_name>;
+
+
+
+
+ 2) PEGAR O NÚMERO DE VALUES DISTINTOS DE 1 GIVEN COLUMN,
+ com 
+
+ SELECT COUNT(DISTINCT <col_name>) FROM <table_name>;
+
+
+
+
+3) RODAR A DIVISAO 
+
+
+    SELECT <num_de_values_distintos_da_column> / <num_total_de_rows_de_1_table>
+
+
+
+EX:
+
+SELECT 141214121/1500000000
+
+
+
+
+número: 0.15 (cardinalidade ALTA)....
+
+
+
+
+
+
+
+
+
+EX:
+
+
+SELECT 
+
+
+5/1500000000000000
+
+
+
+número: 0.00000 (cardinalidade SUPER BAIXA)...
+
+
+
+
+--> QUER DIZER QUE ESSE SEGUNDO EXEMPLO SERIA 
+A COLUMN QUE ESCOLHERÍAMOS COMO PRIMEIRA COLUMN 
+DA CLUSTER KEY,
+
+PQ SUA CARDINALIDADE É SUPER BAIXA...
+
+
+
+
+
+
+
+
+
+
+MENOR CARDINALIDADE (variancia) -> MAIOR CARDINALIDADE (variancia)...
+
+
+
+
+
+
+
+
+
+--> PQ É BEM MAIS FÁCIL AGRUPAR 
+
+DATA COM 1 MENOR QUANTIDADE DE VALUES 
+
+do que com 1 grande quantidade de values/categorias....
+
+

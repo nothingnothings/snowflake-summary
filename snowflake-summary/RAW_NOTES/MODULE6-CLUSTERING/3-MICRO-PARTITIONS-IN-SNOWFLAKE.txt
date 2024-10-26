@@ -1,0 +1,301 @@
+
+
+
+
+
+
+
+
+
+
+
+
+ AGORA FALAREMOS SOBRE MICRO PARTITION NO SNOWFLAKE....
+
+
+
+
+
+
+
+
+
+
+
+
+ DIGAMOS QUE ESTAMOS TENTANDO CARREGAR FILES 
+
+ PARA DENTRO 
+
+ DE 
+ 1 
+ TABLE 
+
+
+
+ SNOWFLAKE...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ --> QUANDO VC CARREGA AS FILES 
+
+
+
+ NA TABLE DO SNOWFLAKE,
+
+
+ AS TABLES 
+
+
+ SAO 
+
+
+ PARTICIONADAS 
+
+
+ HORIZONTALMENTE 
+
+ ORGANIZADAS 
+
+
+
+ EM BLOCKS/PAGES...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ -> CADA "TABLE FILE" É UMA MICRO PARTITIION,
+
+
+
+
+
+ E CADA TABLE FILE É TIPO UMA "PÁGINA"
+
+
+ DA NOSSA TABLE INTEIRA...
+
+
+
+
+
+
+
+
+
+
+
+
+
+ --> DENTRO DE CADA FILE,
+
+
+ OS VALUES DE CADA ATTRIBUTE/COLUMN
+
+
+ SAO GROUPED TOGETHER,
+
+
+ E AÍ 
+
+
+ ARMAZENADOS 
+
+
+ INDEPENDENTEMENTE...
+
+
+
+
+
+
+
+
+
+
+ TIPO ASSIM:
+
+
+
+
+
+
+
+
+ TYPE            NAME       COUNTRY         DATE
+
+
+ 2  2           B   A       DE   UK         11/2 11/2
+
+ 4  3           A   C       FR   SP         11/2 11/2
+
+ 3  2           C   C       SP   DE         11/2 11/2
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> ISSO TUDO É CHAMAOD DE "COLUMNAR STORAGE"..
+
+
+
+
+
+
+
+e columns sao 
+
+ALTAMENTE 
+
+COMPRIMIDAS (compressed),
+
+
+
+
+USANDO 1 SCHEME CHAMADO DE "PACs",
+
+
+OU HYBRID COLUMNAR...
+
+
+
+
+
+
+
+
+
+
+
+
+--> CADA TABLE FILE terá 1 header,
+
+
+
+
+QUE SEGURA 
+
+O OFFSET DE CADA COLUMN,
+
+DENTRO 
+
+DA TABLE FILE..
+
+
+
+
+
+
+
+NA VERDADE,
+
+
+O HEADER SEGURA UM MONTE DE METADATA,
+
+
+TIPO ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+HEADER:  min, max, distinct, column, offset...
+
+
+
+
+
+
+
+
+
+
+RESUMINDO:
+
+
+
+
+1 HEADER EM 1 TABLE FILE 
+
+
+SEGURA 1 RESUMO/SUMMARY DE 1 MICRO PARTITION...
+
+
+
+E ESSA INFO TODA É MT IMPORTANTE...
+
+
+
+
+
+
+
+
+
+
+--> O PROFESSOR REITERA:
+
+
+
+
+
+
+
+
+
+MICRO-PARTITIONING É FEITO AUTOMATICAMENTE 
+
+EM TODAS TABLES 
+
+SNOWFLAKE...
+
+
+
+
+
+
+
+--> TABLES SAO PARTICIONADOS TRANSPARENTEMENTE,
+
+USANDO A ORDEM 
+
+PELA QUAL A DATA É INSERIDA/CARREGADA...

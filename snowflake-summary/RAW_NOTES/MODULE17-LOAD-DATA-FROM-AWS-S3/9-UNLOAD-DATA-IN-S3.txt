@@ -1,0 +1,720 @@
+
+
+
+
+
+
+
+
+AGORA NOS PEDIRAM OUTRA ATIVIDADE...
+
+
+
+
+
+
+
+
+
+--> AGORA DEVEMOS PEGAR A DATA DO SNOWFLAKE,
+
+EM TABLES,
+
+E COLOCAR NO S3...
+
+
+
+
+
+MAS PQ ISSO?
+
+
+
+
+
+
+
+
+
+--> HÁ UM CLIENTE UQE 
+
+QUER __ QUE _ A DATA FIQUE ARMAZENADA NO S3 
+
+
+QUANDO VC A ENVIAR A ELE...
+
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE 
+
+PRECISAMOS 
+
+
+EXPORTAR A DATA 
+
+DE NOSSA TABLE SNOWFLAKE 
+
+
+DIRETAMENTE 
+
+
+
+AO S3...
+
+
+
+
+
+
+
+
+
+--> OU SEJA,
+
+TEREMOS QUE RODAR O COMANDO DE "COPY INTO" AO CONTRÁRIO,
+
+
+"DE NOSSA TABLE PARA O BUCKET DO S3"...
+
+
+
+
+
+
+
+
+
+
+PARA ISSO, PROVAVELMENTE ESCREVEREMOS ASSIM:
+
+
+
+
+
+
+
+
+
+
+
+COPY INTO <stage>
+FROM <table>
+
+
+
+
+
+
+
+
+TIPO 
+
+
+
+
+
+
+
+
+
+
+COPY INTO @demo_db.public.S3_EXTERNAL_STAGE/csv
+FROM demo_db.public.EMP_EXT_STAGE_TABLE;
+
+
+
+
+
+
+
+
+
+
+
+
+OK... FUNCIONOU...
+
+
+
+
+ISSO UPLOADOU NOSSA DATA AO S3,
+
+
+EM FORMATO CSV...
+
+
+
+
+
+
+
+
+
+
+--> MAS DEVEMOS TAMBÉM:
+
+
+
+
+2) VALIDATE SE O NÚMERO DE RECORDS ESTÁ CORRETO...
+
+(validate record counts)...
+
+
+(também em relacao aos column values)...
+
+
+
+
+
+
+
+
+
+
+(
+
+    PARA ISSO, PODEMOS USAR MINUS, PROVAVELMENTE...
+
+
+)
+
+
+
+
+
+
+
+TIPO 
+
+
+
+
+
+SELECT 
+* FROM demo_db.public.EMP_EXT_STAGE_TABLE
+MINUS 
+SELECT 
+T.$1,
+T.$2,
+T.$3,
+T.$4,
+T.$5,
+T.$6
+FROM @demo_db.public.S3_EXTERNAL_STAGE/csv_0_0_0.csv.gz AS T
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK...  EU RODEI O "MINUS",
+
+
+MAS FIQUEI COM 1 ROW APARECENDO... SIGNIFICA QUE 1 DOS ROWS 
+
+NAO FOI COPIADO (
+
+    existe na table, mas n existe 
+    lá 
+
+
+    no csv....
+)
+
+
+
+
+
+ISSO ACONTECEU JUSTAMENTE PQ 
+
+
+MEU FILE_FORMAT ESTÁ COM "SKIP_HEADER",
+
+e aí ele skippou o primeiro row...
+
+
+
+
+
+
+
+POR ISSO DEVO O ALTERAR,
+
+
+COM ESTE COMANDO:
+
+
+
+
+
+
+ALTER FILE FORMAT DEMO_DB.FILE_FORMATS.MY_CSV_FORMAT
+SET SKIP_HEADER=0;
+
+
+
+
+
+
+
+
+
+
+
+OK... AGORA DEU CERTO...
+
+
+
+
+
+
+
+
+O CÓDIGO, ATÉ AGORA:
+
+
+
+
+
+
+
+COPY INTO @demo_db.public.S3_EXTERNAL_STAGE/csv
+FROM demo_db.public.EMP_EXT_STAGE_TABLE;
+
+
+
+ALTER FILE FORMAT DEMO_DB.FILE_FORMATS.MY_CSV_FORMAT
+SET SKIP_HEADER=0;
+
+-- VALIDATION:
+SELECT 
+* FROM demo_db.public.EMP_EXT_STAGE_TABLE
+MINUS 
+SELECT 
+T.$1,
+T.$2,
+T.$3,
+T.$4,
+T.$5,
+T.$6
+FROM @demo_db.public.S3_EXTERNAL_STAGE/csv_0_0_0.csv.gz AS T
+
+
+LIST @demo_db.public.S3_EXTERNAL_STAGE
+
+
+
+
+
+
+
+
+-----------------------------------
+
+
+
+
+
+
+
+
+O PROFESSOR ENTAO CRIA NOVOS FOLDERS AO INTEGRATION OBJECT,
+
+
+COM ESTE CÓDIGO:
+
+
+
+
+
+
+
+ALTER STORAGE INTEGRATION S3_INTEGRATION
+SET STORAGE_ALLOWED_LOCATIONS=(
+    's3://xxxxx/emp/',
+    's3://emp_unload/',
+    's3://zip_folder/
+);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+------> AÍ O PROFESSOR TENTA FAZER UNLOAD DA DATA 
+
+
+NO FOLDER DE emp_unload...
+
+
+
+
+
+
+
+
+
+
+--------> é claro que sempre precisamos criar os folders anterioremnte,
+
+
+lá no s3..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+GZIP COMPRESSED --> DEFINIMOS ISSO NAS OPTIONS DE 
+
+COPY...
+
+
+
+
+
+
+
+
+
+
+
+
+-----> PARA VALIDATE 
+
+
+O COUNT DOS 2 NEGÓCIOS,
+
+
+O PROFESSOR RODOU 
+
+
+
+
+
+
+
+A MESMA COISA QUE EU RODEI,
+
+
+E PERCEBEU QUE 
+
+
+
+
+
+TÍNHAMOS 1 RECORD A MAIS NA NOSSA TABLE...
+
+
+
+
+
+
+-> A RAZAO PARA ISSO FOI POR CONTA DO "SKIP_HEADER=1",
+
+
+
+
+
+que deveria estar como "0"...
+
+
+
+
+
+
+
+
+
+
+professor fez a manha do minus:
+
+
+
+
+
+
+
+
+
+SELECT * FROM emp_ext_stage
+MINUS 
+SELECT 
+T.$1,
+T.$2,
+T.$3,
+T.$4,
+T.$5,
+T.$6 
+FROM @S3_EXTERNAL_STAGE;
+
+
+
+
+
+
+
+ok... e isso deu certo, ficamos sem nenhuma diferenca 
+
+entre as 2 tables...
+
+
+
+
+
+
+
+
+
+
+--> E SE VC QUER SALVAR 1 CSV COM APENAS 
+
+
+
+ALGUMAS COLUMNS,
+
+ISSO TAMBÉM É POSSÍVEL, COM ESTA SINTAXE:
+
+
+
+
+COPY INTO @<external_stage_s3> 
+FROM 
+(
+    SELECT 
+    FIRST_NAME,
+    EMAIL
+    FROM EMP_EXT_STAGE_TABLE
+);
+
+
+
+
+
+
+
+
+
+
+
+
+--> E SE VC QUER QUE A DATA SEJA EXPORTADA EM 
+
+ALGUM FORMATO ESPECIAL,
+
+
+COMO PARQUET FORMAT,
+
+
+
+VC TAMBÉM PODE FAZER ISSO,
+COM ESTA SINTAXE:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+COPY INTO @S3_EXTERNAL_STAGE/parquet 
+FROM 
+emp_ext_stage_table 
+FILE_FORMAT=(
+    TYPE='PARQUET'
+    SNAPPY_COMPRESSION=TRUE
+);
+
+
+
+
+
+
+
+
+
+
+
+--> só nao sei o que é "SNAPPY_COMPRESSION"...
+
+
+
+
+
+
+
+
+--> QUER DIZER QUE TAMBÉM PODEMOS EXPORTAR EM 1 FORMATO PARQUET...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--> OUTRA COISA:
+
+
+
+
+
+SE VC QUER REALMENTE EXPORTAR A DATA DE SUA TABLE 
+
+PARA O BUCKET DA S3,
+
+
+
+SE ___ o VOLUME DE DATA FOR REALMENTE HUGE,
+
+
+
+VC __ SEMPRE __DEVE TENTAR USAR __ 1 
+
+DEDICATED WAREHOUSE PARA ISSO...
+
+
+
+
+
+
+
+
+--> SE VOU EXPORTAR 1 BIG VOLUME OF DATA,
+
+COMO 1TB E 2 TB,
+
+SEMPRE É UMA BEST 
+
+PRACTICE USAR UMA DEDICATED WAREHOUSE,
+
+
+UMA WAREHOUSE QUE VC NAO SHAREIA 
+
+COM NINGUÉM..
+
+
+
+
+
+
+
+
+
+
+--> QUANDO VC ACTUALLY FAZ UNLOAD DA DATA 
+
+A 1 EXTERNAL STAGING AREA,
+
+VC 
+
+SEMPRE DEVE USAR 1 DEDICATED WAREHOUSE...
+
+
+
+
+
+
+
+
+
+
+
+--> MAS O QUE APRENDEMOS?
+
+
+
+
+
+1) DEPOIS QUE VC FIZER UNLOAD 
+
+
+DA DATA NO S3,
+
+
+SEMPRE COMPARE A TABLE 
+
+COM 
+
+A STAGING AREA, USANDO "MINUS"...
+
+
+
+
+
+
+2) TAMBÉM FAÇA VALIDATE DOS COLUMN VALUES,
+COM "MINUS"..
+
+
+
+
+
+3) SE FOR FAZER O UNLOAD DE DATA,
+
+SEMPRE UTILIZE/KEEP 1 
+
+DEDICATED 
+WAREHOUSE 
+
+
+ENQUANTO ESTIVER FAZENDO ESSE UNLOAD...
+
+

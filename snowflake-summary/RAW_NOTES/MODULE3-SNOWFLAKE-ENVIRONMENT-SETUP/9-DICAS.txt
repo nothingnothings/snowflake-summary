@@ -1,0 +1,84 @@
+We understood how to create snowflake trail account and while creating, 
+you should also take care of region we choose.
+
+
+
+
+
+Snowflake is cloud agnostic tool.
+
+
+
+You can host Snowflake on AWS, GOOGLE GCS or AZURE.
+
+
+
+When you choose AWS, all snowflake services
+ will be hosted on AWS. Snowflake will
+  manage storage and leverage  AWS compute 
+  to process and store data.
+
+
+
+
+
+You can arrange  you're worksheet into folders.
+
+
+
+
+You can create charts out of queries you execute.
+
+
+
+You can form Dashboards out of Charts.
+
+
+
+
+You can share your worksheet with other team members.
+
+
+
+You can share your data in Marketplace. You can also request data from marketplace.
+
+
+
+
+
+
+
+Activity monitor window.
+( Profile page , query history page etc )
+
+
+
+
+Database listing and privileges.
+
+
+
+
+
+Warehouse means a group of nodes 
+and clusters which  helps to process the data.
+
+
+
+
+
+
+
+
+And third party connect tools available.
+
+
+
+
+
+
+You created database and sample employee table.
+
+
+We had high level overview about Role selection , 
+compute warehouse while executing statements.
